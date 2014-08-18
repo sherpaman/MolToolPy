@@ -1,4 +1,4 @@
 MolToolPy
 =========
 
-Python classes,dules and tools to manage molecular dynamics data
+Python classes, modules and tools to manage molecular dynamics data
