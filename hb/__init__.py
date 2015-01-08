@@ -249,6 +249,7 @@ class hbonds:
 		fi=open(filein,'r')
 		self.mol=gro.read_gro(filegro)
 		raw_fi=fi.readline()
+		self.name=raw_fi[:-1]
 		n=0
 		while raw_fi:
 			line=raw_fi.split()

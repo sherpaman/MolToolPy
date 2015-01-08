@@ -1,6 +1,5 @@
 import sys
 import numpy
-import matplotlib.pyplot
 
 class c_scale:
 	def __init__(self, c=0, list_ch=[], list_v=[], list_c=[]):
@@ -120,17 +119,18 @@ def read_xpm(file_in,verbose=False):
 		row=newline
 		r=xpm.rows-row_left
 		for c in range(xpm.cols):
-			xpm.array[r,c]=xpm.scal.list_ch.index(row[c+1])
+			xpm.array[r,c]=xpm.scal.list_ch.index(row[1+c*xpm.cop:1+(c+1)*xpm.cop])
 		row_left -= 1
 		newline=fi.readline()
 	row=newline
 	r=xpm.rows-row_left
 	for c in range(xpm.cols):
-		xpm.array[r,c]=xpm.scal.list_ch.index(row[c+1])
+		xpm.array[r,c]=xpm.scal.list_ch.index(row[1+c*xpm.cop:1+(c+1)*xpm.cop])
 	xpm.array=numpy.flipud(xpm.array)
 	return xpm
 
 def main(argv=None):
+	import matplotlib.pyplot
 	if argv==None:
 		argv=sys.argv
 	file_in=argv[1]
