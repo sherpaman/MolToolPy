@@ -24,6 +24,17 @@ def read_energy_field(file_in,nx=None,ny=None,g_grad=False):
 		dE = np.array(np.gradient(E))
 	return energy_field(energy=E,gradient=dE,field=[X,Y],g_grad=g_grad,notes=str(file_in))
 
+class hills:
+	def __init__(self, time, coord, sigmas, heights, cv_names, biasf=None, ranges=None):
+		self.time = time
+		self.coord = coord
+		self.sigmas = sigmas
+		self.heights = heights
+		self.biasf = biasf
+		self.ranges = ranges
+		self.cv_names=cv_names
+	
+	
 class energy_field:
 
 	def __init__ (self, energy=np.zeros([2,2]), gradient=np.zeros([2,2,2]), field=[np.zeros([2,2]),np.zeros([2,2])],g_grad=False,isdefined=False,notes=None):

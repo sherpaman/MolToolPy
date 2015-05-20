@@ -48,6 +48,13 @@ class molecule:
 				if a.num==num:
 					return a
 	
+	def find_atom_in_res(self,res,atom):
+		for n,r in enumerate(self.residues):
+			if (r == str(res) ) | ( n == int(res) ):
+				for a in r.atoms:
+					if atom==str(a):
+						return a.num
+	
 	def find_atom(self,atom):
 		for r in self.residues:
 			for a in r.atoms:
@@ -91,10 +98,15 @@ class res:
 	def __repr__(self):
 		return self.__str__()
 	
-	def atom(self,num):
+	def atom_num_name(self,num):
 		for a in self.atoms:
 			if a.num==num:
 				return a
+				
+	def atom_name_num(self,name):
+		for a in self.atoms:
+			if a.name==name:
+				return a.num
 
 class atom:
 	def __init__(self,name='',num=0,resname=0,resnum=0,resid=res()):
