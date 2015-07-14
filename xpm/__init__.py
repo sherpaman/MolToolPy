@@ -123,7 +123,7 @@ def read_xpm(file_in,verbose=False):
 		row_left -= 1
 		newline=fi.readline()
 	row=newline
-	r=xpm.rows-row_left
+	r=xpm.rows-1
 	for c in range(xpm.cols):
 		xpm.array[r,c]=xpm.scal.list_ch.index(row[1+c*xpm.cop:1+(c+1)*xpm.cop])
 	xpm.array=numpy.flipud(xpm.array)
