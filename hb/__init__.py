@@ -218,8 +218,8 @@ class hbonds:
 				self.hblist.append(hbond(don=don_res,don_atom=don_atom, acc=acc_res,acc_atom=acc_atom, perc=0.0, mediated=0.0, both=0.0,nfr=self.nfr))
 			raw_fi=fi.readline()
 		self.nbonds = len(self.hblist)
-        self.red = True
-		fi.close()
+                self.red = True
+                fi.close()
 	
 	def read_log(self,file_in,file_gro):
 		"""
@@ -302,7 +302,7 @@ class hbonds:
 					self.ref_hb[list_hb.index(new_hb)].append(self.nrhb)
 				self.nrhb += 1
 			raw_fi=fi.readline()
-        self.red = False
+                self.red = False
 		fi.close()
 	
 	def calc_perc(self):
