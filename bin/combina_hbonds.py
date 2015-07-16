@@ -1,10 +1,6 @@
 #!/usr/bin/env python
 
-import math, sys, time
-import numpy as np
-import scipy.stats
-import hb
-
+from hb import Hbonds, merge_two
 from optparse import OptionParser
 
 parser = OptionParser()
@@ -15,14 +11,14 @@ parser.add_option("--gro", dest="gro", action="store", type="string", default=No
 
 (options, args) = parser.parse_args()
 
-hb1=hb.hbonds(name='First')
-hb2=hb.hbonds(name='Second')
+hb1 = Hbonds(name='First')
+hb2 = Hbonds(name='Second')
 
 hb1.read_file_perc(options.hb1,options.gro)
 hb2.read_file_perc(options.hb2,otpions.gro)
 
-hb3=hb.hbonds(name='Combination')
-hb3=hb.merge_two(hb1,hb2)
+hb3 = Hbonds(name='Combination')
+hb3 = merge_two(hb1,hb2)
 
 print hb3
 

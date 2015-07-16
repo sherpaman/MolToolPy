@@ -5,7 +5,7 @@ import copy
 
 
 
-class ts:
+class TimeSer:
         def __init__(self,data,n_data,dim,nbins=12,bins=None,prob=None,reshape=True,frame_row=True,dtype=float):
                 self.n_data = int(n_data)
                 self.dtype  = dtype

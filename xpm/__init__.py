@@ -1,28 +1,28 @@
 import sys
 import numpy
 
-class c_scale:
+class CScale:
 	def __init__(self, c=0, list_ch=[], list_v=[], list_c=[]):
 		self.list_ch = list_ch
 		self.list_v  = list_v
 		self.list_c  = list_c
 		self.c       = c
 	
-class xpm_data:
-	def __init__(self,title='',legend='',xlabel='',ylabel='',typ='Continuous',name='',cols=0,rows=0,colors=0,cop=0,array=numpy.array(0),scal=c_scale(),xaxis=numpy.array(0),yaxis=numpy.array(0)):
-		self.title=title
-		self.name=name
-		self.xlabel=xlabel
-		self.ylabel=ylabel
-		self.type=typ
-		self.cols=cols
-		self.rows=rows
-		self.colors=colors
-		self.cop=cop
-		self.array=array
-		self.scal=scal
-		self.xaxis=xaxis
-		self.yaxis=yaxis
+class Xpm:
+	def __init__(self,title='',legend='',xlabel='',ylabel='',typ='Continuous',name='', cols=0, rows=0, colors=0, cop=0, array=numpy.array(0),scal=CScale(),xaxis=numpy.array(0), yaxis=numpy.array(0)):
+		self.title  = title
+		self.name   = name
+		self.xlabel = xlabel
+		self.ylabel = ylabel
+		self.type   = typ
+		self.cols   = cols
+		self.rows   = rows
+		self.colors = colors
+		self.cop    = cop
+		self.array  = array
+		self.scal   = scal
+		self.xaxis  = xaxis
+		self.yaxis  = yaxis
 
 	def __setattr__(self,name,value):
 		if (name=='cols')|(name=='rows')|(name=='colors')|(name=='cop'):
@@ -35,7 +35,8 @@ class xpm_data:
 			self.__dict__[name]=value
 
 	def write_xpm(self,file_out):
-		fo=open(file_out,'w')
+		#fo=open(file_out,'w')
+                return
 
 def read_xpm(file_in,verbose=False):
 	fi=open(file_in,'r')
@@ -43,7 +44,7 @@ def read_xpm(file_in,verbose=False):
 		raise IOError
 		fi.close()
 		exit(2)
-	xpm=xpm_data()
+	xpm=Xpm()
 	header=5
 	while (header!=0):
 		newline=fi.readline()
