@@ -2,6 +2,7 @@ import numpy as np
 import math as m
 import scipy.special as sp
 import copy
+from mi import mi
 
 
 
@@ -113,12 +114,14 @@ class TimeSer:
                 P_joint = np.zeros( np.hstack( (self.rep, self.rep, self.nbins, self.nbins) ) )
                 E_joint = np.zeros((self.rep,self.rep))
                 M       = np.zeros((self.rep,self.rep))
-                total_step=self.rep*other.rep
-                for s in np.arange(self.rep):
+                total_step = ( self.rep * ( self.rep - 1 ) ) / 2
+                #n=0
+                for s in np.arange(self.rep - 1):
                         E_joint[s,s] = self.entropy[s] + self.entropy[s]
                         M[s,s]       = E_joint[s,s]
                         for o in np.arange(s+1,self.rep):
-                                print " Completed {0:6.3%}\r".format(float(s*o)/total_step)
+                                #n = n + 1
+                                #print " Completed {0:6.3%}\r".format(float(n)/total_step)
                                 DATA = np.transpose(np.vstack((self.data[s],self.data[o])))
                                 histo , null = np.histogramdd(DATA,bins=self.bins+self.bins) # concatenate bins list with "+"
                                 P_joint[s,o] = 1.*histo / self.n_data
@@ -126,6 +129,15 @@ class TimeSer:
                                 E_joint[o,s] = E_joint[s,o]
                                 M[s,o] = self.entropy[s] + self.entropy[o] - E_joint[s,o]
                                 M[o,s] = M[s,o]
+                return M, E_joint, P_joint
+        
+        def mutual_info_for(self):
+                if not self.entropy_av:
+                        self.calc_entropy()
+                P_joint = np.zeros( np.hstack( (self.rep, self.rep, self.nbins, self.nbins) ) )
+                E_joint = np.zeros((self.rep,self.rep))
+                M       = np.zeros((self.rep,self.rep))
+                M, E_joint, P_joint = mi.r_mutualinfo(np.transpose(self.data),self.entropy,self.bins,self.n_data,self.rep,self.nbins)
                 return M, E_joint, P_joint
                 
         def mutual_info_other(self,other):
@@ -143,7 +155,7 @@ class TimeSer:
                 for s in np.arange(self.rep):
                         for o in np.arange(other.rep):
                                 # DATA* -> Transposed[ Self.DIM+Other.DIM, N_sample ]
-                                print " Completed {0:6.3%}\r".format(float(s*o)/total_step)
+                                #print " Completed {0:6.3%}\r".format(float(s*o)/total_step)
                                 DATA = np.transpose(np.vstack((self.data[s],other.data[o])))
                                 histo , null = np.histogramdd(DATA,bins=self.bins+other.bins) # concatenate bins list with "+"
                                 P_joint[s,o] = 1.*histo / self.n_data
@@ -169,8 +181,8 @@ class TimeSer:
                 otherk_nbins  = nbins
                 otherk1_nbins = nbins * ( self.nbins ** self.dim )
                 other_nd    = self.n_data-time
-                other_k     = ts(np.zeros((self.rep,1,other_nd)),other_nd,1,otherk_nbins ,bins=None,prob=None,reshape=False,dtype=int)
-                other_k1    = ts(np.zeros((self.rep,1,other_nd)),other_nd,1,otherk1_nbins,bins=None,prob=None,reshape=False,dtype=int)
+                other_k     = TimeSer(np.zeros((self.rep,1,other_nd)),other_nd,1,otherk_nbins ,bins=None,prob=None,reshape=False,dtype=int)
+                other_k1    = TimeSer(np.zeros((self.rep,1,other_nd)),other_nd,1,otherk1_nbins,bins=None,prob=None,reshape=False,dtype=int)
                 for r in np.arange(self.rep):
                         for k in np.arange(self.n_data-time):
                                 hash_num = 0
