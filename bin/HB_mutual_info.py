@@ -82,7 +82,7 @@ hb_ts = TimeSer(data=DATA,n_data=nframes,dim=1,nbins=2,bins=[np.array([0.0, 0.5,
 if options.file_mut != None:
     M = np.loadtxt(options.file_mut)
 else:
-    M,E,P = hb_ts.mutual_info_for()
+    M,E,P = hb_ts.mutual_info()
 
 if options.transfer :
     T, [ [M_t,  E_t,  P_t ], [M_t1, E_t1, P_t1 ] ] = hb_ts.transfer_entropy(time=4)
