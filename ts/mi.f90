@@ -19,9 +19,9 @@ MODULE MI
     INTEGER, DIMENSION(N)                       :: D_X, D_Y
     INTEGER                                     :: N
     INTEGER                                     :: NBINS_X, NBINS_Y
-    REAL, DIMENSION(NBINS_X,NBINS_Y)          :: PROB
-    REAL, DIMENSION(NBINS_X+1)                :: BINS_X
-    REAL, DIMENSION(NBINS_Y+1)                :: BINS_Y
+    REAL, DIMENSION(0:NBINS_X-1,0:NBINS_Y-1)          :: PROB
+    REAL, DIMENSION(0:NBINS_X)                :: BINS_X
+    REAL, DIMENSION(0:NBINS_Y)                :: BINS_Y
     
     INTEGER               :: I, J, X, Y
     REAL                  :: MIN_D_X, MIN_D_Y, MAX_D_X, MAX_D_Y
@@ -35,17 +35,17 @@ MODULE MI
     BIN_DELTA_X = ( MAX_D_X - MIN_D_X ) / NBINS_X
     BIN_DELTA_Y = ( MAX_D_Y - MIN_D_Y ) / NBINS_Y
     
-    BINS_X    = (/ ( MIN_D_X + (I-1) * BIN_DELTA_X, I=1,NBINS_X+1) /)
-    BINS_Y    = (/ ( MIN_D_Y + (I-1) * BIN_DELTA_Y, I=1,NBINS_Y+1) /)
-    FORALL(I=1:NBINS_X, J=1:NBINS_Y) PROB(I,J)=0.0
+    BINS_X    = (/ ( MIN_D_X + I * BIN_DELTA_X, I=0,NBINS_X) /)
+    BINS_Y    = (/ ( MIN_D_Y + I * BIN_DELTA_Y, I=0,NBINS_Y) /)
+    FORALL(I=0:NBINS_X-1, J=0:NBINS_Y-1) PROB(I,J)=0.0
     
-    DO I=1,N
-        X = MIN(INT((D_X(I) - MIN_D_X) / BIN_DELTA_X)+1,NBINS_X)
-        Y = MIN(INT((D_Y(I) - MIN_D_Y) / BIN_DELTA_Y)+1,NBINS_Y)
+    DO I=0,N-1
+        X = MIN(INT((D_X(I) - MIN_D_X) / BIN_DELTA_X),NBINS_X-1)
+        Y = MIN(INT((D_Y(I) - MIN_D_Y) / BIN_DELTA_Y),NBINS_Y-1)
         PROB(X,Y) = PROB(X,Y) + 1.0 
     END DO
     
-    FORALL(I=1:NBINS_X, J=1:NBINS_Y) PROB(I,J)=PROB(I,J)/N
+    FORALL(I=0:NBINS_X-1, J=0:NBINS_Y-1) PROB(I,J)=PROB(I,J)/N
     
     RETURN
     
@@ -58,9 +58,9 @@ MODULE MI
     REAL   , DIMENSION(N)                       :: D_X, D_Y
     INTEGER                                     :: N
     INTEGER                                     :: NBINS_X, NBINS_Y
-    REAL, DIMENSION(NBINS_X,NBINS_Y)          :: PROB
-    REAL, DIMENSION(NBINS_X+1)                :: BINS_X
-    REAL, DIMENSION(NBINS_Y+1)                :: BINS_Y
+    REAL, DIMENSION(0:NBINS_X-1,0:NBINS_Y-1)          :: PROB
+    REAL, DIMENSION(0:NBINS_X)                :: BINS_X
+    REAL, DIMENSION(0:NBINS_Y)                :: BINS_Y
     
     INTEGER               :: I, J, X, Y
     REAL                  :: MIN_D_X, MIN_D_Y, MAX_D_X, MAX_D_Y
@@ -74,17 +74,17 @@ MODULE MI
     BIN_DELTA_X = ( MAX_D_X - MIN_D_X ) / NBINS_X
     BIN_DELTA_Y = ( MAX_D_Y - MIN_D_Y ) / NBINS_Y
     
-    BINS_X    = (/ ( MIN_D_X + (I+1) * BIN_DELTA_X, I=1,NBINS_X+1) /)
-    BINS_Y    = (/ ( MIN_D_Y + (I+1) * BIN_DELTA_Y, I=1,NBINS_Y+1) /)
-    FORALL(I=1:NBINS_X, J=1:NBINS_Y) PROB(I,J)=0.0
+    BINS_X    = (/ ( MIN_D_X + I * BIN_DELTA_X, I=0,NBINS_X) /)
+    BINS_Y    = (/ ( MIN_D_Y + I * BIN_DELTA_Y, I=0,NBINS_Y) /)
+    FORALL(I=0:NBINS_X-1, J=0:NBINS_Y-1) PROB(I,J)=0.0
     
-    DO I=1,N
-        X = MIN(INT((D_X(I) - MIN_D_X) / BIN_DELTA_X)+1,NBINS_X)
-        Y = MIN(INT((D_Y(I) - MIN_D_Y) / BIN_DELTA_Y)+1,NBINS_Y)
+    DO I=0,N-1
+        X = MIN(INT((D_X(I) - MIN_D_X) / BIN_DELTA_X),NBINS_X-1)
+        Y = MIN(INT((D_Y(I) - MIN_D_Y) / BIN_DELTA_Y),NBINS_Y-1)
         PROB(X,Y) = PROB(X,Y) + 1.0 
     END DO
     
-    FORALL(I=1:NBINS_X, J=1:NBINS_Y) PROB(I,J)=PROB(I,J)/N
+    FORALL(I=0:NBINS_X-1, J=0:NBINS_Y-1) PROB(I,J)=PROB(I,J)/N
     
     RETURN
         
@@ -97,30 +97,30 @@ MODULE MI
     INTEGER, DIMENSION(N)                       :: D_X, D_Y
     INTEGER                                     :: N
     INTEGER                                     :: NBINS_X, NBINS_Y
-    REAL, DIMENSION(NBINS_X,NBINS_Y)          :: PROB
-    REAL, DIMENSION(NBINS_X+1)                :: BINS_X
-    REAL, DIMENSION(NBINS_Y+1)                :: BINS_Y
+    REAL, DIMENSION(0:NBINS_X-1,0:NBINS_Y-1)          :: PROB
+    REAL, DIMENSION(0:NBINS_X)                :: BINS_X
+    REAL, DIMENSION(0:NBINS_Y)                :: BINS_Y
     
     INTEGER               :: I, J, X, Y
     REAL                  :: MIN_D_X, MIN_D_Y, MAX_D_X, MAX_D_Y
     REAL                  :: BIN_DELTA_X, BIN_DELTA_Y
     
-    MIN_D_X = BINS_X(1)
-    MAX_D_X = BINS_X(NBINS_X+1)
-    MIN_D_Y = BINS_Y(1)
-    MAX_D_Y = BINS_Y(NBINS_Y+1)
+    MIN_D_X = BINS_X(0)
+    MAX_D_X = BINS_X(NBINS_X)
+    MIN_D_Y = BINS_Y(0)
+    MAX_D_Y = BINS_Y(NBINS_Y)
         
     BIN_DELTA_X = ( MAX_D_X - MIN_D_X ) / NBINS_X
     BIN_DELTA_Y = ( MAX_D_Y - MIN_D_Y ) / NBINS_Y
-    FORALL(I=1:NBINS_X, J=1:NBINS_Y) PROB(I,J)=0.0
+    FORALL(I=0:NBINS_X-1, J=0:NBINS_Y-1) PROB(I,J)=0.0
     
-    DO I=1,N
-        X = MIN(INT((D_X(I) - MIN_D_X) / BIN_DELTA_X)+1,NBINS_X)
-        Y = MIN(INT((D_Y(I) - MIN_D_Y) / BIN_DELTA_Y)+1,NBINS_Y)
+    DO I=0,N-1
+        X = MIN(INT((D_X(I) - MIN_D_X) / BIN_DELTA_X),NBINS_X-1)
+        Y = MIN(INT((D_Y(I) - MIN_D_Y) / BIN_DELTA_Y),NBINS_Y-1)
         PROB(X,Y) = PROB(X,Y) + 1.0 
     END DO
     
-    FORALL(I=1:NBINS_X, J=1:NBINS_Y) PROB(I,J)=PROB(I,J)/N
+    FORALL(I=0:NBINS_X-1, J=0:NBINS_Y-1) PROB(I,J)=PROB(I,J)/N
     
     RETURN
     
@@ -132,31 +132,31 @@ MODULE MI
     REAL, DIMENSION(N)                          :: D_X, D_Y
     INTEGER                                     :: N
     INTEGER                                     :: NBINS_X, NBINS_Y
-    REAL, DIMENSION(NBINS_X,NBINS_Y)          :: PROB
-    REAL, DIMENSION(NBINS_X+1)                :: BINS_X
-    REAL, DIMENSION(NBINS_Y+1)                :: BINS_Y
+    REAL, DIMENSION(0:NBINS_X-1,0:NBINS_Y-1)          :: PROB
+    REAL, DIMENSION(0:NBINS_X)                :: BINS_X
+    REAL, DIMENSION(0:NBINS_Y)                :: BINS_Y
     
     INTEGER               :: I, J, X, Y
     REAL                  :: MIN_D_X, MIN_D_Y, MAX_D_X, MAX_D_Y
     REAL                  :: BIN_DELTA_X, BIN_DELTA_Y
     
-    MIN_D_X = BINS_X(1)
-    MAX_D_X = BINS_X(NBINS_X+1)
-    MIN_D_Y = BINS_Y(1)
-    MAX_D_Y = BINS_Y(NBINS_Y+1)
+    MIN_D_X = BINS_X(0)
+    MAX_D_X = BINS_X(NBINS_X)
+    MIN_D_Y = BINS_Y(0)
+    MAX_D_Y = BINS_Y(NBINS_Y)
         
     BIN_DELTA_X = ( MAX_D_X - MIN_D_X ) / NBINS_X
     BIN_DELTA_Y = ( MAX_D_Y - MIN_D_Y ) / NBINS_Y
-    FORALL(I=1:NBINS_X, J=1:NBINS_Y) PROB(I,J)=0.0
+    FORALL(I=0:NBINS_X-1, J=0:NBINS_Y-1) PROB(I,J)=0.0
     !WRITE(*,'(A)') "PROB_XY INITIALIZED"
     DO I=1,N
-        X = MIN(INT((D_X(I) - MIN_D_X) / BIN_DELTA_X)+1,NBINS_X)
-        Y = MIN(INT((D_Y(I) - MIN_D_Y) / BIN_DELTA_Y)+1,NBINS_Y)
+        X = MIN(INT((D_X(I) - MIN_D_X) / BIN_DELTA_X),NBINS_X-1)
+        Y = MIN(INT((D_Y(I) - MIN_D_Y) / BIN_DELTA_Y),NBINS_Y-1)
         !WRITE(*,'(I8,I3,I3)'), I,X,Y
         PROB(X,Y) = PROB(X,Y) + 1.0 
     END DO
     !WRITE(*,'(A)') "PROB_XY DONE"
-    FORALL(I=1:NBINS_X, J=1:NBINS_Y) PROB(I,J)=PROB(I,J)/N
+    FORALL(I=0:NBINS_X-1, J=0:NBINS_Y-1) PROB(I,J)=PROB(I,J)/N
     !WRITE(*,'(A)') "PROB_XY NORMALIZED"
     RETURN
     
@@ -170,30 +170,30 @@ MODULE MI
     INTEGER, DIMENSION(N)                       :: D_Y
     INTEGER                                     :: N
     INTEGER                                     :: NBINS_X, NBINS_Y
-    REAL, DIMENSION(NBINS_X,NBINS_Y)            :: PROB
-    REAL,    DIMENSION(NBINS_X+1)               :: BINS_X
-    REAL,    DIMENSION(NBINS_Y+1)               :: BINS_Y
+    REAL, DIMENSION(0:NBINS_X-1,0:NBINS_Y-1)          :: PROB
+    REAL, DIMENSION(0:NBINS_X)                :: BINS_X
+    REAL, DIMENSION(0:NBINS_Y)                :: BINS_Y
     
     INTEGER               :: I, J, X, Y
     REAL                  :: MIN_D_X, MIN_D_Y, MAX_D_X, MAX_D_Y
     REAL                  :: BIN_DELTA_X, BIN_DELTA_Y
     
-    MIN_D_X = BINS_X(1)
-    MAX_D_X = BINS_X(NBINS_X+1)
-    MIN_D_Y = BINS_Y(1)
-    MAX_D_Y = BINS_Y(NBINS_Y+1)
+    MIN_D_X = BINS_X(0)
+    MAX_D_X = BINS_X(NBINS_X)
+    MIN_D_Y = BINS_Y(0)
+    MAX_D_Y = BINS_Y(NBINS_Y)
         
     BIN_DELTA_X = ( MAX_D_X - MIN_D_X ) / NBINS_X
     BIN_DELTA_Y = ( MAX_D_Y - MIN_D_Y ) / NBINS_Y
-    FORALL(I=1:NBINS_X, J=1:NBINS_Y) PROB(I,J)=0.0
+    FORALL(I=0:NBINS_X-1, J=0:NBINS_Y-1) PROB(I,J)=0.0
     
-    DO I=1,N
-        X = MIN(INT((D_X(I) - MIN_D_X) / BIN_DELTA_X)+1,NBINS_X)
-        Y = MIN(INT((D_Y(I) - MIN_D_Y) / BIN_DELTA_Y)+1,NBINS_Y)
+    DO I=0,N-1
+        X = MIN(INT((D_X(I) - MIN_D_X) / BIN_DELTA_X),NBINS_X-1)
+        Y = MIN(INT((D_Y(I) - MIN_D_Y) / BIN_DELTA_Y),NBINS_Y-1)
         PROB(X,Y) = PROB(X,Y) + 1.0 
     END DO
     
-    FORALL(I=1:NBINS_X, J=1:NBINS_Y) PROB(I,J)=PROB(I,J)/N
+    FORALL(I=0:NBINS_X-1, J=0:NBINS_Y-1) PROB(I,J)=PROB(I,J)/N
     
     RETURN
     
@@ -207,30 +207,30 @@ MODULE MI
     REAL,    DIMENSION(N)                       :: D_Y
     INTEGER                                     :: N
     INTEGER                                     :: NBINS_X, NBINS_Y
-    REAL, DIMENSION(NBINS_X,NBINS_Y)          :: PROB
-    REAL, DIMENSION(NBINS_X+1)                :: BINS_X
-    REAL, DIMENSION(NBINS_Y+1)                :: BINS_Y
+    REAL, DIMENSION(0:NBINS_X-1,0:NBINS_Y-1)          :: PROB
+    REAL, DIMENSION(0:NBINS_X)                :: BINS_X
+    REAL, DIMENSION(0:NBINS_Y)                :: BINS_Y
     
     INTEGER               :: I, J, X, Y
     REAL                  :: MIN_D_X, MIN_D_Y, MAX_D_X, MAX_D_Y
     REAL                  :: BIN_DELTA_X, BIN_DELTA_Y
     
-    MIN_D_X = BINS_X(1)
-    MAX_D_X = BINS_X(NBINS_X+1)
-    MIN_D_Y = BINS_Y(1)
-    MAX_D_Y = BINS_Y(NBINS_Y+1)
+    MIN_D_X = BINS_X(0)
+    MAX_D_X = BINS_X(NBINS_X)
+    MIN_D_Y = BINS_Y(0)
+    MAX_D_Y = BINS_Y(NBINS_Y)
         
     BIN_DELTA_X = ( MAX_D_X - MIN_D_X ) / NBINS_X
     BIN_DELTA_Y = ( MAX_D_Y - MIN_D_Y ) / NBINS_Y
-    FORALL(I=1:NBINS_X, J=1:NBINS_Y) PROB(I,J)=0.0
+    FORALL(I=0:NBINS_X-1, J=0:NBINS_Y-1) PROB(I,J)=0.0
     
-    DO I=1,N
-        X = MIN(INT((D_X(I) - MIN_D_X) / BIN_DELTA_X)+1,NBINS_X)
-        Y = MIN(INT((D_Y(I) - MIN_D_Y) / BIN_DELTA_Y)+1,NBINS_Y)
+    DO I=0,N-1
+        X = MIN(INT((D_X(I) - MIN_D_X) / BIN_DELTA_X),NBINS_X-1)
+        Y = MIN(INT((D_Y(I) - MIN_D_Y) / BIN_DELTA_Y),NBINS_Y-1)
         PROB(X,Y) = PROB(X,Y) + 1.0 
     END DO
     
-    FORALL(I=1:NBINS_X, J=1:NBINS_Y) PROB(I,J)=PROB(I,J)/N
+    FORALL(I=0:NBINS_X-1, J=0:NBINS_Y-1) PROB(I,J)=PROB(I,J)/N
     
     RETURN
     
@@ -238,40 +238,40 @@ MODULE MI
     
     SUBROUTINE R_MUTUALINFO(D,E1,BINS,NFRAMES,NREP,NBINS,M,E2,P2)
 
-    INTEGER, INTENT(IN)                          :: NBINS
-    INTEGER, INTENT(IN)                          :: NFRAMES
-    INTEGER, INTENT(IN)                          :: NREP
-    REAL, INTENT(IN), DIMENSION(NFRAMES,NREP)    :: D
-    REAL, INTENT(IN), DIMENSION(NREP)            :: E1
-    REAL, INTENT(IN), DIMENSION(NBINS)           :: BINS
+    INTEGER, INTENT(IN)                                  :: NBINS
+    INTEGER, INTENT(IN)                                  :: NFRAMES
+    INTEGER, INTENT(IN)                                  :: NREP
+    REAL, INTENT(IN), DIMENSION(0:NFRAMES-1,0:NREP-1)    :: D
+    REAL, INTENT(IN), DIMENSION(0:NREP-1)                :: E1
+    REAL, INTENT(IN), DIMENSION(0:NBINS-1)               :: BINS
     
-    REAL, DIMENSION(NFRAMES)                     :: D_TEMP1
-    REAL, DIMENSION(NFRAMES)                     :: D_TEMP2
-    REAL, DIMENSION(NBINS,NBINS)                 :: P_TEMP
-    INTEGER, DIMENSION(2)                        :: S
-    INTEGER                                      :: I, J, K
+    REAL, DIMENSION(0:NFRAMES-1)                     :: D_TEMP1
+    REAL, DIMENSION(0:NFRAMES-1)                     :: D_TEMP2
+    REAL, DIMENSION(0:NBINS-1,0:NBINS-1)             :: P_TEMP
+    INTEGER, DIMENSION(2)                            :: S
+    INTEGER                                           :: I, J, K
     
-    REAL, INTENT(OUT), DIMENSION(NREP,NREP)             :: M
-    REAL, INTENT(OUT), DIMENSION(NREP,NREP)             :: E2
-    REAL, INTENT(OUT), DIMENSION(NBINS,NBINS,NREP,NREP) :: P2
+    REAL, INTENT(OUT), DIMENSION(0:NREP-1,0:NREP-1)                     :: M
+    REAL, INTENT(OUT), DIMENSION(0:NREP-1,0:NREP-1)                     :: E2
+    REAL, INTENT(OUT), DIMENSION(0:NBINS-1,0:NBINS-1,0:NREP-1,0:NREP-1) :: P2
 
     DO I = 0,NREP-1
         E2(I,I) = 2 * E1(I)
         M(I,I) = 2 * E1(I)
-        D_TEMP1(1:NFRAMES) = (/ (D(K,I), K=0,NFRAMES-1) /)
-        DO L = 0,NBINS-1
-            DO K = 0,NBINS-1
-                P2(L,K,J,I) = 1.0
-            END DO
-        END DO 
+        D_TEMP1(0:NFRAMES-1) = (/ (D(K,I), K=0,NFRAMES-1) /)
         DO J = I+1,NREP-1
-            D_TEMP2(1:NFRAMES) = (/ (D(K,J), K = 0,NFRAMES-1) /)
+            DO K = 0,NBINS-1
+                DO L = 0,NBINS-1
+                    P2(L,K,J,I) = 1.0
+                END DO
+            END DO 
+            D_TEMP2(0:NFRAMES-1) = (/ (D(K,J), K = 0,NFRAMES-1) /)
             CALL PROBDEF2D(D_TEMP1,D_TEMP2,S(1),NBINS,NBINS,P_TEMP,BINS,BINS)
-            DO L = 0,NBINS-1
-                DO K = 0,NBINS-1
-                    P2(K,L,J,I) = P_TEMP(K+1,L+1)
-                    P2(K,L,I,J) = P_TEMP(K+1,L+1)
-                    E2(J,I) = E2(J,I) + P_TEMP(K+1,L+1) * LOG(P_TEMP(K+1,L+1)) / LOG(2.0)
+            DO K = 0,NBINS-1
+                DO L = 0,NBINS-1
+                    P2(K,L,J,I) = P_TEMP(K,L)
+                    P2(K,L,I,J) = P_TEMP(K,L)
+                    E2(J,I) = E2(J,I) + P_TEMP(K,L) * LOG(P_TEMP(K,L)) / LOG(2.0)
                 END DO
             END DO
             M(J,I) = E1(I) + E1(J) - E2(J,I)

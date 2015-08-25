@@ -206,8 +206,8 @@ class TimeSer:
                          # THIS IS THE OPTIMAL NUMBER OF BINS THAT SHOULD BE USED 
                          # TO RESOLVE ALL THE POSSIBLE TIME SERIES (TO BE CHECKED)
                          #
-                         # SINCE THE CALCULATION INVOLE THE CALCULATIO OF A JOINT
-                         # PROBABILITY A MATRIX OF DIM nbins*(nbins*(nbin^dim)) IS CREATED:
+                         # SINCE THE PROCESS INVOLVES THE CALCULATION OF A JOINT
+                         # PROBABILITY, A MATRIX OF DIM nbins*(nbins*(nbin^dim)) IS CREATED:
                          # BE CAREFUL SINCE THIS WILL QUICKLY SATURATE THE MEMORY!!
                          #
                          # EXAMPLE:

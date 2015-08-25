@@ -4,7 +4,7 @@ import re
 import os
 import numpy
 from optparse import OptionParser
-from hb import Hbonds
+from hb import HBonds
 import xpm
 
 parser = OptionParser()
