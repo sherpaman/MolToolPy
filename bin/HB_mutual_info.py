@@ -26,7 +26,7 @@ parser.add_argument("-m","--mat",dest="file_mut",action="store",type=str,default
 #
 # OUTPUT FILES
 #
-parser.add_argument("-o","--out",dest="file_out",action="store",type=str,default=None,required=False,help="Output Mutual Info",metavar="DAT FILE")
+parser.add_argument("-o","--out",dest="file_out",action="store",type=str,default=None,required=False,help="Output Base Name",metavar="DAT FILE")
 #
 # VAR ARGUMENTS
 #
@@ -77,12 +77,12 @@ DATA = DATA[options.fr1:options.fr2:options.skip,options.col1:options.col2]
 
 nframes, ncol = DATA.shape
 
-hb_ts = TimeSer(data=DATA,n_data=nframes,dim=1,nbins=2,bins=[np.array([0.0, 0.5, 1.0])])
+hb_ts = TimeSer(data=DATA,n_data=nframes,dim=1,nbins=2,dtype=int)
 
 if options.file_mut != None:
     M = np.loadtxt(options.file_mut)
 else:
-    M,E,P = hb_ts.mutual_info()
+    M,E,P = hb_ts.mutual_info_for()
 
 if options.transfer :
     T, [ [M_t,  E_t,  P_t ], [M_t1, E_t1, P_t1 ] ] = hb_ts.transfer_entropy(time=4)
@@ -137,8 +137,14 @@ for i in out_array.keys():
 
 save_objects.append(out_array)
 
+json_out=options.file_out.split('.')[0]+'.json.gz'
+
+if options.transfer :
+    tran_out=options.file_out.split('.')[0]+'_transfer-entropy.dat'
+    np.savetxt(tran_out,T)
+
 if save_objects != []:
-    with gzip.GzipFile(options.file_out, 'w') as outfile:
+    with gzip.GzipFile(json_out, 'w') as outfile:
         for obj in save_objects:
             outfile.write(json.dumps(obj) + '\n')
 
