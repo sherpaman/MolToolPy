@@ -1,5 +1,4 @@
 MODULE MI
-
     INTERFACE PROB2D
         MODULE PROCEDURE I_PROB2D, R_PROB2D
     END INTERFACE PROB2D
@@ -12,7 +11,12 @@ MODULE MI
     INTERFACE MUTUALINFO_OTHER
         MODULE PROCEDURE R_MUTUALINFO_OTHER, I_MUTUALINFO_OTHER
     END INTERFACE MUTUALINFO_OTHER
-    
+    INTERFACE MUTUALINFO_SIMP
+        MODULE PROCEDURE I_MUTUALINFO_SIMP, R_MUTUALINFO2_SIMP
+    END INTERFACE MUTUALINFO_SIMP
+    INTERFACE MUTUALINFO2_SIMP
+        MODULE PROCEDURE I_MUTUALINFO2_SIMP, R_MUTUALINFO2_SIMP
+    END INTERFACE MUTUALINFO2_SIMP
     CONTAINS
 
     SUBROUTINE I_PROB2D(D_X,D_Y,N,NBINS_X,NBINS_Y,PROB,BINS_X,BINS_Y)
@@ -239,7 +243,7 @@ MODULE MI
     
     END SUBROUTINE IR_PROBDEF2D
     
-    SUBROUTINE R_MUTUALINFO(D,E1,BINS,NFRAMES,NREP,NBINS,M,E2,P2)
+    SUBROUTINE R_MUTUALINFO(D,E1,BINS,NFRAMES,NREP,NBINS,M,EJ,PJ)
 
     INTEGER, INTENT(IN)                                :: NBINS
     INTEGER, INTENT(IN)                                :: NFRAMES
@@ -254,21 +258,21 @@ MODULE MI
     INTEGER                                           :: I, J, K
     
     REAL, INTENT(OUT), DIMENSION(0:NREP-1,0:NREP-1)                     :: M
-    REAL, INTENT(OUT), DIMENSION(0:NREP-1,0:NREP-1)                     :: E2
-    REAL, INTENT(OUT), DIMENSION(0:NBINS-1,0:NBINS-1,0:NREP-1,0:NREP-1) :: P2
+    REAL, INTENT(OUT), DIMENSION(0:NREP-1,0:NREP-1)                     :: EJ
+    REAL, INTENT(OUT), DIMENSION(0:NBINS-1,0:NBINS-1,0:NREP-1,0:NREP-1) :: PJ
 
     DO I = 0,NREP-2
         !WRITE(*,'(A,I3)') "    REP :",I+1
-        E2(I,I) = 2 * E1(I)
-        M(I,I)  = 2 * E1(I)
+        EJ(I,I) = 2 * E1(I)
+        M(I,I)  = 0
         D_TEMP1(0:NFRAMES-1) = (/ (D(K,I), K=0,NFRAMES-1) /)
         DO J = I+1,NREP-1
-            E2(J,I) = 0.0
+            EJ(J,I) = 0.0
             !WRITE(*,'(A,I3)') "vs. REP :",J+1
             DO K = 0,NBINS-1
                 DO L = 0,NBINS-1
                     !WRITE(*,'(A,2I3)') "INITIALIZING :",L,K
-                    P2(L,K,J,I) = 0.0
+                    PJ(L,K,J,I) = 0.0
                 END DO
             END DO 
             D_TEMP2(0:NFRAMES-1) = (/ (D(K,J), K = 0,NFRAMES-1) /)
@@ -276,25 +280,25 @@ MODULE MI
             DO K = 0,NBINS-1
                 DO L = 0,NBINS-1
                     
-                    P2(L,K,J,I) = P_TEMP(L,K)
-                    P2(L,K,I,J) = P_TEMP(L,K)
+                    PJ(L,K,J,I) = P_TEMP(L,K)
+                    PJ(L,K,I,J) = P_TEMP(L,K)
                     IF (P_TEMP(L,K) > 0) THEN
-                        E2(J,I) = E2(J,I) - P_TEMP(L,K) * LOG(P_TEMP(L,K)) / LOG(2.0)
+                        EJ(J,I) = EJ(J,I) - P_TEMP(L,K) * LOG(P_TEMP(L,K))
                         !WRITE(*,'(A,4I3,A,F8.3,A,F8.3)') "SCANNING :",L,K,I,J," : ",P_TEMP(L,K)," -> ", LOG(P_TEMP(L,K))
                     END IF
                 END DO
             END DO
-            E2(I,J) = E2(J,I) 
-            M(J,I)  = E1(I) + E1(J) - E2(J,I)
+            EJ(I,J) = EJ(J,I) 
+            M(J,I)  = E1(I) + E1(J) - EJ(J,I)
             M(I,J)  = M(J,I)
         END DO
     END DO
-    E2(NREP-1,NREP-1) = 2 * E1(NREP-1)
-    M(NREP-1,NREP-1)  = 2 * E1(NREP-1)
+    EJ(NREP-1,NREP-1) = 2 * E1(NREP-1)
+    M(NREP-1,NREP-1)  = 0
     
     END SUBROUTINE R_MUTUALINFO
 
-    SUBROUTINE I_MUTUALINFO(D,E1,BINS,NFRAMES,NREP,NBINS,M,E2,P2)
+    SUBROUTINE I_MUTUALINFO(D,E1,BINS,NFRAMES,NREP,NBINS,M,EJ,PJ)
 
     INTEGER, INTENT(IN)                                  :: NBINS
     INTEGER, INTENT(IN)                                  :: NFRAMES
@@ -309,21 +313,21 @@ MODULE MI
     INTEGER                                             :: I, J, K, L
     
     REAL, INTENT(OUT), DIMENSION(0:NREP-1,0:NREP-1)                     :: M
-    REAL, INTENT(OUT), DIMENSION(0:NREP-1,0:NREP-1)                     :: E2
-    REAL, INTENT(OUT), DIMENSION(0:NBINS-1,0:NBINS-1,0:NREP-1,0:NREP-1) :: P2
+    REAL, INTENT(OUT), DIMENSION(0:NREP-1,0:NREP-1)                     :: EJ
+    REAL, INTENT(OUT), DIMENSION(0:NBINS-1,0:NBINS-1,0:NREP-1,0:NREP-1) :: PJ
 
     DO I = 0,NREP-2
         !WRITE(*,'(A,I3)') "    REP :",I+1
-        E2(I,I) = 2 * E1(I)
-        M(I,I)  = 2 * E1(I)
+        EJ(I,I) = 2 * E1(I)
+        M(I,I)  = 0
         D_TEMP1(0:NFRAMES-1) = (/ (D(K,I), K=0,NFRAMES-1) /)
         DO J = I+1,NREP-1
-            E2(J,I) = 0.0
+            EJ(J,I) = 0.0
             !WRITE(*,'(A,I3)') "vs. REP :",J+1
             DO K = 0,NBINS-1
                 DO L = 0,NBINS-1
                     !WRITE(*,'(A,2I3)') "INITIALIZING :",L,K
-                    P2(L,K,J,I) = 0.0
+                    PJ(L,K,J,I) = 0.0
                 END DO
             END DO 
             D_TEMP2(0:NFRAMES-1) = (/ (D(K,J), K = 0,NFRAMES-1) /)
@@ -331,21 +335,21 @@ MODULE MI
             DO K = 0,NBINS-1
                 DO L = 0,NBINS-1
                     
-                    P2(L,K,J,I) = P_TEMP(L,K)
-                    P2(L,K,I,J) = P_TEMP(L,K)
+                    PJ(L,K,J,I) = P_TEMP(L,K)
+                    PJ(L,K,I,J) = P_TEMP(L,K)
                     IF (P_TEMP(L,K) > 0) THEN
-                        E2(J,I) = E2(J,I) - P_TEMP(L,K) * LOG(P_TEMP(L,K)) / LOG(2.0)
+                        EJ(J,I) = EJ(J,I) - P_TEMP(L,K) * LOG(P_TEMP(L,K))
                         !WRITE(*,'(A,4I3,A,F8.3,A,F8.3)') "SCANNING :",L,K,I,J," : ",P_TEMP(L,K)," -> ", LOG(P_TEMP(L,K))
                     END IF
                 END DO
             END DO
-            E2(I,J) = E2(J,I) 
-            M(J,I)  = E1(I) + E1(J) - E2(J,I)
+            EJ(I,J) = EJ(J,I) 
+            M(J,I)  = E1(I) + E1(J) - EJ(J,I)
             M(I,J)  = M(J,I)
         END DO
     END DO
-    E2(NREP-1,NREP-1) = 2 * E1(NREP-1)
-    M(NREP-1,NREP-1)  = 2 * E1(NREP-1)
+    EJ(NREP-1,NREP-1) = 2 * E1(NREP-1)
+    M(NREP-1,NREP-1)  = 0
     
     END SUBROUTINE I_MUTUALINFO
     
@@ -389,7 +393,7 @@ MODULE MI
                     PJ(L,K,J,I) = P_TEMP(L,K)
                     PJ(L,K,I,J) = P_TEMP(L,K)
                     IF (P_TEMP(L,K) > 0) THEN
-                        EJ(J,I) = EJ(J,I) - P_TEMP(L,K) * LOG(P_TEMP(L,K)) / LOG(2.0)
+                        EJ(J,I) = EJ(J,I) - P_TEMP(L,K) * LOG(P_TEMP(L,K))
                         !WRITE(*,'(A,4I3,A,F8.3,A,F8.3)') "SCANNING :",L,K,I,J," : ",P_TEMP(L,K)," -> ", LOG(P_TEMP(L,K))
                     END IF
                 END DO
@@ -440,7 +444,7 @@ MODULE MI
                     PJ(L,K,J,I) = P_TEMP(L,K)
                     PJ(L,K,I,J) = P_TEMP(L,K)
                     IF (P_TEMP(L,K) > 0) THEN
-                        EJ(J,I) = EJ(J,I) - P_TEMP(L,K) * LOG(P_TEMP(L,K)) / LOG(2.0)
+                        EJ(J,I) = EJ(J,I) - P_TEMP(L,K) * LOG(P_TEMP(L,K))
                         !WRITE(*,'(A,4I3,A,F8.3,A,F8.3)') "SCANNING :",L,K,I,J," : ",P_TEMP(L,K)," -> ", LOG(P_TEMP(L,K))
                     END IF
                 END DO
@@ -451,4 +455,206 @@ MODULE MI
     
     END SUBROUTINE I_MUTUALINFO_OTHER
 
+    SUBROUTINE I_MUTUALINFO_SIMP(D,E1,BINS,NFRAMES,NREP,NBINS,NREP1,M,EJ,PJ)
+
+    INTEGER, INTENT(IN)                                  :: NREP1
+    INTEGER, INTENT(IN)                                  :: NBINS
+    INTEGER, INTENT(IN)                                  :: NREP
+    INTEGER, INTENT(IN)                                  :: NFRAMES
+    
+    INTEGER, INTENT(IN), DIMENSION(0:NFRAMES-1,0:NREP-1) :: D
+    REAL, INTENT(IN), DIMENSION(0:NREP-1)                :: E1
+    REAL, INTENT(IN), DIMENSION(0:NBINS)                 :: BINS
+    
+    REAL, DIMENSION(0:NFRAMES-1)                     :: D_TEMP1
+    REAL, DIMENSION(0:NFRAMES-1)                     :: D_TEMP2
+    REAL, DIMENSION(0:NBINS-1,0:NBINS-1)             :: P_TEMP
+    INTEGER                                          :: I, K, L
+    
+    REAL, INTENT(OUT), DIMENSION(0:NREP-1)                     :: M
+    REAL, INTENT(OUT), DIMENSION(0:NREP-1)                     :: EJ
+    REAL, INTENT(OUT), DIMENSION(0:NBINS-1,0:NBINS-1,0:NREP-1) :: PJ
+
+    D_TEMP1(0:NFRAMES-1) = (/ (D(K,NREP1), K=0,NFRAMES-1) /)
+    EJ(NREP1) = 2 * E1(NREP1)
+    M(NREP1)  = 0
+    
+    DO I = 0,NREP-1
+        !WRITE(*,'(A,I3)') "    REP :",I+1
+        IF (I /= NREP1) THEN
+            D_TEMP2(0:NFRAMES-1) = (/ (D(K,I), K=0,NFRAMES-1) /)
+            EJ(I) = 0.0
+            DO K = 0,NBINS-1
+                DO L = 0,NBINS-1
+                    !WRITE(*,'(A,2I3)') "INITIALIZING :",L,K
+                    PJ(L,K,I) = 0.0
+                END DO
+            END DO 
+            CALL PROBDEF2D(D_TEMP2,D_TEMP1,NFRAMES,NBINS,NBINS,P_TEMP,BINS,BINS)
+            DO K = 0,NBINS-1
+                DO L = 0,NBINS-1
+                    PJ(L,K,I) = P_TEMP(L,K)
+                    IF (P_TEMP(L,K) > 0) THEN
+                        EJ(I) = EJ(I) - P_TEMP(L,K) * LOG(P_TEMP(L,K))
+                    END IF
+                END DO
+            END DO
+            M(I) = E1(I) + E1(NREP1) - EJ(I)
+        END IF
+    END DO
+    
+    END SUBROUTINE I_MUTUALINFO_SIMP
+    
+    SUBROUTINE R_MUTUALINFO_SIMP(D,E1,BINS,NREP1,NFRAMES,NREP,NBINS,M,EJ,PJ)
+    
+    INTEGER, INTENT(IN)                               :: NREP1 
+    INTEGER, INTENT(IN)                               :: NBINS
+    INTEGER, INTENT(IN)                               :: NREP
+    INTEGER, INTENT(IN)                               :: NFRAMES
+    
+    REAL, INTENT(IN), DIMENSION(0:NFRAMES-1,0:NREP-1) :: D
+    REAL, INTENT(IN), DIMENSION(0:NREP-1)             :: E1
+    REAL, INTENT(IN), DIMENSION(0:NBINS)              :: BINS
+
+    REAL, DIMENSION(0:NFRAMES-1)                     :: D_TEMP1
+    REAL, DIMENSION(0:NFRAMES-1)                     :: D_TEMP2
+    REAL, DIMENSION(0:NBINS-1,0:NBINS-1)             :: P_TEMP
+    INTEGER                                          :: I, K, L
+    
+    REAL, INTENT(OUT), DIMENSION(0:NREP-1)                     :: M
+    REAL, INTENT(OUT), DIMENSION(0:NREP-1)                     :: EJ
+    REAL, INTENT(OUT), DIMENSION(0:NBINS-1,0:NBINS-1,0:NREP-1) :: PJ
+
+    D_TEMP1(0:NFRAMES-1) = (/ (D(K,NREP1), K=0,NFRAMES-1) /)
+    EJ(NREP1) = 2 * E1(NREP1)
+    M(NREP1)  = 0
+    
+    DO I = 0,NREP-1
+        !WRITE(*,'(A,I3)') "    REP :",I+1
+        IF (I /= NREP1) THEN
+            D_TEMP2(0:NFRAMES-1) = (/ (D(K,I), K=0,NFRAMES-1) /)
+            EJ(I) = 0.0
+            DO K = 0,NBINS-1
+                DO L = 0,NBINS-1
+                    !WRITE(*,'(A,2I3)') "INITIALIZING :",L,K
+                    PJ(L,K,I) = 0.0
+                END DO
+            END DO 
+            CALL PROBDEF2D(D_TEMP2,D_TEMP1,NFRAMES,NBINS,NBINS,P_TEMP,BINS,BINS)
+            DO K = 0,NBINS-1
+                DO L = 0,NBINS-1
+                    PJ(L,K,I) = P_TEMP(L,K)
+                    IF (P_TEMP(L,K) > 0) THEN
+                        EJ(I) = EJ(I) - P_TEMP(L,K) * LOG(P_TEMP(L,K))
+                    END IF
+                END DO
+            END DO
+            M(I) = E1(I) + E1(NREP1) - EJ(I)
+        END IF
+    END DO
+    
+    END SUBROUTINE R_MUTUALINFO_SIMP
+
+    SUBROUTINE I_MUTUALINFO2_SIMP(D,E1,BINSX,BINSY,NFRAMES,NREP,NBINSX,NBINSY,NREP1,M,EJ,PJ)
+    
+    INTEGER, INTENT(IN)                               :: NREP1 
+    INTEGER, INTENT(IN)                               :: NBINSX, NBINSY
+    INTEGER, INTENT(IN)                               :: NREP
+    INTEGER, INTENT(IN)                               :: NFRAMES
+    
+    INTEGER, INTENT(IN), DIMENSION(0:NFRAMES-1,0:NREP-1) :: D
+    REAL, INTENT(IN), DIMENSION(0:NREP-1)             :: E1
+    REAL, INTENT(IN), DIMENSION(0:NBINSX)             :: BINSX
+    REAL, INTENT(IN), DIMENSION(0:NBINSY)             :: BINSY
+    
+    REAL, DIMENSION(0:NFRAMES-1)                     :: D_TEMP1
+    REAL, DIMENSION(0:NFRAMES-1)                     :: D_TEMP2
+    REAL, DIMENSION(0:NBINSY-1,0:NBINSX-1)             :: P_TEMP
+    INTEGER                                          :: I, K, L
+    
+    REAL, INTENT(OUT), DIMENSION(0:NREP-1)                     :: M
+    REAL, INTENT(OUT), DIMENSION(0:NREP-1)                     :: EJ
+    REAL, INTENT(OUT), DIMENSION(0:NBINSY-1,0:NBINSX-1,0:NREP-1) :: PJ
+
+    D_TEMP1(0:NFRAMES-1) = (/ (D(K,NREP1), K=0,NFRAMES-1) /)
+    EJ(NREP1) = 2 * E1(NREP1)
+    M(NREP1)  = 0
+    
+    DO I = 0,NREP-1
+        !WRITE(*,'(A,I3)') "    REP :",I+1
+        IF (I /= NREP1) THEN
+            D_TEMP2(0:NFRAMES-1) = (/ (D(K,I), K=0,NFRAMES-1) /)
+            EJ(I) = 0.0
+            DO K = 0,NBINSX-1
+                DO L = 0,NBINSY-1
+                    !WRITE(*,'(A,2I3)') "INITIALIZING :",L,K
+                    PJ(L,K,I) = 0.0
+                END DO
+            END DO 
+            CALL PROBDEF2D(D_TEMP2,D_TEMP1,NFRAMES,NBINSY,NBINSX,P_TEMP,BINSX,BINSY)
+            DO K = 0,NBINSX-1
+                DO L = 0,NBINSY-1
+                    PJ(L,K,I) = P_TEMP(L,K)
+                    IF (P_TEMP(L,K) > 0) THEN
+                        EJ(I) = EJ(I) - P_TEMP(L,K) * LOG(P_TEMP(L,K))
+                    END IF
+                END DO
+            END DO
+            M(I) = E1(I) + E1(NREP1) - EJ(I)
+        END IF
+    END DO
+    
+    END SUBROUTINE I_MUTUALINFO2_SIMP
+
+    SUBROUTINE R_MUTUALINFO2_SIMP(D,E1,BINSX,BINSY,NFRAMES,NREP,NBINSX,NBINSY,NREP1,M,EJ,PJ)
+    
+    INTEGER, INTENT(IN)                               :: NREP1 
+    INTEGER, INTENT(IN)                               :: NBINSX, NBINSY
+    INTEGER, INTENT(IN)                               :: NREP
+    INTEGER, INTENT(IN)                               :: NFRAMES
+    
+    REAL, INTENT(IN), DIMENSION(0:NFRAMES-1,0:NREP-1) :: D
+    REAL, INTENT(IN), DIMENSION(0:NREP-1)             :: E1
+    REAL, INTENT(IN), DIMENSION(0:NBINSX)             :: BINSX
+    REAL, INTENT(IN), DIMENSION(0:NBINSY)             :: BINSY
+    
+    REAL, DIMENSION(0:NFRAMES-1)                     :: D_TEMP1
+    REAL, DIMENSION(0:NFRAMES-1)                     :: D_TEMP2
+    REAL, DIMENSION(0:NBINSY-1,0:NBINSX-1)             :: P_TEMP
+    INTEGER                                          :: I, K, L
+    
+    REAL, INTENT(OUT), DIMENSION(0:NREP-1)                     :: M
+    REAL, INTENT(OUT), DIMENSION(0:NREP-1)                     :: EJ
+    REAL, INTENT(OUT), DIMENSION(0:NBINSY-1,0:NBINSX-1,0:NREP-1) :: PJ
+
+    D_TEMP1(0:NFRAMES-1) = (/ (D(K,NREP1), K=0,NFRAMES-1) /)
+    EJ(NREP1) = 2 * E1(NREP1)
+    M(NREP1)  = 0
+    
+    DO I = 0,NREP-1
+        !WRITE(*,'(A,I3)') "    REP :",I+1
+        IF (I /= NREP1) THEN
+            D_TEMP2(0:NFRAMES-1) = (/ (D(K,I), K=0,NFRAMES-1) /)
+            EJ(I) = 0.0
+            DO K = 0,NBINSX-1
+                DO L = 0,NBINSY-1
+                    !WRITE(*,'(A,2I3)') "INITIALIZING :",L,K
+                    PJ(L,K,I) = 0.0
+                END DO
+            END DO 
+            CALL PROBDEF2D(D_TEMP2,D_TEMP1,NFRAMES,NBINSY,NBINSX,P_TEMP,BINSX,BINSY)
+            DO K = 0,NBINSX-1
+                DO L = 0,NBINSY-1
+                    PJ(L,K,I) = P_TEMP(L,K)
+                    IF (P_TEMP(L,K) > 0) THEN
+                        EJ(I) = EJ(I) - P_TEMP(L,K) * LOG(P_TEMP(L,K))
+                    END IF
+                END DO
+            END DO
+            M(I) = E1(I) + E1(NREP1) - EJ(I)
+        END IF
+    END DO
+    
+    END SUBROUTINE R_MUTUALINFO2_SIMP
+    
 END MODULE

@@ -10,6 +10,7 @@ import os
 import math
 import gzip
 import json
+import matplotlib.pyplot as plt
 
 #
 # SET THE INTERFACE MODULES
@@ -85,49 +86,33 @@ else:
     M,E,P = hb_ts.mutual_info_for()
 
 if options.transfer :
-    T, [ [M_t,  E_t,  P_t ], [M_t1, E_t1, P_t1 ] ] = hb_ts.transfer_entropy(time=4)
+    Transfer = hb_ts.transfer_entropy_for(time=4)
+    D = hb_ts.calc_direction(Transfer)
+    T, [ [M_t,  E_t,  P_t ], [M_t1, E_t1, P_t1 ] ] = Transfer
+    plt.matshow(D,origin='lower')
+    plt.colorbar()
+    plt.figure()
+    plt.plot(np.sum(D,axis=0))
+    plt.show()
 
 n_hb = M.shape[0]
 
-I = np.zeros(M.shape)
-M_o = np.zeros(M.shape)
-for i in np.arange(n_hb):
-    for j in np.arange(i+1,n_hb):
-        ref = M[i,i] * M[j,j]
-        M_o[i,j] = M[i,j] # I don't want to consider the diagonal term
-        if ref != 0:
-            I[i,j] = M[i,j] / ( M[i,i] + M[j,j] )
-
 percentile = 1. - ( 10. / ( n_hb ** 2 ) ) # Will show at least the top-5
-quantile_i = np.sort(np.ravel(I  ))[int(percentile*n_hb**2)-1] 
-quantile_m = np.sort(np.ravel(M_o))[int(percentile*n_hb**2)-1] 
+quantile_m = np.sort(np.ravel(M))[int(percentile*n_hb**2)-1] 
 
-pi = np.where(I   >= quantile_i)
-pm = np.where(M_o >= quantile_m)
+pm = np.where(M >= quantile_m)
 
-print " Mutual Info {0:8.6f} percentile (val={1:10.6f})".format(percentile,quantile_m)
-print " Normal Info {0:8.6f} percentile (val={1:10.6f})".format(percentile,quantile_i)
+print " Mutual Info {0:8.6f} percentile (val={1:10.6f};n={2:4d})".format(percentile,quantile_m,len(pm))
 
-print "{0:>10s}{1:>30s}{2:>30s}".format("Mut.Info","HB1","HB2")
-for i in range(len(pm[0])):
-    if pm[0][i] != pm[1][i]:
-        print "{0:>10.6f}{1:>30s}{2:>30s}".format(M_o[pm[0][i],pm[1][i]], str(hbonds.hblist[pm[0][i]])[:30], str(hbonds.hblist[pm[1][i]])[:30])
-print "{0:>10s}{1:>30s}{2:>30s}".format("Norm.Info","HB1","HB2")
-for i in range(len(pi[0])):
-    if pi[0][i] != pi[1][i] :
-        print "{0:>10.6f}{1:>30s}{2:>30s}".format(I[pi[0][i],pi[1][i]], str(hbonds.hblist[pi[0][i]])[:30], str(hbonds.hblist[pi[1][i]])[:30]  )
-
-
-
+#print "{0:>10s}{1:>30s}{2:>30s}".format("Mut.Info","HB1","HB2")
+#for i in range(len(pm[0])):
+#    if pm[0][i] != pm[1][i]:
+#        print "{0:>10.6f}{1:>30s}{2:>30s}".format(M_o[pm[0][i],pm[1][i]], str(hbonds.hblist[pm[0][i]])[:30], str(hbonds.hblist[pm[1][i]])[:30])
 
 if options.file_out != None: 
-    if options.file_mut != None :
-        out_array["Normalized Mutual Info"] = I.tolist()
-        
-    else :
-        out_array["Mutual Info"]         = M.tolist()
-        out_array["Joint Entropies"]     = E.tolist()
-        out_array["Joint Probabilities"] = P.tolist()
+    out_array["Mutual Info"]         = M.tolist()
+    out_array["Joint Entropies"]     = E.tolist()
+    out_array["Joint Probabilities"] = P.tolist()
     if options.transfer:
         out_array["Transfer Entropy"] = T.tolist() 
 
