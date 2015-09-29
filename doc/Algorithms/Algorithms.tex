@@ -1,0 +1,117 @@
+\documentclass[a4paper]{article}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage[english]{babel}
+\usepackage{mathtools}
+\usepackage{amsfonts}
+\usepackage{graphicx}
+\usepackage{epic}
+\usepackage{color}
+\title{MolTool package}
+\author{Andrea Coletta, PhD}
+\date{25, September 2015}
+\begin{document}
+\maketitle
+\section{TimeSer}
+\subsection{Algorithms}
+\subsubsection{Digitalize} \label{sec:digital}
+We usually deal with a data series $\vec{x}(t) \in \mathbb{R}^d$ where $d \in \mathbb{N}$ (the number of dimensions of the singular value) and $t \in \mathbb{N}$ (the time-frame at wich the value is observed). 
+
+In some cases we need to deal with a ``digitalized'' version of the time-series, where the data are encoded in a integer format. Obviously this encoding is not unique but it depends on a particular ``code''. In this case we encode the data using a value-grid defined using the same bins used to calculate the histograms. Let's assume, for sake of simplicity that the number of bins used to perform the digitalization is the same in each dimension.
+
+\begin{align*}
+ \vec{x}(t) &\in \mathbb{R}^d \text{ (the original data)}\\
+ d          &=   \text{ number of dimensions}\\
+ {N_b}      &=   \text{ number of bins}\\
+ {B}        &=   \{ B_0,\,\dots\, ,B_{{N_b}} \}\text{ (bins)}
+\end{align*}
+
+\begin{align*}
+ \text{Digitalize} &: \vec{x} \in \mathbb{R}^d \longmapsto \vec{b} \in \mathbb{N}^d \\
+ { }               & b_i = \max_{\substack{j \in \{0,\,\dots\,,N_b\} }} (j | B_j \leq x_i) - 1\\ 
+ { }               & i \in \{1,\,\dots\,,d\}
+\end{align*}
+
+\begin{figure}
+    \centering
+    \def\svgwidth{0.75\columnwidth}
+    \input{digitalize.pdf_tex}
+    \caption{Graphical representation of the ``Digitalize'' aglorithm.}
+\end{figure}
+
+\begin{figure}
+\centering
+\setlength{\unitlength}{0.75cm}
+\begin{picture}(10, 10)
+    %AXES
+    \put(1,1){\vector(1,0){8}} \put(9,0.5){$i$}
+    \put(1,1){\vector(0,1){8}} \put(0.5,9){$j$}
+    %POINT PROJECTIONS
+    \put(3.5,1.0) {\color{blue}\dashline{0.2}(0,0)(0,3.25)}
+    \put(1.0,4.25){\color{blue}\dashline{0.2}(0,0)(2.5,0)}
+    %DIGITIZED POINT POJECTIONS
+    \put(3,1){\color{red}\dashline{0.1}(0,0)(0,1)}
+    \put(1,4){\color{red}\dashline{0.1}(0,0)(1,0)}
+    %POINTS AND ARROWS
+    \put(3.5,4.25){\color{blue}\circle*{0.1}}
+    %\put(3,4){\color{black}\circle*{0.1}}
+    \put(3.5,4.25){\vector(-2,-1){0.5}}
+    \put(1.5,4.25){\vector(0,-1){0.25}}
+    \put(3.5,1.5){\vector(-1,0){0.5}}
+    %GRID
+    \multiput(2,2)(1,0){7}{\dashline{0.1}(0,0)(0,6)}
+    \multiput(2,2)(0,1){7}{\dashline{0.1}(0,0)(6,0)}
+    %TICK LABELS
+    \put(0.1,2){$B_0$}
+    \put(0.1,3){$B_1$}
+    \put(0.1,4){$B_2$}
+    \put(0.1,5){$B_3$}
+    \put(0.25,6.25){\rotatebox{90}{$\dots $}}
+    \put(0.1,8){$B_{N_d}$}
+    \put(1.75,0.1){$B_0$}
+    \put(2.75,0.1){$B_1$}
+    \put(3.75,0.1){$B_2$}
+    \put(4.75,0.1){$B_3$}
+    \put(6.25,0.1){$\dots $}
+    \put(7.75,0.1){$B_{N_d}$}
+\end{picture}
+    \caption{Graphical representation of the ``Digitalize'' aglorithm.}
+\end{figure}
+\subsubsection{Reduce to 1-D}\label{sec:to1-D}
+Given a binning grid, the original data series $\vec{x}(t) \in \mathbb{R}^d$ it could be reduced to a 1-dim integer series. The new series is an ``encoded'' version: the values univocally idenfiy the particular bin of the binning grid, in which the original value falls.
+\begin{align*}
+ \vec{x}(t) &\in \mathbb{R}^d \text{ (the original data)}\\
+ d          &=   \text{ number of dimensions}\\
+ {N_b}      &=   \text{ number of bins}\\
+ {B}        &=   \{ B_0,\,\dots\, ,B_{{N_b}} \}\text{ (bins)}
+\end{align*}
+
+Also in this case, for sake of simplicity, we use the same binning in each dimension.
+\begin{align*}
+ \text{Digitalize} &: \vec{x} \in \mathbb{R}^d \longmapsto b \in \mathbb{N} \\
+ { }               & b = \sum_{i=0}^{d-1} \underbrace{\left [ \max_{\substack{j \in \{0,\,\dots\,,N_b\} }} (j | B_j \leq x_i) - 1 \right ]}_{\text{ see ``Digitalize'' sec.\ref{sec:digital}}} * {N_b}^i\\ 
+ { }               & i \in \{1,\,\dots\,,d\}
+\end{align*}
+
+\subsubsection{Trajectory}\label{sec:traj}
+In order to calculate the entropy rate of a time series, and with it also to estimate the entropy transfer into another time series, starting from the original $\vec{x}(t) \in R^d$ data wee need to create an accessory time series in wich the singular element represents a time window of a pre-defined number of frames. The original data is previously ``encoded'' into a ``digitized'' form (using the ``Digitalize'' algorithm, sec. \ref{sec:digital}) and subsequently an hash number is calculated for each time window biunivocally corresponding to one of the possible value combinations:
+
+\begin{align*}
+ \vec{b}(t) &\in \mathbb{N}^d \text{ (the digitalized data)}\\
+ \tau       &\in \mathbb{N} \text{ (width of the time windows used)}\\
+ d          &=   \text{ number of dimensions}\\
+ {N_b}      &=   \text{ number of bins} \\
+ {B}        &=   \{ B_0,\,\dots\, ,B_{{N_b}} \}\text{ (bins)}
+\end{align*}
+
+The bins values correspond also to the only possible value that each component of $\vec{b}$ can assume. Also in this case we assume that the number of bin used in each dimension is the same.
+
+So the function wich starting from the original time-series generates a new time-series for wich each value correspond to a different subsequence of length $\tau$ is:
+
+\begin{align*}
+ \text{Traj} &: \vec{b}(t) \in \mathbb{R}^d \longmapsto w(t) \in \mathbb{N} \\
+ { }         & w(t) = \sum_{k=0}^{\tau-1} \underbrace{\left [ \sum_{i=0}^{d-1} \overbrace{d_i(l+k)}^{\text{ ``digitalized''}} * {N_b}^i \right ]}_{\text{1-dim reduction}} * {N_b}^{k*d}
+\end{align*}
+
+\end{document}

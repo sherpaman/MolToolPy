@@ -1,15 +1,17 @@
-import numpy as np
-import math as m
-import scipy.special as sp
 import copy
+import warnings
+import math as m
+import numpy as np
+import scipy.special as sp
 from mi import mi
+warnings.filterwarnings('error')
 
 
 class TimeSer:
         def __init__(self,data,n_data,dim,nbins=12,bins=None,prob=None,reshape=True,frame_row=True,dtype=float):
                 self.n_data = int(n_data)
                 self.dtype  = dtype
-                self        = np.array(data,dtype=dtype)
+                self.data   = np.array(data,dtype=dtype)
                 self.dim    = int(dim)
                 self.rep    = self._calc_rep()
                 self.nbins  = nbins
@@ -43,29 +45,23 @@ class TimeSer:
                         #print "Data already reshaped"
                         return
                 self.reshape = False
-                proper_shape_data = np.zeros((self.rep,self.dim,self.n_data))
                 #row, lines = self.data.shape
-                if ( (self.dim == 1)  & (self.rep == 1) ):
-                        for k in np.arange(self.n_data):
-                                # IN_DATA [ N_sample, N_rep ]
-                                # DATA [ N_rep, DIM, N_sample ]
-                                proper_shape_data [0,0,k] = self.data[ k ]
+                if self.frame_row:
+                        # IN_DATA [ N_sample, N_rep ]
+                        self.data = np.transpose(self.data).reshape((self.rep,self.dim,self.n_data))
+                        #for i in np.arange(self.rep):
+                                #for j in np.arange(self.dim):
+                                        #for k in np.arange(self.n_data):
+                                                ## OUT_DATA [ N_rep, DIM, N_sample ]
+                                                #proper_shape_data [i,j,k] = self.data[ k , i * self.dim + j ]
                 else:
-                        if self.frame_row:
-                                # IN_DATA [ N_sample, N_rep ]
-                                for i in np.arange(self.rep):
-                                        for j in np.arange(self.dim):
-                                                for k in np.arange(self.n_data):
-                                                        # OUT_DATA [ N_rep, DIM, N_sample ]
-                                                        proper_shape_data [i,j,k] = self.data[ k , i * self.dim + j ]
-                        else:
-                                # IN_DATA [ N_rep, N_sample ]
-                                for i in np.arange(self.rep):
-                                        for j in np.arange(self.dim):
-                                                for k in np.arange(self.n_data):
-                                                        # OUT_DATA [ N_rep, DIM, N_sample ]
-                                                        proper_shape_data [i,j,k] = self.data[ i * self.dim + j, k ]
-                self.data = proper_shape_data
+                        # IN_DATA [ N_rep, N_sample ]
+                        self.data = self.data.reshape((self.rep,self.dim,self.n_data))
+                        #for i in np.arange(self.rep):
+                                #for j in np.arange(self.dim):
+                                        #for k in np.arange(self.n_data):
+                                                ## OUT_DATA [ N_rep, DIM, N_sample ]
+                                                #proper_shape_data [i,j,k] = self.data[ i * self.dim + j, k ]
                 return
 
         def _check_shape(self):
@@ -137,15 +133,12 @@ class TimeSer:
                 E_joint = np.zeros((self.rep,self.rep))
                 M       = np.zeros((self.rep,self.rep))
                 total_step = ( self.rep * ( self.rep - 1 ) ) / 2
-                #n=0
                 for s in np.arange(self.rep - 1):
-                        E_joint[s,s] = self.entropy[s] + self.entropy[s]
-                        M[s,s]       = 0
+                        E_joint[s,s] = self.entropy[s]
+                        M[s,s]       = self.entropy[s]
                         for i in np.arange(self.nbins):
                                 P_joint[s,s,i,i] = self.prob[s,i]
                         for o in np.arange(s+1,self.rep):
-                                #n = n + 1
-                                #print " Completed {0:6.3%}\r".format(float(n)/total_step)
                                 DATA = np.transpose(np.vstack((self.data[s],self.data[o])))
                                 histo , null = np.histogramdd(DATA,bins=(self.nbins,self.nbins)) # concatenate bins list with "+"
                                 P_joint[s,o] = 1.*histo / self.n_data
@@ -153,11 +146,11 @@ class TimeSer:
                                 E_joint[o,s] = E_joint[s,o]
                                 M[s,o] = self.entropy[s] + self.entropy[o] - E_joint[s,o]
                                 M[o,s] = M[s,o]
-                E_joint[self.rep-1,self.rep-1] = self.entropy[self.rep-1] + self.entropy[self.rep-1]
-                M[self.rep-1,self.rep-1]       = 0
+                E_joint[self.rep-1,self.rep-1] = self.entropy[-1]
+                M[self.rep-1,self.rep-1]       = self.entropy[-1]
                 return M, E_joint, P_joint
         
-        def mutual_info_for(self):
+        def mutual_info_prob_for(self):
                 # CALCULATE MUTUAL INFO OF EACH PAIR OF REPLICAS
                 if not self.entropy_av:
                         self.calc_entropy()
@@ -169,6 +162,18 @@ class TimeSer:
                 elif self.dtype == int :
                         M, E_joint, P_joint = mi.i_mutualinfo(np.transpose(self.data),self.entropy,self.bins,self.n_data,self.rep,self.nbins)
                 return np.transpose(M), np.transpose(E_joint), np.transpose(P_joint)
+
+        def mutual_info_for(self):
+                # CALCULATE MUTUAL INFO OF EACH PAIR OF REPLICAS
+                if not self.entropy_av:
+                        self.calc_entropy()
+                E_joint = np.zeros((self.rep,self.rep))
+                M       = np.zeros((self.rep,self.rep))
+                if self.dtype == float :
+                        M, E_joint = mi.r_mutualinfo(np.transpose(self.data),self.entropy,self.bins,self.n_data,self.rep,self.nbins)
+                elif self.dtype == int :
+                        M, E_joint = mi.i_mutualinfo(np.transpose(self.data),self.entropy,self.bins,self.n_data,self.rep,self.nbins)
+                return np.transpose(M), np.transpose(E_joint)
         
         def mutual_info_simple(self,nrep1=0):
                 # CALCULATE MUTUAL INFO OF A SINGLE REPLICA AGAINST ALL THE OTHERS
@@ -198,7 +203,7 @@ class TimeSer:
                         return None
                 if not self.entropy_av:
                         self.calc_entropy()
-                P_joint = np.zeros( np.hstack( (self.nbins,self.nbins,self.rep) ) )
+                P_joint = np.zeros((self.nbins,self.nbins,self.rep))
                 E_joint = np.zeros(self.rep)
                 M       = np.zeros(self.rep)
                 if self.dtype == float :
@@ -240,62 +245,61 @@ class TimeSer:
                         self.calc_entropy()
                 if not other.entropy_av:
                         other.calc_entropy()
-                P_joint = np.zeros(np.hstack( (self.rep, other.rep, self.nbins, other.nbins) ) )
                 E_joint = np.zeros((self.rep,other.rep))
                 M       = np.zeros((self.rep,other.rep))
-                d1 = np.transpose(self.data)
-                d2 = np.transpose(other.data)
+                d1      = np.transpose(self.data)
+                d2      = np.transpose(other.data)
 
                 if (self.dtype == int):
                         if (other.dtype == int):
-                                M, E_joint, P_joint =  mi.i_mutualinfo_other(d1,d2,    \
+                                M, E_joint =  mi.i_mutualinfo_other(d1,d2,    \
                                                         self.entropy, other.entropy,   \
-                                                        self.bins, other.bins,   \
+                                                        self.bins, other.bins,         \
                                                         self.n_data,                   \
                                                         self.rep,     other.rep,       \
                                                         self.nbins,   other.nbins)
                         elif (other.dtype == float):
-                                M, E_joint, P_joint = mi.ir_mutualinfo_other(d1,d2,     \
+                                M, E_joint = mi.ir_mutualinfo_other(d1,d2,    \
                                                         self.entropy, other.entropy,   \
-                                                        self.bins[0], other.bins[0],   \
+                                                        self.bins, other.bins,         \
                                                         self.n_data,                   \
                                                         self.rep,     other.rep,       \
                                                         self.nbins,   other.nbins)
                 elif (self.dtype == float):
                         if (other.dtype == int):
-                                M, E_joint, P_joint = mi.ri_mutualinfo_other(d1,d2,     \
+                                M, E_joint = mi.ri_mutualinfo_other(d1,d2,    \
                                                         self.entropy, other.entropy,   \
-                                                        self.bins[0], other.bins[0],   \
+                                                        self.bins, other.bins,         \
                                                         self.n_data,                   \
                                                         self.rep,     other.rep,       \
                                                         self.nbins,   other.nbins)
                         elif (other.dtype == float):
-                                M, E_joint, P_joint =  mi.r_mutualinfo_otherd(1,d2,     \
+                                M, E_joint =  mi.r_mutualinfo_otherd(1,d2,    \
                                                         self.entropy, other.entropy,   \
-                                                        self.bins[0], other.bins[0],   \
+                                                        self.bins, other.bins,         \
                                                         self.n_data,                   \
                                                         self.rep,     other.rep,       \
                                                         self.nbins,   other.nbins)
-                return np.transpose(M), np.transpose(E_joint), np.transpose(P_joint)
+                return np.transpose(M), np.transpose(E_joint)
         
-        def digitized(self):
-                other = copy.deepcopy(self)
-                other.data = np.zeros([self.rep,self.dim,self.n_data],dtype=int)
-                #values = np.zeros((self.dim,self.nbins[0]))
-                #if self.dim == 1 :
-                for r in np.arange(self.rep):
+        def digitized(self,replicas=None):
+                if replicas == None:
+                        replicas = np.arange(self.rep)
+                else:
+                        if hasattr(replicas, '__iter__'):
+                                replicas = np.array(list(replicas))
+                        else:
+                                replicas = np.array([int(replicas)])
+                rep    = len(replicas)
+                other  = TimeSer(np.zeros((rep,self.dim,self.n_data),dtype=int),self.n_data,self.dim,self.nbins,reshape=False)
+                self.calc_bins()
+                for r in replicas:
                         for d in np.arange(self.dim):
                                 for k in np.arange(self.n_data):
-                                        #print r,d,k, self[r,d,k]
-                                        other.data[r,d,k] = int(np.max(np.where( self.bins[d][:-1] <= self[r,d,k] )))
-                #else:
-                        #for r in np.arange(self.rep):
-                                #for d in np.arange(self.dim):
-                                        #for k in np.arange(self.n_data):
-                                                #other.data[r,d,k] = np.max(np.where( self.bins[d][:-1] <= self[r,d,k] ))
+                                        other.data[r,d,k] = int(np.max(np.where( self.bins[d][:-1] <= self.data[r,d,k] )))
                 return other
         
-        def traj(self,time=2,nbins=None):
+        def traj(self,time=2,nbins=None,replicas=None):
                 if nbins == None:
                          #
                          # THIS IS THE OPTIMAL NUMBER OF BINS THAT SHOULD BE USED 
@@ -314,22 +318,28 @@ class TimeSer:
                          # 
                          #
                         nbins= int(self.nbins) ** int( self.dim * time )
-                
+                if hasattr(replicas, '__iter__'):
+                        replicas = np.array(list(replicas))
+                elif replicas == None:
+                        replicas = np.arange(0,self.rep)
+                else:
+                        replicas = np.array([int(replicas)])
+                rep = len(replicas)
                 prod_t = np.ones(time+1,dtype=int)
                 for i in np.arange(1,self.dim+1):
                         self.prod[i] = self.prod[i-1] * self.nbins
                 for i in np.arange(1,time+1):
                                 prod_t[i] =  prod_t[i-1] * self.prod[self.dim]
-                otherk_nbins   = nbins
-                otherk1_nbins  = nbins * ( self.nbins ** self.dim )
-                otherk_bins    = [ np.linspace(0, otherk_nbins-1, otherk_nbins+1) ]
-                otherk1_bins   = [ np.linspace(0,otherk1_nbins-1,otherk1_nbins+1) ]
-                other_nd       = self.n_data-time
-                other_k  = TimeSer(np.zeros((self.rep,1,other_nd)),other_nd,1,nbins=otherk_nbins ,bins=otherk_bins ,prob=None,reshape=False,dtype=int)
-                other_k1 = TimeSer(np.zeros((self.rep,1,other_nd)),other_nd,1,nbins=otherk1_nbins,bins=otherk1_bins,prob=None,reshape=False,dtype=int)
+                k_nbins   = nbins
+                k1_nbins  = nbins * ( self.nbins ** self.dim )
+                k_bins    = [ np.linspace(0, k_nbins-1, k_nbins+1) ]
+                k1_bins   = [ np.linspace(0,k1_nbins-1,k1_nbins+1) ]
+                nd        = self.n_data-time
+                k         = TimeSer(np.zeros((rep,1,nd)),nd,1,nbins=k_nbins,bins=k_bins,prob=None,reshape=False,dtype=int)
+                k1        = TimeSer(np.zeros((rep,1,nd)),nd,1,nbins=k1_nbins,bins=k1_bins,prob=None,reshape=False,dtype=int)
                 digit = self.digitized()
-                for r in np.arange(self.rep):
-                        for k in np.arange(self.n_data-time):
+                for r in replicas:
+                        for l in np.arange(self.n_data-time):
                                 hash_num = 0
                                 for t in np.arange(time):
                                         #
@@ -339,33 +349,12 @@ class TimeSer:
                                         #
                                         # N.B. : THE DATA HAVE TO BE DIGITIZED
                                         #
-                                        hash_num = hash_num + int(np.vdot(digit.data[r,:,k+t],self.prod[:-1])) * prod_t[t]
-                                hash_num1 = hash_num + int(np.vdot(digit.data[r,:,k+time],self.prod[:-1])) * prod_t[time]
-                                other_k.data[r,0,k]  = hash_num
-                                other_k1.data[r,0,k] = hash_num1
-                return other_k, other_k1
-                
-        
-        def transfer_entropy_for(self,time=2,nbins=None):
-                # CALCULATE THE TRANSFER ENTROPIES BETWEEN THE REPLICAS
-                ok, ok1 = self.traj(time,nbins)
-                #print "Calculating Mutual Info of traj(K)s"
-                M,  E,  P  = ok.mutual_info_for()
-                #print "Calculating Mutual Info of traj(K+1)s with respect of traj(K)s"
-                # WHICH ONE IS CORRECT ?!
-                M1, E1, P1 = ok.mutual_info_other_for(ok1)
-                #M1, E1, P1 = ok1.mutual_info_other(ok)
-                T = np.zeros((self.rep,self.rep))
-                # T(I,J) = H(I) - H(J) - H(I_k+1, J_k) + H(I_k,J_k)
-                #print "Calculating Transfer Entropy"
-                for s in np.arange(self.rep):
-                        for o in np.arange(self.rep):
-                                T[s,o] = ok1.entropy[s] + ok.entropy[o] - M1[s,o] + M[s,o]
-                #print "Done"
-                return T, [ [M,  E,  P ], [M1, E1, P1 ] ] 
-        
-        
-        
+                                        hash_num = hash_num + int(np.vdot(digit.data[r,:,l+t],self.prod[:-1])) * prod_t[t]
+                                hash_num1 = hash_num + int(np.vdot(digit.data[r,:,l+time],self.prod[:-1])) * prod_t[time]
+                                k.data[r,0,l]  = hash_num
+                                k1.data[r,0,l] = hash_num1
+                return k, k1
+
         def transfer_entropy(self,time=2,nbins=None):
                 # CALCULATE THE TRANSFER ENTROPIES BETWEEN THE REPLICAS
                 if nbins == None:
@@ -386,37 +375,66 @@ class TimeSer:
                          # 
                          #
                         nbins= int(self.nbins) ** int( self.dim * time )
-
-                ok, ok1 = self.traj(time,nbins)
-                #print "Calculating Mutual Info of traj(K)s"
+                ok, ok1    = self.traj(time,nbins)
                 M,  E,  P  = ok.mutual_info()
-                #print "Calculating Mutual Info of traj(K+1)s with respect of traj(K)s"
-                # WHICH ONE IS CORRECT ?!
-                M1, E1, P1 = ok.mutual_info_other(ok1)
-                #M1, E1, P1 = ok1.mutual_info_other(ok)
-                T = np.zeros((self.rep,self.rep))
-                # T(I,J) = H(I) + H(J) - H(I_k+1, J_k) + H(I_k,J_k)
-                #print "Calculating Transfer Entropy"
+                M1, E1, P1 = ok1.mutual_info_other(ok)
+                T          = np.zeros((self.rep,self.rep))
+                D          = np.zeros((self.rep,self.rep))
+                Rate       = np.diagonal(M1 - M)
                 for s in np.arange(self.rep):
                         for o in np.arange(self.rep):
-                                T[s,o] = ok1.entropy[s] + ok.entropy[o] - M1[s,o] + M[s,o]
-                #print "Done"
-                return T, [ [M,  E,  P ], [M1, E1, P1 ] ]
-        
-        def calc_direction(self,T):
-                D = np.zeros((self.rep,self.rep))
-                Tran = T[0]
-                Rate = np.array([(T[1][0][1]-T[1][1][1])[i,i] for i in np.arange(self.rep) ])
+                                T[s,o] = Rate[o] - M1[o,s] + M[o,s]
                 for i in np.arange(self.rep):
                         for j in np.arange(self.rep):
-                                 D[i,j] = Tran[i,j]/Rate[i] - Tran[j,i]/Rate[j]
+                                 D[i,j] = T[i,j]/Rate[i] - T[j,i]/Rate[j]
+                return T, D
+
+        def transfer_entropy_for(self,time=2,nbins=None):
+                # CALCULATE THE TRANSFER ENTROPIES BETWEEN THE REPLICAS
+                ok, ok1 = self.traj(time,nbins)
+                M,  E   = ok.mutual_info_for()
+                M1, E1  = ok1.mutual_info_other_for(ok)
+                T       = np.zeros((self.rep,self.rep))
+                D       = np.zeros((self.rep,self.rep))
+                Rate    = np.diagonal(M1 - M)
+                for s in np.arange(self.rep):
+                        for o in np.arange(self.rep):
+                                T[s,o] = Rate[o] - (M1[s,o] - M[s,o])
+                for i in np.arange(self.rep):
+                        for j in np.arange(self.rep):
+                                 D[i,j] = T[i,j]/Rate[j] - T[j,i]/Rate[i]
+                return T, D
+        
+        def direction_other_for(self,other,time=2,ref=None,nbins_ref=None,replicas=None,nbins_replicas=None):
+                if ref == None:
+                        ref = np.arange(0,self.rep)
+                else:
+                        if hasattr(replicas, '__iter__'):
+                                ref = np.array(list(ref))
+                        else:
+                                ref = np.array([int(ref)])
+                if hasattr(replicas, '__iter__'):
+                        replicas = np.array(list(replicas))
+                elif replicas == None:
+                        replicas = np.arange(0,other.rep)
+                else:
+                        replicas = np.array([int(replicas)])
+                sk, sk1  = self.traj(time,nbins=nbins_ref,replicas=ref)
+                ok, ok1  = other.traj(time,nbins=nbins_replicas,replicas=replicas)
+                M,  E    = sk.mutual_info_other_for(ok)
+                MSO, ESO = sk1.mutual_info_other_for(ok)
+                MOS, EOS = ok1.mutual_info_other_for(sk)
+                T_source = np.zeros((len(ref),len(replicas))) # Transfer Entropies from self to other
+                T_drain  = np.zeros((len(replicas),len(ref))) # Transfer Entropies from other to self
+                D        = np.zeros((len(ref),len(replicas))) # Directionality Matrix
+                rate_s   = sk1.entropy - sk.entropy
+                rate_o   = ok1.entropy - ok.entropy
+                for s in np.arange(len(ref)):
+                        for o in np.arange(len(replicas)):
+                                T_source[s,o] = rate_o[o] - (MOS[o,s] - M[o,s])
+                                T_drain[o,s]  = rate_s[s] - (MSO[s,o] - M[s,o])
+                                try:
+                                        D[s,o] = T_source[s,o]/rate_o[o] - T_drain[o,s]/rate_s[s]
+                                except RuntimeWarning:
+                                        D[s,o] = 0.0
                 return D
-                                        
-                                        
-                
-                
-                
-                                        
-                                        
-                        
-                

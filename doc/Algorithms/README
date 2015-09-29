@@ -1,0 +1,1 @@
+inkscape -D -z --file=digitalize.svg --export-pdf=digitalize.pdf --export-latex
