@@ -6,6 +6,23 @@ import scipy.special as sp
 from mi import mi
 warnings.filterwarnings('error')
 
+def bins_opt(data,n):
+        found=False
+        n_try=n
+        c=0
+        limit=1E4
+        while(c<limit):
+                c += 1
+                h,b = np.histogram(data,n_try)
+                if np.sum(h>0)<n :
+                        n_try += 1
+                else:
+                    i=np.where(h>0)[0]
+                    j=np.append(i[:1],i+1)
+                    return b[j]
+        print "Warning: Reached limit!!! using standard bins"
+        h,b=np.histogram(data,n)
+        return b
 
 class TimeSer:
         def __init__(self,data,n_data,dim,nbins=12,bins=None,prob=None,reshape=True,frame_row=True,dtype=float):
@@ -70,10 +87,13 @@ class TimeSer:
         def _check_prob_shape(self):
                 return ( self.prob.shape == tuple([self.rep]) + tuple( self.nbins ) )
         
-        def calc_bins(self):
+        def calc_bins(self,opt=False):
                 self.bins = []
                 for d in np.arange(self.dim):
-                        self.bins.append(np.linspace(np.min(self.data[:,d,:]),np.max(self.data[:,d,:]),self.nbins+1))
+                        if opt:
+                                self.bins.append(bins_opt(self.data[:,d,:].ravel(),self.nbins))
+                        else:
+                                self.bins.append(np.linspace(np.min(self.data[:,d,:]),np.max(self.data[:,d,:]),self.nbins+1))
                 return
                                 
         def calc_prob(self):
@@ -274,7 +294,7 @@ class TimeSer:
                                                         self.rep,     other.rep,       \
                                                         self.nbins,   other.nbins)
                         elif (other.dtype == float):
-                                M, E_joint =  mi.r_mutualinfo_otherd(1,d2,    \
+                                M, E_joint =  mi.r_mutualinfo_other(d1,d2,    \
                                                         self.entropy, other.entropy,   \
                                                         self.bins, other.bins,         \
                                                         self.n_data,                   \
@@ -386,7 +406,10 @@ class TimeSer:
                                 T[s,o] = Rate[o] - M1[o,s] + M[o,s]
                 for i in np.arange(self.rep):
                         for j in np.arange(self.rep):
-                                 D[i,j] = T[i,j]/Rate[i] - T[j,i]/Rate[j]
+                                 try:
+                                        D[i,j] = T[i,j]/Rate[j] - T[j,i]/Rate[i]
+                                 except RuntimeWarning:
+                                        D[i,j] = 0.0
                 return T, D
 
         def transfer_entropy_for(self,time=2,nbins=None):
@@ -402,7 +425,10 @@ class TimeSer:
                                 T[s,o] = Rate[o] - (M1[s,o] - M[s,o])
                 for i in np.arange(self.rep):
                         for j in np.arange(self.rep):
-                                 D[i,j] = T[i,j]/Rate[j] - T[j,i]/Rate[i]
+                                try:
+                                        D[i,j] = T[i,j]/Rate[j] - T[j,i]/Rate[i]
+                                except RuntimeWarning:
+                                        D[i,j] = 0.0
                 return T, D
         
         def direction_other_for(self,other,time=2,ref=None,nbins_ref=None,replicas=None,nbins_replicas=None):
