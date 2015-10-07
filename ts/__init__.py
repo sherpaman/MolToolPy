@@ -37,7 +37,6 @@ class TimeSer:
                 #self.bins   = [ np.linspace(np.min(self.data),np.max(self.data),nbins+1) ] # IT MUST BE A *LIST* OF *1-DIM ARRAYS*
                 self.bins   = bins
                 self.reshape= reshape
-                self.prod=np.ones(dim+1,dtype=int)
                 self.frame_row=frame_row
                 self._shape(force=self.reshape)
                 self.prob=prob
@@ -86,6 +85,28 @@ class TimeSer:
                 
         def _check_prob_shape(self):
                 return ( self.prob.shape == tuple([self.rep]) + tuple( self.nbins ) )
+                
+        def _to_1dim(self,replicas=None):
+                if self.dim == 1:
+                        return self
+                if hasattr(replicas, '__iter__'):
+                        replicas = np.array(list(replicas))
+                elif replicas == None:
+                        replicas = np.arange(0,self.rep)
+                else:
+                        replicas = np.array([int(replicas)])
+                rep    = len(replicas)
+                prod   = np.ones(self.dim+1,dtype=int)
+                for i in np.arange(1,self.dim+1):
+                        prod[i] = prod[i-1] * self.nbins
+                d = self.digitized()
+                o = np.zeros((rep,self.n_data))
+                for r in replicas:
+                        for t in np.arange(self.n_data):
+                                o[r,t]=int(np.vdot(d.data[r,:,t],prod[:-1]))
+                other = TimeSer(o,n_data=self.n_data,dim=1,nbins=prod[-1],dtype=int)
+                return other
+                
         
         def calc_bins(self,opt=False):
                 self.bins = []
@@ -100,7 +121,7 @@ class TimeSer:
                 if self.reshape == True:
                         self._proper_shape()
                 # PROB ( N_rep, DIM_1, DIM_2 ... )
-                self.prob = np.zeros( np.hstack((self.rep, self.nbins)) )
+                self.prob = np.zeros( np.hstack((self.rep, self.nbins*np.ones(self.dim,dtype=int))) )
                 for i in np.arange(self.rep):
                         DATA = self.data[i]
                         if np.any(self.bins == None):
@@ -178,21 +199,26 @@ class TimeSer:
                 E_joint = np.zeros((self.rep,self.rep))
                 M       = np.zeros((self.rep,self.rep))
                 if self.dtype == float :
-                        M, E_joint, P_joint = mi.r_mutualinfo(np.transpose(self.data),self.entropy,self.bins,self.n_data,self.rep,self.nbins)
+                        M, E_joint, P_joint = mi.r_mutualinfo_prob(np.transpose(self.data),self.entropy,self.bins,self.n_data,self.rep,self.nbins)
                 elif self.dtype == int :
-                        M, E_joint, P_joint = mi.i_mutualinfo(np.transpose(self.data),self.entropy,self.bins,self.n_data,self.rep,self.nbins)
+                        M, E_joint, P_joint = mi.i_mutualinfo_prob(np.transpose(self.data),self.entropy,self.bins,self.n_data,self.rep,self.nbins)
                 return np.transpose(M), np.transpose(E_joint), np.transpose(P_joint)
 
         def mutual_info_for(self):
                 # CALCULATE MUTUAL INFO OF EACH PAIR OF REPLICAS
-                if not self.entropy_av:
-                        self.calc_entropy()
                 E_joint = np.zeros((self.rep,self.rep))
-                M       = np.zeros((self.rep,self.rep))
-                if self.dtype == float :
-                        M, E_joint = mi.r_mutualinfo(np.transpose(self.data),self.entropy,self.bins,self.n_data,self.rep,self.nbins)
-                elif self.dtype == int :
-                        M, E_joint = mi.i_mutualinfo(np.transpose(self.data),self.entropy,self.bins,self.n_data,self.rep,self.nbins)
+                M       = np.zeros((self.rep,self.rep))                
+                if self.dim > 1:
+                        s = self._to_1dim()
+                        s.calc_entropy()
+                        M, E_joint = mi.i_mutualinfo(np.transpose(s.data),s.entropy,s.bins,s.n_data,s.rep,s.nbins)
+                else:
+                        if not self.entropy_av:
+                                self.calc_entropy()
+                        if self.dtype == float :
+                                M, E_joint = mi.r_mutualinfo(np.transpose(self.data),s.entropy,self.bins,self.n_data,self.rep,self.nbins)
+                        elif self.dtype == int :
+                                M, E_joint = mi.i_mutualinfo(np.transpose(self.data),s.entropy,self.bins,self.n_data,self.rep,self.nbins)
                 return np.transpose(M), np.transpose(E_joint)
         
         def mutual_info_simple(self,nrep1=0):
@@ -301,7 +327,57 @@ class TimeSer:
                                                         self.rep,     other.rep,       \
                                                         self.nbins,   other.nbins)
                 return np.transpose(M), np.transpose(E_joint)
-        
+
+        def mutual_info_other_prob_for(self,other):
+                if self.dim > 1 :
+                        print "This function is available only for 1-dim data"
+                        print " you can use the slower function : mutual_info_other()"
+                        raise Error
+                if self.n_data != other.n_data:
+                        print "The Number of Observation in the two time series are different ({0:d} != {0:d})".format(self.n_data,other.n_data)
+                        raise ValueError
+                if not self.entropy_av:
+                        self.calc_entropy()
+                if not other.entropy_av:
+                        other.calc_entropy()
+                P_joint = np.zeros((self.rep,other.rep, self.nbins))
+                E_joint = np.zeros((self.rep,other.rep))
+                M       = np.zeros((self.rep,other.rep))
+                d1      = np.transpose(self.data)
+                d2      = np.transpose(other.data)
+
+                if (self.dtype == int):
+                        if (other.dtype == int):
+                                M, E_joint =  mi.i_mutualinfo_other(d1,d2,    \
+                                                        self.entropy, other.entropy,   \
+                                                        self.bins, other.bins,         \
+                                                        self.n_data,                   \
+                                                        self.rep,     other.rep,       \
+                                                        self.nbins,   other.nbins)
+                        elif (other.dtype == float):
+                                M, E_joint = mi.ir_mutualinfo_other(d1,d2,    \
+                                                        self.entropy, other.entropy,   \
+                                                        self.bins, other.bins,         \
+                                                        self.n_data,                   \
+                                                        self.rep,     other.rep,       \
+                                                        self.nbins,   other.nbins)
+                elif (self.dtype == float):
+                        if (other.dtype == int):
+                                M, E_joint = mi.ri_mutualinfo_other(d1,d2,    \
+                                                        self.entropy, other.entropy,   \
+                                                        self.bins, other.bins,         \
+                                                        self.n_data,                   \
+                                                        self.rep,     other.rep,       \
+                                                        self.nbins,   other.nbins)
+                        elif (other.dtype == float):
+                                M, E_joint =  mi.r_mutualinfo_other(d1,d2,    \
+                                                        self.entropy, other.entropy,   \
+                                                        self.bins, other.bins,         \
+                                                        self.n_data,                   \
+                                                        self.rep,     other.rep,       \
+                                                        self.nbins,   other.nbins)
+                return np.transpose(M), np.transpose(E_joint). np.transpose(P_joint) 
+
         def digitized(self,replicas=None):
                 if replicas == None:
                         replicas = np.arange(self.rep)
@@ -344,12 +420,13 @@ class TimeSer:
                         replicas = np.arange(0,self.rep)
                 else:
                         replicas = np.array([int(replicas)])
-                rep = len(replicas)
+                rep    = len(replicas)
                 prod_t = np.ones(time+1,dtype=int)
+                prod   = np.ones(dim+1,dtype=int)
                 for i in np.arange(1,self.dim+1):
-                        self.prod[i] = self.prod[i-1] * self.nbins
+                        prod[i] = self.prod[i-1] * self.nbins
                 for i in np.arange(1,time+1):
-                                prod_t[i] =  prod_t[i-1] * self.prod[self.dim]
+                                prod_t[i] =  prod_t[i-1] * prod[self.dim]
                 k_nbins   = nbins
                 k1_nbins  = nbins * ( self.nbins ** self.dim )
                 k_bins    = [ np.linspace(0, k_nbins-1, k_nbins+1) ]
@@ -357,7 +434,7 @@ class TimeSer:
                 nd        = self.n_data-time
                 k         = TimeSer(np.zeros((rep,1,nd)),nd,1,nbins=k_nbins,bins=k_bins,prob=None,reshape=False,dtype=int)
                 k1        = TimeSer(np.zeros((rep,1,nd)),nd,1,nbins=k1_nbins,bins=k1_bins,prob=None,reshape=False,dtype=int)
-                digit = self.digitized()
+                digit     = self.digitized()
                 for r in replicas:
                         for l in np.arange(self.n_data-time):
                                 hash_num = 0
@@ -369,8 +446,8 @@ class TimeSer:
                                         #
                                         # N.B. : THE DATA HAVE TO BE DIGITIZED
                                         #
-                                        hash_num = hash_num + int(np.vdot(digit.data[r,:,l+t],self.prod[:-1])) * prod_t[t]
-                                hash_num1 = hash_num + int(np.vdot(digit.data[r,:,l+time],self.prod[:-1])) * prod_t[time]
+                                        hash_num = hash_num + int(np.vdot(digit.data[r,:,l+t],prod[:-1])) * prod_t[t]
+                                hash_num1 = hash_num + int(np.vdot(digit.data[r,:,l+time],prod[:-1])) * prod_t[time]
                                 k.data[r,0,l]  = hash_num
                                 k1.data[r,0,l] = hash_num1
                 return k, k1
