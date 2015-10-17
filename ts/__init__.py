@@ -194,6 +194,7 @@ class TimeSer:
                 The number of bins created is defined in self.nbins.
                 The bins size can be optimized (resulting in a non omogeneous bin size)
                 in order to avoid bins with zero elements (eg. multimodal distributions)
+                WARNING: at the moment the optimized bins will broke the FORTRAN code.
                 
                 '''
                 self.bins = []
