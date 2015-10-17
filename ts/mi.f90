@@ -47,15 +47,15 @@ MODULE MI
     
     BINS_X    = (/ ( MIN_D_X + I * BIN_DELTA_X, I=0,NBINS_X) /)
     BINS_Y    = (/ ( MIN_D_Y + I * BIN_DELTA_Y, I=0,NBINS_Y) /)
-    FORALL(I=0:NBINS_X-1, J=0:NBINS_Y-1) PROB(I,J)=0.0
+    !FORALL(I=0:NBINS_X-1, J=0:NBINS_Y-1) PROB(I,J)=0.0
     
     DO I=0,N-1
         X = MIN(INT((D_X(I) - MIN_D_X) / BIN_DELTA_X),NBINS_X-1)
         Y = MIN(INT((D_Y(I) - MIN_D_Y) / BIN_DELTA_Y),NBINS_Y-1)
-        PROB(X,Y) = PROB(X,Y) + 1.0 
+        PROB(X,Y) = PROB(X,Y) + 1.0 / N
     END DO
     
-    FORALL(I=0:NBINS_X-1, J=0:NBINS_Y-1) PROB(I,J)=PROB(I,J)/N
+    !FORALL(I=0:NBINS_X-1, J=0:NBINS_Y-1) PROB(I,J)=PROB(I,J)/N
     
     RETURN
     
@@ -86,15 +86,15 @@ MODULE MI
     
     BINS_X    = (/ ( MIN_D_X + I * BIN_DELTA_X, I=0,NBINS_X) /)
     BINS_Y    = (/ ( MIN_D_Y + I * BIN_DELTA_Y, I=0,NBINS_Y) /)
-    FORALL(I=0:NBINS_X-1, J=0:NBINS_Y-1) PROB(I,J)=0.0
+    !FORALL(I=0:NBINS_X-1, J=0:NBINS_Y-1) PROB(I,J)=0.0
     
     DO I=0,N-1
         X = MIN(INT((D_X(I) - MIN_D_X) / BIN_DELTA_X),NBINS_X-1)
         Y = MIN(INT((D_Y(I) - MIN_D_Y) / BIN_DELTA_Y),NBINS_Y-1)
-        PROB(X,Y) = PROB(X,Y) + 1.0 
+        PROB(X,Y) = PROB(X,Y) + 1.0 / N 
     END DO
     
-    FORALL(I=0:NBINS_X-1, J=0:NBINS_Y-1) PROB(I,J)=PROB(I,J)/N
+    !FORALL(I=0:NBINS_X-1, J=0:NBINS_Y-1) PROB(I,J)=PROB(I,J)/N
     
     RETURN
         
@@ -122,15 +122,15 @@ MODULE MI
         
     BIN_DELTA_X = ( MAX_D_X - MIN_D_X ) / NBINS_X
     BIN_DELTA_Y = ( MAX_D_Y - MIN_D_Y ) / NBINS_Y
-    FORALL(I=0:NBINS_X-1, J=0:NBINS_Y-1) PROB(I,J)=0.0
+    !FORALL(I=0:NBINS_X-1, J=0:NBINS_Y-1) PROB(I,J)=0.0
     
     DO I=0,N-1
         X = MIN(INT((D_X(I) - MIN_D_X) / BIN_DELTA_X),NBINS_X-1)
         Y = MIN(INT((D_Y(I) - MIN_D_Y) / BIN_DELTA_Y),NBINS_Y-1)
-        PROB(X,Y) = PROB(X,Y) + 1.0 
+        PROB(X,Y) = PROB(X,Y) + 1.0 / N
     END DO
     
-    FORALL(I=0:NBINS_X-1, J=0:NBINS_Y-1) PROB(I,J)=PROB(I,J)/N
+    !FORALL(I=0:NBINS_X-1, J=0:NBINS_Y-1) PROB(I,J)=PROB(I,J)/N
     
     RETURN
     
@@ -157,14 +157,14 @@ MODULE MI
         
     BIN_DELTA_X = ( MAX_D_X - MIN_D_X ) / NBINS_X
     BIN_DELTA_Y = ( MAX_D_Y - MIN_D_Y ) / NBINS_Y
-    FORALL(I=0:NBINS_X-1, J=0:NBINS_Y-1) PROB(J,I)=0.0
+    !FORALL(I=0:NBINS_X-1, J=0:NBINS_Y-1) PROB(J,I)=0.0
     
     DO I=1,N
         X = MIN(INT((D_X(I) - MIN_D_X) / BIN_DELTA_X),NBINS_X-1)
         Y = MIN(INT((D_Y(I) - MIN_D_Y) / BIN_DELTA_Y),NBINS_Y-1)
-        PROB(X,Y) = PROB(X,Y) + 1.0 
+        PROB(X,Y) = PROB(X,Y) + 1.0 / N
     END DO
-    FORALL(I=0:NBINS_X-1, J=0:NBINS_Y-1) PROB(J,I)=PROB(J,I)/N
+    !FORALL(I=0:NBINS_X-1, J=0:NBINS_Y-1) PROB(J,I)=PROB(J,I)/N
     RETURN
     
     END SUBROUTINE RR_PROBDEF2D
@@ -192,15 +192,15 @@ MODULE MI
         
     BIN_DELTA_X = ( MAX_D_X - MIN_D_X ) / NBINS_X
     BIN_DELTA_Y = ( MAX_D_Y - MIN_D_Y ) / NBINS_Y
-    FORALL(I=0:NBINS_X-1, J=0:NBINS_Y-1) PROB(I,J)=0.0
+    !FORALL(I=0:NBINS_X-1, J=0:NBINS_Y-1) PROB(I,J)=0.0
     
     DO I=0,N-1
         X = MIN(INT((D_X(I) - MIN_D_X) / BIN_DELTA_X),NBINS_X-1)
         Y = MIN(INT((D_Y(I) - MIN_D_Y) / BIN_DELTA_Y),NBINS_Y-1)
-        PROB(X,Y) = PROB(X,Y) + 1.0 
+        PROB(X,Y) = PROB(X,Y) + 1.0 / N
     END DO
     
-    FORALL(I=0:NBINS_X-1, J=0:NBINS_Y-1) PROB(I,J)=PROB(I,J)/N
+    !FORALL(I=0:NBINS_X-1, J=0:NBINS_Y-1) PROB(I,J)=PROB(I,J)/N
     
     RETURN
     
@@ -229,15 +229,15 @@ MODULE MI
         
     BIN_DELTA_X = ( MAX_D_X - MIN_D_X ) / NBINS_X
     BIN_DELTA_Y = ( MAX_D_Y - MIN_D_Y ) / NBINS_Y
-    FORALL(I=0:NBINS_X-1, J=0:NBINS_Y-1) PROB(I,J)=0.0
+    !FORALL(I=0:NBINS_X-1, J=0:NBINS_Y-1) PROB(I,J)=0.0
     
     DO I=0,N-1
         X = MIN(INT((D_X(I) - MIN_D_X) / BIN_DELTA_X),NBINS_X-1)
         Y = MIN(INT((D_Y(I) - MIN_D_Y) / BIN_DELTA_Y),NBINS_Y-1)
-        PROB(X,Y) = PROB(X,Y) + 1.0 
+        PROB(X,Y) = PROB(X,Y) + 1.0 / N
     END DO
     
-    FORALL(I=0:NBINS_X-1, J=0:NBINS_Y-1) PROB(I,J)=PROB(I,J)/N
+    !FORALL(I=0:NBINS_X-1, J=0:NBINS_Y-1) PROB(I,J)=PROB(I,J)/N
     
     RETURN
     
@@ -454,7 +454,7 @@ MODULE MI
     
     END SUBROUTINE I_MUTUALINFO_OTHER_PROB
 
-    SUBROUTINE I_MUTUALINFO_SIMP(D,E1,BINS,NFRAMES,NREP,NBINS,NREP1,M,EJ,PJ)
+    SUBROUTINE I_MUTUALINFO_SIMP(D,E1,BINS,NFRAMES,NREP,NBINS,NREP1,M,EJ)
 
     INTEGER, INTENT(IN)                                  :: NREP1
     INTEGER, INTENT(IN)                                  :: NBINS
@@ -472,7 +472,6 @@ MODULE MI
     
     REAL, INTENT(OUT), DIMENSION(0:NREP-1)                     :: M
     REAL, INTENT(OUT), DIMENSION(0:NREP-1)                     :: EJ
-    REAL, INTENT(OUT), DIMENSION(0:NBINS-1,0:NBINS-1,0:NREP-1) :: PJ
 
     D_TEMP1(0:NFRAMES-1) = (/ (D(K,NREP1), K=0,NFRAMES-1) /)
     EJ(NREP1) = E1(NREP1)
@@ -483,16 +482,9 @@ MODULE MI
         IF (I /= NREP1) THEN
             D_TEMP2(0:NFRAMES-1) = (/ (D(K,I), K=0,NFRAMES-1) /)
             EJ(I) = 0.0
-            DO K = 0,NBINS-1
-                DO L = 0,NBINS-1
-                    !WRITE(*,'(A,2I3)') "INITIALIZING :",L,K
-                    PJ(L,K,I) = 0.0
-                END DO
-            END DO 
             CALL PROBDEF2D(D_TEMP2,D_TEMP1,NFRAMES,NBINS,NBINS,P_TEMP,BINS,BINS)
             DO K = 0,NBINS-1
                 DO L = 0,NBINS-1
-                    PJ(L,K,I) = P_TEMP(L,K)
                     IF (P_TEMP(L,K) > 0) THEN
                         EJ(I) = EJ(I) - P_TEMP(L,K) * LOG(P_TEMP(L,K))
                     END IF
@@ -504,7 +496,7 @@ MODULE MI
     
     END SUBROUTINE I_MUTUALINFO_SIMP
     
-    SUBROUTINE R_MUTUALINFO_SIMP(D,E1,BINS,NREP1,NFRAMES,NREP,NBINS,M,EJ,PJ)
+    SUBROUTINE R_MUTUALINFO_SIMP(D,E1,BINS,NREP1,NFRAMES,NREP,NBINS,M,EJ)
     
     INTEGER, INTENT(IN)                               :: NREP1 
     INTEGER, INTENT(IN)                               :: NBINS
@@ -522,7 +514,6 @@ MODULE MI
     
     REAL, INTENT(OUT), DIMENSION(0:NREP-1)                     :: M
     REAL, INTENT(OUT), DIMENSION(0:NREP-1)                     :: EJ
-    REAL, INTENT(OUT), DIMENSION(0:NBINS-1,0:NBINS-1,0:NREP-1) :: PJ
 
     D_TEMP1(0:NFRAMES-1) = (/ (D(K,NREP1), K=0,NFRAMES-1) /)
     EJ(NREP1) = E1(NREP1)
@@ -533,16 +524,9 @@ MODULE MI
         IF (I /= NREP1) THEN
             D_TEMP2(0:NFRAMES-1) = (/ (D(K,I), K=0,NFRAMES-1) /)
             EJ(I) = 0.0
-            DO K = 0,NBINS-1
-                DO L = 0,NBINS-1
-                    !WRITE(*,'(A,2I3)') "INITIALIZING :",L,K
-                    PJ(L,K,I) = 0.0
-                END DO
-            END DO 
             CALL PROBDEF2D(D_TEMP2,D_TEMP1,NFRAMES,NBINS,NBINS,P_TEMP,BINS,BINS)
             DO K = 0,NBINS-1
                 DO L = 0,NBINS-1
-                    PJ(L,K,I) = P_TEMP(L,K)
                     IF (P_TEMP(L,K) > 0) THEN
                         EJ(I) = EJ(I) - P_TEMP(L,K) * LOG(P_TEMP(L,K))
                     END IF
@@ -712,14 +696,23 @@ MODULE MI
     REAL, DIMENSION(0:NBINS-1,0:NBINS-1)                :: P_TEMP
     INTEGER                                             :: I, J, K, L
     
-    REAL, INTENT(OUT), DIMENSION(0:NREP-1,0:NREP-1)                     :: M
-    REAL, INTENT(OUT), DIMENSION(0:NREP-1,0:NREP-1)                     :: EJ
+    REAL, INTENT(OUT), DIMENSION(0:NREP-1,0:NREP-1)     :: M
+    REAL, INTENT(OUT), DIMENSION(0:NREP-1,0:NREP-1)     :: EJ
+
+    WRITE(*,'(A)')    "SUBROUTINE I_MUTUALINFO"
+    WRITE(*,'(A,I10)') " NREP  : " , NREP
+    WRITE(*,'(A,I10)') " NBINS : " , NBINS
+    WRITE(*,'(A,I10)') " FRAMES: " , NFRAMES
+    WRITE(*,'(A,I4,A,I4)') " D: ", SIZE(D,1), "x", SIZE(D,2)
+    WRITE(*,'(A,I4,A,I4)') " E: ", SIZE(E1,1)
 
     DO I = 0,NREP-2
+        WRITE(*,'(A,I10)') " I : " , I
         EJ(I,I) = E1(I)
         M(I,I)  = E1(I)
         D_TEMP1(0:NFRAMES-1) = (/ (D(K,I), K=0,NFRAMES-1) /)
         DO J = I+1,NREP-1
+            WRITE(*,'(A,I10)') " J : " , J
             EJ(J,I) = 0.0
             D_TEMP2(0:NFRAMES-1) = (/ (D(K,J), K = 0,NFRAMES-1) /)
             CALL PROBDEF2D(D_TEMP2,D_TEMP1,NFRAMES,NBINS,NBINS,P_TEMP,BINS,BINS)
