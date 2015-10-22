@@ -623,143 +623,152 @@ MODULE MI_OMP
         
     END SUBROUTINE R_PROB2D
 
-    SUBROUTINE II_PROBDEF2D(D_X,D_Y,N,NBINS_X,NBINS_Y,PROB,BINS_X,BINS_Y)
+    SUBROUTINE II_PROBDEF2D(D_X,D_Y,BINS_X,BINS_Y,N,NBINS_X,NBINS_Y,PROB)
 
     IMPLICIT NONE
     
     INTEGER, DIMENSION(0:N-1)                       :: D_X, D_Y
-    INTEGER                                     :: N
-    INTEGER                                     :: NBINS_X, NBINS_Y
-    REAL, DIMENSION(0:NBINS_X-1,0:NBINS_Y-1)    :: PROB
-    REAL, DIMENSION(0:NBINS_X)                :: BINS_X
-    REAL, DIMENSION(0:NBINS_Y)                :: BINS_Y
+        INTEGER, INTENT(IN)                                :: N
+    INTEGER, INTENT(IN)                                    :: NBINS_X, NBINS_Y
+    REAL, DIMENSION(0:NBINS_X-1,0:NBINS_Y-1) ,INTENT(OUT)  :: PROB
+    REAL, DIMENSION(0:NBINS_X), INTENT(IN)                 :: BINS_X
+    REAL, DIMENSION(0:NBINS_Y), INTENT(IN)                 :: BINS_Y
     
-    INTEGER               :: I, J, X, Y
-    REAL                  :: MIN_D_X, MIN_D_Y, MAX_D_X, MAX_D_Y
-    REAL                  :: BIN_DELTA_X, BIN_DELTA_Y
+    INTEGER               :: I, J, K, X, Y
+    REAL                  :: P 
     
-    MIN_D_X = BINS_X(0)
-    MAX_D_X = BINS_X(NBINS_X)
-    MIN_D_Y = BINS_Y(0)
-    MAX_D_Y = BINS_Y(NBINS_Y)
-        
-    BIN_DELTA_X = ( MAX_D_X - MIN_D_X ) / NBINS_X
-    BIN_DELTA_Y = ( MAX_D_Y - MIN_D_Y ) / NBINS_Y
+    P = 1.0 / N
+    
     FORALL(I=0:NBINS_X-1, J=0:NBINS_Y-1) PROB(I,J)=0.0
-    
     DO I=0,N-1
-        X = MIN(INT((D_X(I) - MIN_D_X) / BIN_DELTA_X),NBINS_X-1)
-        Y = MIN(INT((D_Y(I) - MIN_D_Y) / BIN_DELTA_Y),NBINS_Y-1)
-        PROB(X,Y) = PROB(X,Y) + 1.0 / N
+        X = NBINS_X-1
+        Y = NBINS_Y-1
+        DO K=1,NBINS_X-1
+            IF ( BINS_X(K) > D_X(I) )  THEN
+                X = K - 1
+                EXIT
+            END IF
+        END DO
+        DO K=1,NBINS_Y-1
+            IF ( BINS_Y(K) > D_Y(I) ) THEN
+                Y = K - 1
+                EXIT
+            END IF
+        END DO
+        PROB(X,Y) = PROB(X,Y) + P
     END DO
-    
-    !FORALL(I=0:NBINS_X-1, J=0:NBINS_Y-1) PROB(I,J)=PROB(I,J)/N
-    
-    RETURN
     
     END SUBROUTINE II_PROBDEF2D
     
-    SUBROUTINE RR_PROBDEF2D(D_X,D_Y,N,NBINS_X,NBINS_Y,PROB,BINS_X,BINS_Y)
+    SUBROUTINE RR_PROBDEF2D(D_X,D_Y,BINS_X,BINS_Y,N,NBINS_X,NBINS_Y,PROB)
     IMPLICIT NONE
     
-    REAL, DIMENSION(0:N-1)                          :: D_X, D_Y
-    INTEGER                                     :: N
-    INTEGER                                     :: NBINS_X, NBINS_Y
-    REAL, DIMENSION(0:NBINS_X-1,0:NBINS_Y-1)          :: PROB
-    REAL, DIMENSION(0:NBINS_X)                :: BINS_X
-    REAL, DIMENSION(0:NBINS_Y)                :: BINS_Y
+    REAL, DIMENSION(0:N-1)                                 :: D_X, D_Y
+    INTEGER, INTENT(IN)                                    :: N
+    INTEGER, INTENT(IN)                                    :: NBINS_X, NBINS_Y
+    REAL, DIMENSION(0:NBINS_X-1,0:NBINS_Y-1) ,INTENT(OUT)  :: PROB
+    REAL, DIMENSION(0:NBINS_X), INTENT(IN)                 :: BINS_X
+    REAL, DIMENSION(0:NBINS_Y), INTENT(IN)                 :: BINS_Y
     
-    INTEGER               :: I, J, X, Y
-    REAL                  :: MIN_D_X, MIN_D_Y, MAX_D_X, MAX_D_Y
-    REAL                  :: BIN_DELTA_X, BIN_DELTA_Y
+    INTEGER               :: I, J, K, X, Y
+    REAL                  :: P 
     
-    MIN_D_X = BINS_X(0)
-    MAX_D_X = BINS_X(NBINS_X)
-    MIN_D_Y = BINS_Y(0)
-    MAX_D_Y = BINS_Y(NBINS_Y)
-        
-    BIN_DELTA_X = ( MAX_D_X - MIN_D_X ) / NBINS_X
-    BIN_DELTA_Y = ( MAX_D_Y - MIN_D_Y ) / NBINS_Y
-    FORALL(I=0:NBINS_X-1, J=0:NBINS_Y-1) PROB(J,I)=0.0
+    P = 1.0 / N
     
-    DO I=1,N
-        X = MIN(INT((D_X(I) - MIN_D_X) / BIN_DELTA_X),NBINS_X-1)
-        Y = MIN(INT((D_Y(I) - MIN_D_Y) / BIN_DELTA_Y),NBINS_Y-1)
-        PROB(X,Y) = PROB(X,Y) + 1.0 / N
+    FORALL(I=0:NBINS_X-1, J=0:NBINS_Y-1) PROB(I,J)=0.0
+    DO I=0,N-1
+        X = NBINS_X-1
+        Y = NBINS_Y-1
+        DO K=1,NBINS_X-1
+            IF ( BINS_X(K) > D_X(I) )  THEN
+                X = K - 1
+                EXIT
+            END IF
+        END DO
+        DO K=1,NBINS_Y-1
+            IF ( BINS_Y(K) > D_Y(I) ) THEN
+                Y = K - 1
+                EXIT
+            END IF
+        END DO
+        PROB(X,Y) = PROB(X,Y) + P
     END DO
-    !FORALL(I=0:NBINS_X-1, J=0:NBINS_Y-1) PROB(J,I)=PROB(J,I)/N
-    RETURN
     
     END SUBROUTINE RR_PROBDEF2D
     
-    SUBROUTINE RI_PROBDEF2D(D_X,D_Y,N,NBINS_X,NBINS_Y,PROB,BINS_X,BINS_Y)
+    SUBROUTINE RI_PROBDEF2D(D_X,D_Y,BINS_X,BINS_Y,N,NBINS_X,NBINS_Y,PROB)
 
     IMPLICIT NONE
     
     REAL,    DIMENSION(0:N-1)                       :: D_X
     INTEGER, DIMENSION(0:N-1)                       :: D_Y
-    INTEGER                                     :: N
-    INTEGER                                     :: NBINS_X, NBINS_Y
-    REAL, DIMENSION(0:NBINS_X-1,0:NBINS_Y-1)          :: PROB
-    REAL, DIMENSION(0:NBINS_X)                :: BINS_X
-    REAL, DIMENSION(0:NBINS_Y)                :: BINS_Y
+    INTEGER, INTENT(IN)                                    :: N
+    INTEGER, INTENT(IN)                                    :: NBINS_X, NBINS_Y
+    REAL, DIMENSION(0:NBINS_X-1,0:NBINS_Y-1) ,INTENT(OUT)  :: PROB
+    REAL, DIMENSION(0:NBINS_X), INTENT(IN)                 :: BINS_X
+    REAL, DIMENSION(0:NBINS_Y), INTENT(IN)                 :: BINS_Y
     
-    INTEGER               :: I, J, X, Y
-    REAL                  :: MIN_D_X, MIN_D_Y, MAX_D_X, MAX_D_Y
-    REAL                  :: BIN_DELTA_X, BIN_DELTA_Y
+    INTEGER               :: I, J, K, X, Y
+    REAL                  :: P 
     
-    MIN_D_X = BINS_X(0)
-    MAX_D_X = BINS_X(NBINS_X)
-    MIN_D_Y = BINS_Y(0)
-    MAX_D_Y = BINS_Y(NBINS_Y)
-        
-    BIN_DELTA_X = ( MAX_D_X - MIN_D_X ) / NBINS_X
-    BIN_DELTA_Y = ( MAX_D_Y - MIN_D_Y ) / NBINS_Y
+    P = 1.0 / N
+    
     FORALL(I=0:NBINS_X-1, J=0:NBINS_Y-1) PROB(I,J)=0.0
     DO I=0,N-1
-        X = MIN(INT((D_X(I) - MIN_D_X) / BIN_DELTA_X),NBINS_X-1)
-        Y = MIN(INT((D_Y(I) - MIN_D_Y) / BIN_DELTA_Y),NBINS_Y-1)
-        PROB(X,Y) = PROB(X,Y) + 1.0 / N
+        X = NBINS_X-1
+        Y = NBINS_Y-1
+        DO K=1,NBINS_X-1
+            IF ( BINS_X(K) > D_X(I) )  THEN
+                X = K - 1
+                EXIT
+            END IF
+        END DO
+        DO K=1,NBINS_Y-1
+            IF ( BINS_Y(K) > D_Y(I) ) THEN
+                Y = K - 1
+                EXIT
+            END IF
+        END DO
+        PROB(X,Y) = PROB(X,Y) + P
     END DO
-    FORALL(I=0:NBINS_X-1, J=0:NBINS_Y-1) PROB(I,J)=PROB(I,J)/N
-    
-    RETURN
     
     END SUBROUTINE RI_PROBDEF2D
     
-    SUBROUTINE IR_PROBDEF2D(D_X,D_Y,N,NBINS_X,NBINS_Y,PROB,BINS_X,BINS_Y)
+    SUBROUTINE IR_PROBDEF2D(D_X,D_Y,BINS_X,BINS_Y,N,NBINS_X,NBINS_Y,PROB)
 
     IMPLICIT NONE
     
     INTEGER, DIMENSION(0:N-1)                       :: D_X
     REAL,    DIMENSION(0:N-1)                       :: D_Y
-    INTEGER                                     :: N
-    INTEGER                                     :: NBINS_X, NBINS_Y
-    REAL, DIMENSION(0:NBINS_X-1,0:NBINS_Y-1)          :: PROB
-    REAL, DIMENSION(0:NBINS_X)                :: BINS_X
-    REAL, DIMENSION(0:NBINS_Y)                :: BINS_Y
+    INTEGER, INTENT(IN)                                    :: N
+    INTEGER, INTENT(IN)                                    :: NBINS_X, NBINS_Y
+    REAL, DIMENSION(0:NBINS_X-1,0:NBINS_Y-1) ,INTENT(OUT)  :: PROB
+    REAL, DIMENSION(0:NBINS_X), INTENT(IN)                 :: BINS_X
+    REAL, DIMENSION(0:NBINS_Y), INTENT(IN)                 :: BINS_Y
     
-    INTEGER               :: I, J, X, Y
-    REAL                  :: MIN_D_X, MIN_D_Y, MAX_D_X, MAX_D_Y
-    REAL                  :: BIN_DELTA_X, BIN_DELTA_Y
+    INTEGER               :: I, J, K, X, Y
+    REAL                  :: P 
     
-    MIN_D_X = BINS_X(0)
-    MAX_D_X = BINS_X(NBINS_X)
-    MIN_D_Y = BINS_Y(0)
-    MAX_D_Y = BINS_Y(NBINS_Y)
-        
-    BIN_DELTA_X = ( MAX_D_X - MIN_D_X ) / NBINS_X
-    BIN_DELTA_Y = ( MAX_D_Y - MIN_D_Y ) / NBINS_Y
-
+    P = 1.0 / N
+    
     FORALL(I=0:NBINS_X-1, J=0:NBINS_Y-1) PROB(I,J)=0.0
     DO I=0,N-1
-        X = MIN(INT((D_X(I) - MIN_D_X) / BIN_DELTA_X),NBINS_X-1)
-        Y = MIN(INT((D_Y(I) - MIN_D_Y) / BIN_DELTA_Y),NBINS_Y-1)
-        PROB(X,Y) = PROB(X,Y) + 1.0 / N
+        X = NBINS_X-1
+        Y = NBINS_Y-1
+        DO K=1,NBINS_X-1
+            IF ( BINS_X(K) > D_X(I) )  THEN
+                X = K - 1
+                EXIT
+            END IF
+        END DO
+        DO K=1,NBINS_Y-1
+            IF ( BINS_Y(K) > D_Y(I) ) THEN
+                Y = K - 1
+                EXIT
+            END IF
+        END DO
+        PROB(X,Y) = PROB(X,Y) + P
     END DO
-    FORALL(I=0:NBINS_X-1, J=0:NBINS_Y-1) PROB(I,J)=PROB(I,J)/N
-    
-    RETURN
     
     END SUBROUTINE IR_PROBDEF2D
     
@@ -796,7 +805,7 @@ MODULE MI_OMP
                 END DO
             END DO 
             D_TEMP2(0:NFRAMES-1) = (/ (D(K,J), K = 0,NFRAMES-1) /)
-            CALL PROBDEF2D(D_TEMP2,D_TEMP1,NFRAMES,NBINS,NBINS,P_TEMP,BINS,BINS)
+            CALL PROBDEF2D(D_TEMP2,D_TEMP1,BINS,BINS,NFRAMES,NBINS,NBINS,P_TEMP)
             DO K = 0,NBINS-1
                 DO L = 0,NBINS-1
                     PJ(L,K,J,I) = P_TEMP(L,K)
@@ -850,7 +859,7 @@ MODULE MI_OMP
                 END DO
             END DO 
             D_TEMP2(0:NFRAMES-1) = (/ (D(K,J), K = 0,NFRAMES-1) /)
-            CALL PROBDEF2D(D_TEMP2,D_TEMP1,NFRAMES,NBINS,NBINS,P_TEMP,BINS,BINS)
+            CALL PROBDEF2D(D_TEMP2,D_TEMP1,BINS,BINS,NFRAMES,NBINS,NBINS,P_TEMP)
             DO K = 0,NBINS-1
                 DO L = 0,NBINS-1
                     
@@ -906,7 +915,7 @@ MODULE MI_OMP
                 END DO
             END DO 
             D_TEMP2(0:NFRAMES-1) = (/ (D2(K,J), K = 0,NFRAMES-1) /)
-            CALL PROBDEF2D(D_TEMP2,D_TEMP1,NFRAMES,NBINS2,NBINS1,P_TEMP,BINS2,BINS1)
+            CALL PROBDEF2D(D_TEMP2,D_TEMP1,BINS2,BINS1,NFRAMES,NBINS2,NBINS1,P_TEMP)
             DO K = 0,NBINS1-1
                 DO L = 0,NBINS2-1
                     PJ(L,K,J,I) = P_TEMP(L,K)
@@ -957,7 +966,7 @@ MODULE MI_OMP
                 END DO
             END DO 
             D_TEMP2(0:NFRAMES-1) = (/ (D2(K,J), K = 0,NFRAMES-1) /)
-            CALL PROBDEF2D(D_TEMP2,D_TEMP1,NFRAMES,NBINS2,NBINS1,P_TEMP,BINS2,BINS1)
+            CALL PROBDEF2D(D_TEMP2,D_TEMP1,BINS2,BINS1,NFRAMES,NBINS2,NBINS1,P_TEMP)
             DO K = 0,NBINS1-1
                 DO L = 0,NBINS2-1
                     PJ(L,K,J,I) = P_TEMP(L,K)
@@ -1012,7 +1021,7 @@ MODULE MI_OMP
                     PJ(L,K,I) = 0.0
                 END DO
             END DO 
-            CALL PROBDEF2D(D_TEMP2,D_TEMP1,NFRAMES,NBINS,NBINS,P_TEMP,BINS,BINS)
+            CALL PROBDEF2D(D_TEMP2,D_TEMP1,BINS,BINS,NFRAMES,NBINS,NBINS,P_TEMP)
             DO K = 0,NBINS-1
                 DO L = 0,NBINS-1
                     PJ(L,K,I) = P_TEMP(L,K)
@@ -1059,7 +1068,7 @@ MODULE MI_OMP
         IF (I /= NREP1) THEN
             D_TEMP2(0:NFRAMES-1) = (/ (D(K,I), K=0,NFRAMES-1) /)
             EJ(I) = 0.0
-            CALL PROBDEF2D(D_TEMP2,D_TEMP1,NFRAMES,NBINS,NBINS,P_TEMP,BINS,BINS)
+            CALL PROBDEF2D(D_TEMP2,D_TEMP1,BINS,BINS,NFRAMES,NBINS,NBINS,P_TEMP)
             DO K = 0,NBINS-1
                 DO L = 0,NBINS-1
                     IF (P_TEMP(L,K) > 0) THEN
@@ -1110,7 +1119,7 @@ MODULE MI_OMP
                     PJ(L,K,I) = 0.0
                 END DO
             END DO 
-            CALL PROBDEF2D(D_TEMP2,D_TEMP1,NFRAMES,NBINSY,NBINSX,P_TEMP,BINSX,BINSY)
+            CALL PROBDEF2D(D_TEMP2,D_TEMP1,BINSX,BINSY,NFRAMES,NBINSY,NBINSX,P_TEMP)
             DO K = 0,NBINSX-1
                 DO L = 0,NBINSY-1
                     PJ(L,K,I) = P_TEMP(L,K)
@@ -1161,7 +1170,7 @@ MODULE MI_OMP
                     PJ(L,K,I) = 0.0
                 END DO
             END DO 
-            CALL PROBDEF2D(D_TEMP2,D_TEMP1,NFRAMES,NBINSY,NBINSX,P_TEMP,BINSX,BINSY)
+            CALL PROBDEF2D(D_TEMP2,D_TEMP1,BINSX,BINSY,NFRAMES,NBINSY,NBINSX,P_TEMP)
             DO K = 0,NBINSX-1
                 DO L = 0,NBINSY-1
                     PJ(L,K,I) = P_TEMP(L,K)
@@ -1204,7 +1213,7 @@ MODULE MI_OMP
         DO J = I+1,NREP-1
             EJ(J,I) = 0.0
             D_TEMP2(0:NFRAMES-1) = (/ (D(K,J), K = 0,NFRAMES-1) /)
-            CALL PROBDEF2D(D_TEMP2,D_TEMP1,NFRAMES,NBINS,NBINS,P_TEMP,BINS,BINS)
+            CALL PROBDEF2D(D_TEMP2,D_TEMP1,BINS,BINS,NFRAMES,NBINS,NBINS,P_TEMP)
             DO K = 0,NBINS-1
                 DO L = 0,NBINS-1
                     IF (P_TEMP(L,K) > 0) THEN
@@ -1259,7 +1268,7 @@ MODULE MI_OMP
         DO J = I+1,NREP-1
             EJ(J,I) = 0.0
             D_TEMP2(0:NFRAMES-1) = (/ (D(K,J), K = 0,NFRAMES-1) /)
-            CALL PROBDEF2D(D_TEMP2,D_TEMP1,NFRAMES,NBINS,NBINS,P_TEMP,BINS,BINS)
+            CALL PROBDEF2D(D_TEMP2,D_TEMP1,BINS,BINS,NFRAMES,NBINS,NBINS,P_TEMP)
             DO K = 0,NBINS-1
                 DO L = 0,NBINS-1
                     IF (P_TEMP(L,K) > 0) THEN
@@ -1307,7 +1316,7 @@ MODULE MI_OMP
         DO J = 0,NREP2-1
             EJ(J,I) = 0.0
             D_TEMP2(0:NFRAMES-1) = (/ (D2(K,J), K = 0,NFRAMES-1) /)
-            CALL PROBDEF2D(D_TEMP2,D_TEMP1,NFRAMES,NBINS2,NBINS1,P_TEMP,BINS2,BINS1)
+            CALL PROBDEF2D(D_TEMP2,D_TEMP1,BINS2,BINS1,NFRAMES,NBINS2,NBINS1,P_TEMP)
             DO K = 0,NBINS1-1
                 DO L = 0,NBINS2-1
                     IF (P_TEMP(L,K) > 0) THEN
@@ -1350,7 +1359,7 @@ MODULE MI_OMP
         DO J = 0,NREP2-1
             EJ(J,I) = 0.0
             D_TEMP2(0:NFRAMES-1) = (/ (D2(K,J), K = 0,NFRAMES-1) /)
-            CALL PROBDEF2D(D_TEMP2,D_TEMP1,NFRAMES,NBINS2,NBINS1,P_TEMP,BINS2,BINS1)
+            CALL PROBDEF2D(D_TEMP2,D_TEMP1,BINS2,BINS1,NFRAMES,NBINS2,NBINS1,P_TEMP)
             DO K = 0,NBINS1-1
                 DO L = 0,NBINS2-1
                     IF (P_TEMP(L,K) > 0) THEN
@@ -1393,7 +1402,7 @@ MODULE MI_OMP
         DO J = 0,NREP2-1
             EJ(J,I) = 0.0
             D_TEMP2(0:NFRAMES-1) = (/ (D2(K,J), K = 0,NFRAMES-1) /)
-            CALL PROBDEF2D(D_TEMP2,D_TEMP1,NFRAMES,NBINS2,NBINS1,P_TEMP,BINS2,BINS1)
+            CALL PROBDEF2D(D_TEMP2,D_TEMP1,BINS2,BINS1,NFRAMES,NBINS2,NBINS1,P_TEMP)
             DO K = 0,NBINS1-1
                 DO L = 0,NBINS2-1
                     IF (P_TEMP(L,K) > 0) THEN
@@ -1436,7 +1445,7 @@ MODULE MI_OMP
         DO J = 0,NREP2-1
             EJ(J,I) = 0.0
             D_TEMP2(0:NFRAMES-1) = (/ (D2(K,J), K = 0,NFRAMES-1) /)
-            CALL PROBDEF2D(D_TEMP2,D_TEMP1,NFRAMES,NBINS2,NBINS1,P_TEMP,BINS2,BINS1)
+            CALL PROBDEF2D(D_TEMP2,D_TEMP1,BINS2,BINS1,NFRAMES,NBINS2,NBINS1,P_TEMP)
             DO K = 0,NBINS1-1
                 DO L = 0,NBINS2-1
                     IF (P_TEMP(L,K) > 0) THEN

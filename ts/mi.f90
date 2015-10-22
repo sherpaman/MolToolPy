@@ -620,140 +620,152 @@ MODULE MI
         
     END SUBROUTINE R_PROB2D
 
-    SUBROUTINE II_PROBDEF2D(D_X,D_Y,N,NBINS_X,NBINS_Y,PROB,BINS_X,BINS_Y)
+    SUBROUTINE II_PROBDEF2D(D_X,D_Y,BINS_X,BINS_Y,N,NBINS_X,NBINS_Y,PROB)
 
     IMPLICIT NONE
     
     INTEGER, DIMENSION(0:N-1)                       :: D_X, D_Y
-    INTEGER                                     :: N
-    INTEGER                                     :: NBINS_X, NBINS_Y
-    REAL, DIMENSION(0:NBINS_X-1,0:NBINS_Y-1)    :: PROB
-    REAL, DIMENSION(0:NBINS_X)                :: BINS_X
-    REAL, DIMENSION(0:NBINS_Y)                :: BINS_Y
+        INTEGER, INTENT(IN)                                :: N
+    INTEGER, INTENT(IN)                                    :: NBINS_X, NBINS_Y
+    REAL, DIMENSION(0:NBINS_X-1,0:NBINS_Y-1) ,INTENT(OUT)  :: PROB
+    REAL, DIMENSION(0:NBINS_X), INTENT(IN)                 :: BINS_X
+    REAL, DIMENSION(0:NBINS_Y), INTENT(IN)                 :: BINS_Y
     
-    INTEGER               :: I, J, X, Y
-    REAL                  :: MIN_D_X, MIN_D_Y, MAX_D_X, MAX_D_Y
-    REAL                  :: BIN_DELTA_X, BIN_DELTA_Y
+    INTEGER               :: I, J, K, X, Y
+    REAL                  :: P 
     
-    MIN_D_X = BINS_X(0)
-    MAX_D_X = BINS_X(NBINS_X)
-    MIN_D_Y = BINS_Y(0)
-    MAX_D_Y = BINS_Y(NBINS_Y)
-        
-    BIN_DELTA_X = ( MAX_D_X - MIN_D_X ) / NBINS_X
-    BIN_DELTA_Y = ( MAX_D_Y - MIN_D_Y ) / NBINS_Y
-
+    P = 1.0 / N
+    
     FORALL(I=0:NBINS_X-1, J=0:NBINS_Y-1) PROB(I,J)=0.0
     DO I=0,N-1
-        X = MIN(INT((D_X(I) - MIN_D_X) / BIN_DELTA_X),NBINS_X-1)
-        Y = MIN(INT((D_Y(I) - MIN_D_Y) / BIN_DELTA_Y),NBINS_Y-1)
-        PROB(X,Y) = PROB(X,Y) + 1.0 / N
+        X = NBINS_X-1
+        Y = NBINS_Y-1
+        DO K=1,NBINS_X-1
+            IF ( BINS_X(K) > D_X(I) )  THEN
+                X = K - 1
+                EXIT
+            END IF
+        END DO
+        DO K=1,NBINS_Y-1
+            IF ( BINS_Y(K) > D_Y(I) ) THEN
+                Y = K - 1
+                EXIT
+            END IF
+        END DO
+        PROB(X,Y) = PROB(X,Y) + P
     END DO
-    
-    RETURN
     
     END SUBROUTINE II_PROBDEF2D
     
-    SUBROUTINE RR_PROBDEF2D(D_X,D_Y,N,NBINS_X,NBINS_Y,PROB,BINS_X,BINS_Y)
+    SUBROUTINE RR_PROBDEF2D(D_X,D_Y,BINS_X,BINS_Y,N,NBINS_X,NBINS_Y,PROB)
     IMPLICIT NONE
     
-    REAL, DIMENSION(0:N-1)                          :: D_X, D_Y
-    INTEGER                                     :: N
-    INTEGER                                     :: NBINS_X, NBINS_Y
-    REAL, DIMENSION(0:NBINS_X-1,0:NBINS_Y-1)          :: PROB
-    REAL, DIMENSION(0:NBINS_X)                :: BINS_X
-    REAL, DIMENSION(0:NBINS_Y)                :: BINS_Y
+    REAL, DIMENSION(0:N-1)                                 :: D_X, D_Y
+    INTEGER, INTENT(IN)                                    :: N
+    INTEGER, INTENT(IN)                                    :: NBINS_X, NBINS_Y
+    REAL, DIMENSION(0:NBINS_X-1,0:NBINS_Y-1) ,INTENT(OUT)  :: PROB
+    REAL, DIMENSION(0:NBINS_X), INTENT(IN)                 :: BINS_X
+    REAL, DIMENSION(0:NBINS_Y), INTENT(IN)                 :: BINS_Y
     
-    INTEGER               :: I, J, X, Y
-    REAL                  :: MIN_D_X, MIN_D_Y, MAX_D_X, MAX_D_Y
-    REAL                  :: BIN_DELTA_X, BIN_DELTA_Y
+    INTEGER               :: I, J, K, X, Y
+    REAL                  :: P 
     
-    MIN_D_X = BINS_X(0)
-    MAX_D_X = BINS_X(NBINS_X)
-    MIN_D_Y = BINS_Y(0)
-    MAX_D_Y = BINS_Y(NBINS_Y)
-        
-    BIN_DELTA_X = ( MAX_D_X - MIN_D_X ) / NBINS_X
-    BIN_DELTA_Y = ( MAX_D_Y - MIN_D_Y ) / NBINS_Y
+    P = 1.0 / N
     
-    FORALL(I=0:NBINS_X-1, J=0:NBINS_Y-1) PROB(J,I)=0.0
-    DO I=1,N
-        X = MIN(INT((D_X(I) - MIN_D_X) / BIN_DELTA_X),NBINS_X-1)
-        Y = MIN(INT((D_Y(I) - MIN_D_Y) / BIN_DELTA_Y),NBINS_Y-1)
-        PROB(X,Y) = PROB(X,Y) + 1.0 / N
+    FORALL(I=0:NBINS_X-1, J=0:NBINS_Y-1) PROB(I,J)=0.0
+    DO I=0,N-1
+        X = NBINS_X-1
+        Y = NBINS_Y-1
+        DO K=1,NBINS_X-1
+            IF ( BINS_X(K) > D_X(I) )  THEN
+                X = K - 1
+                EXIT
+            END IF
+        END DO
+        DO K=1,NBINS_Y-1
+            IF ( BINS_Y(K) > D_Y(I) ) THEN
+                Y = K - 1
+                EXIT
+            END IF
+        END DO
+        PROB(X,Y) = PROB(X,Y) + P
     END DO
-
-    RETURN
     
     END SUBROUTINE RR_PROBDEF2D
     
-    SUBROUTINE RI_PROBDEF2D(D_X,D_Y,N,NBINS_X,NBINS_Y,PROB,BINS_X,BINS_Y)
+    SUBROUTINE RI_PROBDEF2D(D_X,D_Y,BINS_X,BINS_Y,N,NBINS_X,NBINS_Y,PROB)
 
     IMPLICIT NONE
     
     REAL,    DIMENSION(0:N-1)                       :: D_X
     INTEGER, DIMENSION(0:N-1)                       :: D_Y
-    INTEGER                                     :: N
-    INTEGER                                     :: NBINS_X, NBINS_Y
-    REAL, DIMENSION(0:NBINS_X-1,0:NBINS_Y-1)          :: PROB
-    REAL, DIMENSION(0:NBINS_X)                :: BINS_X
-    REAL, DIMENSION(0:NBINS_Y)                :: BINS_Y
+    INTEGER, INTENT(IN)                                    :: N
+    INTEGER, INTENT(IN)                                    :: NBINS_X, NBINS_Y
+    REAL, DIMENSION(0:NBINS_X-1,0:NBINS_Y-1) ,INTENT(OUT)  :: PROB
+    REAL, DIMENSION(0:NBINS_X), INTENT(IN)                 :: BINS_X
+    REAL, DIMENSION(0:NBINS_Y), INTENT(IN)                 :: BINS_Y
     
-    INTEGER               :: I, J, X, Y
-    REAL                  :: MIN_D_X, MIN_D_Y, MAX_D_X, MAX_D_Y
-    REAL                  :: BIN_DELTA_X, BIN_DELTA_Y
+    INTEGER               :: I, J, K, X, Y
+    REAL                  :: P 
     
-    MIN_D_X = BINS_X(0)
-    MAX_D_X = BINS_X(NBINS_X)
-    MIN_D_Y = BINS_Y(0)
-    MAX_D_Y = BINS_Y(NBINS_Y)
-        
-    BIN_DELTA_X = ( MAX_D_X - MIN_D_X ) / NBINS_X
-    BIN_DELTA_Y = ( MAX_D_Y - MIN_D_Y ) / NBINS_Y
+    P = 1.0 / N
     
     FORALL(I=0:NBINS_X-1, J=0:NBINS_Y-1) PROB(I,J)=0.0
     DO I=0,N-1
-        X = MIN(INT((D_X(I) - MIN_D_X) / BIN_DELTA_X),NBINS_X-1)
-        Y = MIN(INT((D_Y(I) - MIN_D_Y) / BIN_DELTA_Y),NBINS_Y-1)
-        PROB(X,Y) = PROB(X,Y) + 1.0 / N
+        X = NBINS_X-1
+        Y = NBINS_Y-1
+        DO K=1,NBINS_X-1
+            IF ( BINS_X(K) > D_X(I) )  THEN
+                X = K - 1
+                EXIT
+            END IF
+        END DO
+        DO K=1,NBINS_Y-1
+            IF ( BINS_Y(K) > D_Y(I) ) THEN
+                Y = K - 1
+                EXIT
+            END IF
+        END DO
+        PROB(X,Y) = PROB(X,Y) + P
     END DO
-    
-    RETURN
     
     END SUBROUTINE RI_PROBDEF2D
     
-    SUBROUTINE IR_PROBDEF2D(D_X,D_Y,N,NBINS_X,NBINS_Y,PROB,BINS_X,BINS_Y)
+    SUBROUTINE IR_PROBDEF2D(D_X,D_Y,BINS_X,BINS_Y,N,NBINS_X,NBINS_Y,PROB)
 
     IMPLICIT NONE
     
     INTEGER, DIMENSION(0:N-1)                       :: D_X
     REAL,    DIMENSION(0:N-1)                       :: D_Y
-    INTEGER                                     :: N
-    INTEGER                                     :: NBINS_X, NBINS_Y
-    REAL, DIMENSION(0:NBINS_X-1,0:NBINS_Y-1)          :: PROB
-    REAL, DIMENSION(0:NBINS_X)                :: BINS_X
-    REAL, DIMENSION(0:NBINS_Y)                :: BINS_Y
+    INTEGER, INTENT(IN)                                    :: N
+    INTEGER, INTENT(IN)                                    :: NBINS_X, NBINS_Y
+    REAL, DIMENSION(0:NBINS_X-1,0:NBINS_Y-1) ,INTENT(OUT)  :: PROB
+    REAL, DIMENSION(0:NBINS_X), INTENT(IN)                 :: BINS_X
+    REAL, DIMENSION(0:NBINS_Y), INTENT(IN)                 :: BINS_Y
     
-    INTEGER               :: I, J, X, Y
-    REAL                  :: MIN_D_X, MIN_D_Y, MAX_D_X, MAX_D_Y
-    REAL                  :: BIN_DELTA_X, BIN_DELTA_Y
+    INTEGER               :: I, J, K, X, Y
+    REAL                  :: P 
     
-    MIN_D_X = BINS_X(0)
-    MAX_D_X = BINS_X(NBINS_X)
-    MIN_D_Y = BINS_Y(0)
-    MAX_D_Y = BINS_Y(NBINS_Y)
-        
-    BIN_DELTA_X = ( MAX_D_X - MIN_D_X ) / NBINS_X
-    BIN_DELTA_Y = ( MAX_D_Y - MIN_D_Y ) / NBINS_Y
+    P = 1.0 / N
     
     FORALL(I=0:NBINS_X-1, J=0:NBINS_Y-1) PROB(I,J)=0.0
     DO I=0,N-1
-        X = MIN(INT((D_X(I) - MIN_D_X) / BIN_DELTA_X),NBINS_X-1)
-        Y = MIN(INT((D_Y(I) - MIN_D_Y) / BIN_DELTA_Y),NBINS_Y-1)
-        PROB(X,Y) = PROB(X,Y) + 1.0 / N
+        X = NBINS_X-1
+        Y = NBINS_Y-1
+        DO K=1,NBINS_X-1
+            IF ( BINS_X(K) > D_X(I) )  THEN
+                X = K - 1
+                EXIT
+            END IF
+        END DO
+        DO K=1,NBINS_Y-1
+            IF ( BINS_Y(K) > D_Y(I) ) THEN
+                Y = K - 1
+                EXIT
+            END IF
+        END DO
+        PROB(X,Y) = PROB(X,Y) + P
     END DO
-    
-    RETURN
     
     END SUBROUTINE IR_PROBDEF2D
     
@@ -790,7 +802,7 @@ MODULE MI
                 END DO
             END DO 
             D_TEMP2(0:NFRAMES-1) = (/ (D(K,J), K = 0,NFRAMES-1) /)
-            CALL PROBDEF2D(D_TEMP2,D_TEMP1,NFRAMES,NBINS,NBINS,P_TEMP,BINS,BINS)
+            CALL PROBDEF2D(D_TEMP2,D_TEMP1,BINS,BINS,NFRAMES,NBINS,NBINS,P_TEMP)
             DO K = 0,NBINS-1
                 DO L = 0,NBINS-1
                     PJ(L,K,J,I) = P_TEMP(L,K)
@@ -844,7 +856,7 @@ MODULE MI
                 END DO
             END DO 
             D_TEMP2(0:NFRAMES-1) = (/ (D(K,J), K = 0,NFRAMES-1) /)
-            CALL PROBDEF2D(D_TEMP2,D_TEMP1,NFRAMES,NBINS,NBINS,P_TEMP,BINS,BINS)
+            CALL PROBDEF2D(D_TEMP2,D_TEMP1,BINS,BINS,NFRAMES,NBINS,NBINS,P_TEMP)
             DO K = 0,NBINS-1
                 DO L = 0,NBINS-1
                     
@@ -900,7 +912,7 @@ MODULE MI
                 END DO
             END DO 
             D_TEMP2(0:NFRAMES-1) = (/ (D2(K,J), K = 0,NFRAMES-1) /)
-            CALL PROBDEF2D(D_TEMP2,D_TEMP1,NFRAMES,NBINS2,NBINS1,P_TEMP,BINS2,BINS1)
+            CALL PROBDEF2D(D_TEMP2,D_TEMP1,BINS2,BINS1,NFRAMES,NBINS2,NBINS1,P_TEMP)
             DO K = 0,NBINS1-1
                 DO L = 0,NBINS2-1
                     PJ(L,K,J,I) = P_TEMP(L,K)
@@ -951,7 +963,7 @@ MODULE MI
                 END DO
             END DO 
             D_TEMP2(0:NFRAMES-1) = (/ (D2(K,J), K = 0,NFRAMES-1) /)
-            CALL PROBDEF2D(D_TEMP2,D_TEMP1,NFRAMES,NBINS2,NBINS1,P_TEMP,BINS2,BINS1)
+            CALL PROBDEF2D(D_TEMP2,D_TEMP1,BINS2,BINS1,NFRAMES,NBINS2,NBINS1,P_TEMP)
             DO K = 0,NBINS1-1
                 DO L = 0,NBINS2-1
                     PJ(L,K,J,I) = P_TEMP(L,K)
@@ -968,7 +980,7 @@ MODULE MI
     
     END SUBROUTINE I_MUTUALINFO_OTHER_PROB
 
-    SUBROUTINE I_MUTUALINFO_SIMP(D,E1,BINS,NFRAMES,NREP,NBINS,NREP1,M,EJ)
+    SUBROUTINE I_MUTUALINFO_SIMP(D,E1,BINS,NFRAMES,NREP,NBINS,NREP1,M,EJ,PJ)
 
     INTEGER, INTENT(IN)                                  :: NREP1
     INTEGER, INTENT(IN)                                  :: NBINS
@@ -986,19 +998,30 @@ MODULE MI
     
     REAL, INTENT(OUT), DIMENSION(0:NREP-1)                     :: M
     REAL, INTENT(OUT), DIMENSION(0:NREP-1)                     :: EJ
+    REAL, INTENT(OUT), DIMENSION(0:NBINS-1,0:NBINS-1,0:NREP-1) :: PJ
 
     D_TEMP1(0:NFRAMES-1) = (/ (D(K,NREP1), K=0,NFRAMES-1) /)
     EJ(NREP1) = E1(NREP1)
     M(NREP1)  = E1(NREP1)
-    
+
+    !$OMP PARALLEL DO &
+    !$OMP PRIVATE(D_TEMP2,P_TEMP,I,J,L,K) &
+    !$OMP SHARED(D_TEMP1,E1,EJ,M,NFRAMES,NBINSX,NBINSY,BINSX,BINSY) 
     DO I = 0,NREP-1
         !WRITE(*,'(A,I3)') "    REP :",I+1
         IF (I /= NREP1) THEN
             D_TEMP2(0:NFRAMES-1) = (/ (D(K,I), K=0,NFRAMES-1) /)
             EJ(I) = 0.0
-            CALL PROBDEF2D(D_TEMP2,D_TEMP1,NFRAMES,NBINS,NBINS,P_TEMP,BINS,BINS)
             DO K = 0,NBINS-1
                 DO L = 0,NBINS-1
+                    !WRITE(*,'(A,2I3)') "INITIALIZING :",L,K
+                    PJ(L,K,I) = 0.0
+                END DO
+            END DO 
+            CALL PROBDEF2D(D_TEMP2,D_TEMP1,BINS,BINS,NFRAMES,NBINS,NBINS,P_TEMP)
+            DO K = 0,NBINS-1
+                DO L = 0,NBINS-1
+                    PJ(L,K,I) = P_TEMP(L,K)
                     IF (P_TEMP(L,K) > 0) THEN
                         EJ(I) = EJ(I) - P_TEMP(L,K) * LOG(P_TEMP(L,K))
                     END IF
@@ -1007,7 +1030,8 @@ MODULE MI
             M(I) = E1(I) + E1(NREP1) - EJ(I)
         END IF
     END DO
-    
+    !$OMP END PARALLEL DO
+        
     END SUBROUTINE I_MUTUALINFO_SIMP
     
     SUBROUTINE R_MUTUALINFO_SIMP(D,E1,BINS,NREP1,NFRAMES,NREP,NBINS,M,EJ)
@@ -1033,12 +1057,15 @@ MODULE MI
     EJ(NREP1) = E1(NREP1)
     M(NREP1)  = E1(NREP1)
     
+    !$OMP PARALLEL DO &
+    !$OMP PRIVATE(D_TEMP2,P_TEMP,I,J,L,K) &
+    !$OMP SHARED(D_TEMP1,E1,EJ,M,NFRAMES,NBINSX,NBINSY,BINSX,BINSY)  
     DO I = 0,NREP-1
         !WRITE(*,'(A,I3)') "    REP :",I+1
         IF (I /= NREP1) THEN
             D_TEMP2(0:NFRAMES-1) = (/ (D(K,I), K=0,NFRAMES-1) /)
             EJ(I) = 0.0
-            CALL PROBDEF2D(D_TEMP2,D_TEMP1,NFRAMES,NBINS,NBINS,P_TEMP,BINS,BINS)
+            CALL PROBDEF2D(D_TEMP2,D_TEMP1,BINS,BINS,NFRAMES,NBINS,NBINS,P_TEMP)
             DO K = 0,NBINS-1
                 DO L = 0,NBINS-1
                     IF (P_TEMP(L,K) > 0) THEN
@@ -1049,7 +1076,8 @@ MODULE MI
             M(I) = E1(I) + E1(NREP1) - EJ(I)
         END IF
     END DO
-    
+    !$OMP END PARALLEL DO
+        
     END SUBROUTINE R_MUTUALINFO_SIMP
 
     SUBROUTINE I_MUTUALINFO2_SIMP(D,E1,BINSX,BINSY,NFRAMES,NREP,NBINSX,NBINSY,NREP1,M,EJ,PJ)
@@ -1066,7 +1094,7 @@ MODULE MI
     
     REAL, DIMENSION(0:NFRAMES-1)                     :: D_TEMP1
     REAL, DIMENSION(0:NFRAMES-1)                     :: D_TEMP2
-    REAL, DIMENSION(0:NBINSY-1,0:NBINSX-1)             :: P_TEMP
+    REAL, DIMENSION(0:NBINSY-1,0:NBINSX-1)           :: P_TEMP
     INTEGER                                          :: I, K, L
     
     REAL, INTENT(OUT), DIMENSION(0:NREP-1)                     :: M
@@ -1076,7 +1104,7 @@ MODULE MI
     D_TEMP1(0:NFRAMES-1) = (/ (D(K,NREP1), K=0,NFRAMES-1) /)
     EJ(NREP1) = E1(NREP1)
     M(NREP1)  = E1(NREP1)
-    
+  
     DO I = 0,NREP-1
         !WRITE(*,'(A,I3)') "    REP :",I+1
         IF (I /= NREP1) THEN
@@ -1088,7 +1116,7 @@ MODULE MI
                     PJ(L,K,I) = 0.0
                 END DO
             END DO 
-            CALL PROBDEF2D(D_TEMP2,D_TEMP1,NFRAMES,NBINSY,NBINSX,P_TEMP,BINSX,BINSY)
+            CALL PROBDEF2D(D_TEMP2,D_TEMP1,BINSX,BINSY,NFRAMES,NBINSY,NBINSX,P_TEMP)
             DO K = 0,NBINSX-1
                 DO L = 0,NBINSY-1
                     PJ(L,K,I) = P_TEMP(L,K)
@@ -1139,7 +1167,7 @@ MODULE MI
                     PJ(L,K,I) = 0.0
                 END DO
             END DO 
-            CALL PROBDEF2D(D_TEMP2,D_TEMP1,NFRAMES,NBINSY,NBINSX,P_TEMP,BINSX,BINSY)
+            CALL PROBDEF2D(D_TEMP2,D_TEMP1,BINSX,BINSY,NFRAMES,NBINSY,NBINSX,P_TEMP)
             DO K = 0,NBINSX-1
                 DO L = 0,NBINSY-1
                     PJ(L,K,I) = P_TEMP(L,K)
@@ -1163,14 +1191,18 @@ MODULE MI
     REAL, INTENT(IN), DIMENSION(0:NREP-1)              :: E1
     REAL, INTENT(IN), DIMENSION(0:NBINS)               :: BINS
     
-    REAL, DIMENSION(0:NFRAMES-1)                     :: D_TEMP1
-    REAL, DIMENSION(0:NFRAMES-1)                     :: D_TEMP2
-    REAL, DIMENSION(0:NBINS-1,0:NBINS-1)             :: P_TEMP
-    INTEGER                                           :: I, J, K
+    REAL, DIMENSION(0:NFRAMES-1)                       :: D_TEMP1
+    REAL, DIMENSION(0:NFRAMES-1)                       :: D_TEMP2
+    REAL, DIMENSION(0:NBINS-1,0:NBINS-1)               :: P_TEMP
+    INTEGER                                            :: I, J, K
     
-    REAL, INTENT(OUT), DIMENSION(0:NREP-1,0:NREP-1)                     :: M
-    REAL, INTENT(OUT), DIMENSION(0:NREP-1,0:NREP-1)                     :: EJ
+    REAL, INTENT(OUT), DIMENSION(0:NREP-1,0:NREP-1)    :: M
+    REAL, INTENT(OUT), DIMENSION(0:NREP-1,0:NREP-1)    :: EJ
 
+    CALL OMP_SET_NUM_THREADS(8)
+    !$OMP PARALLEL DO &
+    !$OMP PRIVATE(D_TEMP1,D_TEMP2,P_TEMP,I,J,L,K) &
+    !$OMP SHARED(D,E1,EJ,M,NFRAMES,NBINS,BINS)
     DO I = 0,NREP-2
         EJ(I,I) = E1(I)
         M(I,I)  = E1(I)
@@ -1178,7 +1210,7 @@ MODULE MI
         DO J = I+1,NREP-1
             EJ(J,I) = 0.0
             D_TEMP2(0:NFRAMES-1) = (/ (D(K,J), K = 0,NFRAMES-1) /)
-            CALL PROBDEF2D(D_TEMP2,D_TEMP1,NFRAMES,NBINS,NBINS,P_TEMP,BINS,BINS)
+            CALL PROBDEF2D(D_TEMP2,D_TEMP1,BINS,BINS,NFRAMES,NBINS,NBINS,P_TEMP)
             DO K = 0,NBINS-1
                 DO L = 0,NBINS-1
                     IF (P_TEMP(L,K) > 0) THEN
@@ -1191,6 +1223,8 @@ MODULE MI
             M(I,J)  = M(J,I)
         END DO
     END DO
+    !$OMP END PARALLEL DO
+    
     EJ(NREP-1,NREP-1) = E1(NREP-1)
     M(NREP-1,NREP-1)  = E1(NREP-1)
     
@@ -1205,13 +1239,13 @@ MODULE MI
     REAL, INTENT(IN), DIMENSION(0:NREP-1)                :: E1
     REAL, INTENT(IN), DIMENSION(0:NBINS)                 :: BINS
     
-    INTEGER, DIMENSION(0:NFRAMES-1)                     :: D_TEMP1
-    INTEGER, DIMENSION(0:NFRAMES-1)                     :: D_TEMP2
-    REAL, DIMENSION(0:NBINS-1,0:NBINS-1)                :: P_TEMP
-    INTEGER                                             :: I, J, K, L
+    INTEGER, DIMENSION(0:NFRAMES-1)                      :: D_TEMP1
+    INTEGER, DIMENSION(0:NFRAMES-1)                      :: D_TEMP2
+    REAL, DIMENSION(0:NBINS-1,0:NBINS-1)                 :: P_TEMP
+    INTEGER                                              :: I, J, K, L
     
-    REAL, INTENT(OUT), DIMENSION(0:NREP-1,0:NREP-1)     :: M
-    REAL, INTENT(OUT), DIMENSION(0:NREP-1,0:NREP-1)     :: EJ
+    REAL, INTENT(OUT), DIMENSION(0:NREP-1,0:NREP-1)      :: M
+    REAL, INTENT(OUT), DIMENSION(0:NREP-1,0:NREP-1)      :: EJ
 
     WRITE(*,'(A)')    "SUBROUTINE I_MUTUALINFO"
     WRITE(*,'(A,I10)') " NREP  : " , NREP
@@ -1220,16 +1254,18 @@ MODULE MI
     WRITE(*,'(A,I4,A,I4)') " D: ", SIZE(D,1), "x", SIZE(D,2)
     WRITE(*,'(A,I4,A,I4)') " E: ", SIZE(E1,1)
 
+    CALL OMP_SET_NUM_THREADS(8)
+    !$OMP PARALLEL DO &
+    !$OMP PRIVATE(D_TEMP1,D_TEMP2,P_TEMP,I,J,L,K) &
+    !$OMP SHARED(D,E1,EJ,M,NFRAMES,NBINS,BINS)
     DO I = 0,NREP-2
-        WRITE(*,'(A,I10)') " I : " , I
         EJ(I,I) = E1(I)
         M(I,I)  = E1(I)
         D_TEMP1(0:NFRAMES-1) = (/ (D(K,I), K=0,NFRAMES-1) /)
         DO J = I+1,NREP-1
-            WRITE(*,'(A,I10)') " J : " , J
             EJ(J,I) = 0.0
             D_TEMP2(0:NFRAMES-1) = (/ (D(K,J), K = 0,NFRAMES-1) /)
-            CALL PROBDEF2D(D_TEMP2,D_TEMP1,NFRAMES,NBINS,NBINS,P_TEMP,BINS,BINS)
+            CALL PROBDEF2D(D_TEMP2,D_TEMP1,BINS,BINS,NFRAMES,NBINS,NBINS,P_TEMP)
             DO K = 0,NBINS-1
                 DO L = 0,NBINS-1
                     IF (P_TEMP(L,K) > 0) THEN
@@ -1242,11 +1278,13 @@ MODULE MI
             M(I,J)  = M(J,I)
         END DO
     END DO
+    !$OMP END PARALLEL DO
+    
     EJ(NREP-1,NREP-1) = E1(NREP-1)
     M(NREP-1,NREP-1)  = E1(NREP-1)
     
     END SUBROUTINE I_MUTUALINFO
-       
+        
     SUBROUTINE R_MUTUALINFO_OTHER(D1,D2,E1,E2,BINS1,BINS2,NFRAMES,NREP1,NREP2,NBINS1,NBINS2,M,EJ)
 
     INTEGER, INTENT(IN)                                   :: NBINS1,NBINS2
@@ -1266,13 +1304,16 @@ MODULE MI
     
     REAL, INTENT(OUT), DIMENSION(0:NREP2-1,0:NREP1-1)                       :: M
     REAL, INTENT(OUT), DIMENSION(0:NREP2-1,0:NREP1-1)                       :: EJ
-
+    
+    !$OMP PARALLEL DO &
+    !$OMP PRIVATE(D_TEMP1,D_TEMP2,P_TEMP,I,J,L,K) &
+    !$OMP SHARED(D1,D2,E1,E2,EJ,M,NFRAMES,NBINS1,NBINS2,BINS1,BINS2)
     DO I = 0,NREP1-1
         D_TEMP1(0:NFRAMES-1) = (/ (D1(K,I), K=0,NFRAMES-1) /)
         DO J = 0,NREP2-1
             EJ(J,I) = 0.0
             D_TEMP2(0:NFRAMES-1) = (/ (D2(K,J), K = 0,NFRAMES-1) /)
-            CALL PROBDEF2D(D_TEMP2,D_TEMP1,NFRAMES,NBINS2,NBINS1,P_TEMP,BINS2,BINS1)
+            CALL PROBDEF2D(D_TEMP2,D_TEMP1,BINS2,BINS1,NFRAMES,NBINS2,NBINS1,P_TEMP)
             DO K = 0,NBINS1-1
                 DO L = 0,NBINS2-1
                     IF (P_TEMP(L,K) > 0) THEN
@@ -1283,7 +1324,8 @@ MODULE MI
             M(J,I) = E1(I) + E2(J) - EJ(J,I)
         END DO
     END DO
-    
+    !$OMP END PARALLEL DO  
+     
     END SUBROUTINE R_MUTUALINFO_OTHER
 
     SUBROUTINE I_MUTUALINFO_OTHER(D1,D2,E1,E2,BINS1,BINS2,NFRAMES,NREP1,NREP2,NBINS1,NBINS2,M,EJ)
@@ -1306,12 +1348,15 @@ MODULE MI
     REAL, INTENT(OUT), DIMENSION(0:NREP2-1,0:NREP1-1)                       :: M
     REAL, INTENT(OUT), DIMENSION(0:NREP2-1,0:NREP1-1)                       :: EJ
 
+    !$OMP PARALLEL DO &
+    !$OMP PRIVATE(D_TEMP1,D_TEMP2,P_TEMP,I,J,L,K) &
+    !$OMP SHARED(D1,D2,E1,E2,EJ,M,NFRAMES,NBINS1,NBINS2,BINS1,BINS2)
     DO I = 0,NREP1-1
         D_TEMP1(0:NFRAMES-1) = (/ (D1(K,I), K=0,NFRAMES-1) /)
         DO J = 0,NREP2-1
             EJ(J,I) = 0.0
             D_TEMP2(0:NFRAMES-1) = (/ (D2(K,J), K = 0,NFRAMES-1) /)
-            CALL PROBDEF2D(D_TEMP2,D_TEMP1,NFRAMES,NBINS2,NBINS1,P_TEMP,BINS2,BINS1)
+            CALL PROBDEF2D(D_TEMP2,D_TEMP1,BINS2,BINS1,NFRAMES,NBINS2,NBINS1,P_TEMP)
             DO K = 0,NBINS1-1
                 DO L = 0,NBINS2-1
                     IF (P_TEMP(L,K) > 0) THEN
@@ -1322,6 +1367,7 @@ MODULE MI
             M(J,I) = E1(I) + E2(J) - EJ(J,I)
         END DO
     END DO
+    !$OMP END PARALLEL DO
     
     END SUBROUTINE I_MUTUALINFO_OTHER
     
@@ -1345,12 +1391,15 @@ MODULE MI
     REAL, INTENT(OUT), DIMENSION(0:NREP2-1,0:NREP1-1)                       :: M
     REAL, INTENT(OUT), DIMENSION(0:NREP2-1,0:NREP1-1)                       :: EJ
 
+    !$OMP PARALLEL DO &
+    !$OMP PRIVATE(D_TEMP1,D_TEMP2,P_TEMP,I,J,L,K) &
+    !$OMP SHARED(D1,D2,E1,E2,EJ,M,NFRAMES,NBINS1,NBINS2,BINS1,BINS2)
     DO I = 0,NREP1-1
         D_TEMP1(0:NFRAMES-1) = (/ (D1(K,I), K=0,NFRAMES-1) /)
         DO J = 0,NREP2-1
             EJ(J,I) = 0.0
             D_TEMP2(0:NFRAMES-1) = (/ (D2(K,J), K = 0,NFRAMES-1) /)
-            CALL PROBDEF2D(D_TEMP2,D_TEMP1,NFRAMES,NBINS2,NBINS1,P_TEMP,BINS2,BINS1)
+            CALL PROBDEF2D(D_TEMP2,D_TEMP1,BINS2,BINS1,NFRAMES,NBINS2,NBINS1,P_TEMP)
             DO K = 0,NBINS1-1
                 DO L = 0,NBINS2-1
                     IF (P_TEMP(L,K) > 0) THEN
@@ -1361,6 +1410,7 @@ MODULE MI
             M(J,I) = E1(I) + E2(J) - EJ(J,I)
         END DO
     END DO
+    !$OMP END PARALLEL DO
     
     END SUBROUTINE IR_MUTUALINFO_OTHER
 
@@ -1384,12 +1434,15 @@ MODULE MI
     REAL, INTENT(OUT), DIMENSION(0:NREP2-1,0:NREP1-1)                       :: M
     REAL, INTENT(OUT), DIMENSION(0:NREP2-1,0:NREP1-1)                       :: EJ
 
+    !$OMP PARALLEL DO &
+    !$OMP PRIVATE(D_TEMP1,D_TEMP2,P_TEMP,I,J,L,K) &
+    !$OMP SHARED(D1,D2,E1,E2,EJ,M,NFRAMES,NBINS1,NBINS2,BINS1,BINS2)
     DO I = 0,NREP1-1
         D_TEMP1(0:NFRAMES-1) = (/ (D1(K,I), K=0,NFRAMES-1) /)
         DO J = 0,NREP2-1
             EJ(J,I) = 0.0
             D_TEMP2(0:NFRAMES-1) = (/ (D2(K,J), K = 0,NFRAMES-1) /)
-            CALL PROBDEF2D(D_TEMP2,D_TEMP1,NFRAMES,NBINS2,NBINS1,P_TEMP,BINS2,BINS1)
+            CALL PROBDEF2D(D_TEMP2,D_TEMP1,BINS2,BINS1,NFRAMES,NBINS2,NBINS1,P_TEMP)
             DO K = 0,NBINS1-1
                 DO L = 0,NBINS2-1
                     IF (P_TEMP(L,K) > 0) THEN
@@ -1400,6 +1453,7 @@ MODULE MI
             M(J,I) = E1(I) + E2(J) - EJ(J,I)
         END DO
     END DO
+    !$OMP END PARALLEL DO
     
     END SUBROUTINE RI_MUTUALINFO_OTHER
 
@@ -1419,19 +1473,19 @@ MODULE MI
     IF (ALLOCATED(OPT_BIN_TRAJ)) DEALLOCATE(OPT_BIN_TRAJ)
     ALLOCATE(OPT_BIN_TRAJ(0:NBINS))
     
-    OPT_BIN_TRAJ(0)         = D(I_BINS(1))
-    OPT_BIN_TRAJ(1:NBINS-1) = (/ ( ( D(I_BINS(I)) + D(I_BINS(I-1)) ) / 2.0 , I = 2,NBINS) /)
-    OPT_BIN_TRAJ(NBINS)     = D(I_BINS(NBINS))
+    OPT_BIN_TRAJ(0)         = D(I_BINS(0))
+    OPT_BIN_TRAJ(1:NBINS-1) = (/ ( ( D(I_BINS(I)) + D(I_BINS(I-1)) ) / 2.0 , I = 1,NBINS-1) /)
+    OPT_BIN_TRAJ(NBINS)     = D(I_BINS(NBINS-1))
     
     END FUNCTION OPT_BIN_TRAJ
 
     SUBROUTINE PROBDEF_TRAJ(D,BINS,N,NBINS,PROB)
     
-    INTEGER, DIMENSION(1:N),INTENT(IN)              :: D
+    INTEGER, DIMENSION(N),INTENT(IN)            :: D
     INTEGER, INTENT(IN)                             :: N
     INTEGER, INTENT(IN)                             :: NBINS
     REAL, DIMENSION(0:NBINS-1),INTENT(INOUT)        :: PROB
-    REAL, DIMENSION(0:NBINS),INTENT(IN)             :: BINS
+    REAL, DIMENSION(0:NBINS),INTENT(INOUT)          :: BINS
     
     INTEGER               :: I, K, X
     REAL                  :: P 
@@ -1456,7 +1510,7 @@ MODULE MI
 
     SUBROUTINE PROBDEF2D_TRAJ(D_X,D_Y,BINS_X,BINS_Y,N,NBINS_X,NBINS_Y,PROB)
     
-    INTEGER, DIMENSION(1:N),INTENT(IN)                     :: D_X, D_Y
+    INTEGER, DIMENSION(N),INTENT(IN)                   :: D_X, D_Y
     INTEGER, INTENT(IN)                                    :: N
     INTEGER, INTENT(IN)                                    :: NBINS_X, NBINS_Y
     REAL, DIMENSION(0:NBINS_X-1,0:NBINS_Y-1) ,INTENT(OUT)  :: PROB
@@ -1490,29 +1544,35 @@ MODULE MI
     RETURN
     
     END SUBROUTINE PROBDEF2D_TRAJ
-
+    
     SUBROUTINE ENTROPY_TRAJ(D,NFRAMES,NREP,E)
     
-    INTEGER, INTENT(IN)                                  :: NFRAMES
-    INTEGER, INTENT(IN)                                  :: NREP
-    INTEGER, DIMENSION(0:NFRAMES-1,0:NREP-1), INTENT(IN) :: D
-    REAL, DIMENSION(0:NREP-1), INTENT(OUT)               :: E
+    INTEGER, INTENT(IN)             :: NFRAMES
+    INTEGER, INTENT(IN)             :: NREP
+    INTEGER, INTENT(IN)             :: D(0:NFRAMES-1,0:NREP-1)
+    REAL, INTENT(OUT)               :: E(0:NREP-1)
     
-    REAL, DIMENSION(:), ALLOCATABLE          :: BINS
-    REAL, DIMENSION(:), ALLOCATABLE          :: P_TEMP
     INTEGER, DIMENSION(NFRAMES)          :: D_TEMP
     INTEGER, DIMENSION(NFRAMES)              :: I_BINS
     INTEGER                                  :: NBINS
     INTEGER                                  :: I, S1, S2
     INTEGER                                  :: K
     REAL                                     :: P
+    
+    REAL, DIMENSION(:), ALLOCATABLE          :: BINS
+    REAL, DIMENSION(:), ALLOCATABLE          :: P_TEMP
 
-    P = 1.0/NFRAMES
 
     WRITE(*,'(A)')     "SUBROUTINE ENTROPY_TRAJ_OMP "
     WRITE(*,'(A,I10)') " NREP  : " , NREP
     WRITE(*,'(A,I10)') " FRAMES: " , NFRAMES
-
+    
+    P = 1.0/NFRAMES
+      
+    CALL OMP_SET_NUM_THREADS(8)
+    !$OMP PARALLEL DO &
+    !$OMP PRIVATE(D_TEMP,BINS,P_TEMP,I_BINS,NBINS,K,S1,S2) &
+    !$OMP SHARED(D,E,NFRAMES,P)
     DO I = 0,NREP-1
         !WRITE(*,'(A,I10)') " I  : " , I
         D_TEMP(1:NFRAMES) = (/ (D(K,I), K=0,NFRAMES-1) /)
@@ -1534,21 +1594,24 @@ MODULE MI
 
         !WRITE(*,'(A,I10)')     "CALC PROB ", I
         CALL PROBDEF_TRAJ(D_TEMP,BINS,NFRAMES,NBINS,P_TEMP)
-        WRITE(*,'(A,I10)')     "CALC PROB DONE ", I
+        !WRITE(*,'(A,I10)')     "CALC PROB DONE ", I
         DO K = 0,NBINS-1
             IF (P_TEMP(K) > 0) THEN
                 E(I) = E(I) - P_TEMP(K) * LOG(P_TEMP(K))
             END IF
         END DO
+        !!$OMP CRITICAL
         !WRITE(*,'(A,I10)')     "DEALLOCATING ", I
         DEALLOCATE(P_TEMP, STAT=S2)
         !WRITE(*,'(A,2I10)')     "DEALLOCATING PROB DONE", I, S2
         DEALLOCATE(BINS, STAT=S1)
         !WRITE(*,'(A,2I10)')     "DEALLOCATING BIN  DONE", I, S1
+        !!$OMP END CRITICAL
     END DO
-
-    END SUBROUTINE ENTROPY_TRAJ
-
+    !$OMP END PARALLEL DO
+    
+    END SUBROUTINE ENTROPY_TRAJ    
+    
     SUBROUTINE MUTUALINFO_TRAJ(D,E1,NFRAMES,NREP,M,EJ)
 
     INTEGER, INTENT(IN)                                  :: NFRAMES
@@ -1556,31 +1619,33 @@ MODULE MI
     INTEGER, INTENT(IN), DIMENSION(0:NFRAMES-1,0:NREP-1) :: D
     REAL, INTENT(IN), DIMENSION(0:NREP-1)                :: E1
     
-    REAL, ALLOCATABLE                        :: BINS_X(:)
-    REAL, ALLOCATABLE                        :: BINS_Y(:)
-    REAL, ALLOCATABLE                        :: P_TEMP(:,:)
-    
-    INTEGER, DIMENSION(NFRAMES)              :: D_TEMP1
-    INTEGER, DIMENSION(NFRAMES)              :: D_TEMP2
+    REAL, DIMENSION(:), ALLOCATABLE          :: BINS_X
+    REAL, DIMENSION(:), ALLOCATABLE          :: BINS_Y
+    REAL, DIMENSION(:,:), ALLOCATABLE        :: P_TEMP
+    INTEGER, DIMENSION(NFRAMES)          :: D_TEMP1
+    INTEGER, DIMENSION(NFRAMES)          :: D_TEMP2
     INTEGER, DIMENSION(NFRAMES)              :: I_BINS_X
     INTEGER, DIMENSION(NFRAMES)              :: I_BINS_Y
+
     INTEGER                                  :: NBINS_X, NBINS_Y
     INTEGER                                  :: I, J, K, L
     
     REAL, INTENT(OUT), DIMENSION(0:NREP-1,0:NREP-1)      :: M
     REAL, INTENT(OUT), DIMENSION(0:NREP-1,0:NREP-1)      :: EJ
 
-    WRITE(*,'(A)')     "SUBROUTINE MUTUALINFO_TRAJ"
+    WRITE(*,'(A)')     "SUBROUTINE MUTUALINFO_TRAJ_OMP "
     WRITE(*,'(A,I10)') " NREP  : " , NREP
     WRITE(*,'(A,I10)') " FRAMES: " , NFRAMES
 
+    CALL OMP_SET_NUM_THREADS(8)
+    !$OMP PARALLEL DO &
+    !$OMP PRIVATE(D_TEMP1,D_TEMP2,P_TEMP,I,J,L,K,NBINS_X,NBINS_Y,BINS_X,BINS_Y,I_BINS_X,I_BINS_Y) &
+    !$OMP SHARED(D,E1,EJ,M,NFRAMES)
     DO I = 0,NREP-2
-        !WRITE(*,'(A,I10)') " I : " , I
         EJ(I,I) = E1(I)
         M(I,I)  = E1(I)
         D_TEMP1(1:NFRAMES) = (/ (D(K,I), K=0,NFRAMES-1) /)
         CALL UNIRNK(D_TEMP1,I_BINS_X,NBINS_X)
-        !WRITE(*,'(A,I10)') " NBINS_X : " , NBINS_X
         ALLOCATE(BINS_X(0:NBINS_X))
         BINS_X(0) = D_TEMP1(I_BINS_X(1))
         DO K = 2,NBINS_X
@@ -1588,11 +1653,9 @@ MODULE MI
         END DO
         BINS_X(NBINS_X) = D_TEMP1(I_BINS_X(NBINS_X)) 
         DO J = I+1,NREP-1
-            !WRITE(*,'(A,I10)') " J : " , J
             EJ(J,I) = 0.0
             D_TEMP2(1:NFRAMES) = (/ (D(K,J), K = 0,NFRAMES-1) /)
             CALL UNIRNK(D_TEMP2,I_BINS_Y,NBINS_Y)
-            !WRITE(*,'(A,I10)') " NBINS_Y : " , NBINS_Y
             ALLOCATE(BINS_Y(0:NBINS_Y))
             BINS_Y(0) = D_TEMP2(I_BINS_Y(1))
             DO K = 2,NBINS_Y
@@ -1615,15 +1678,15 @@ MODULE MI
             DEALLOCATE(P_TEMP)
         END DO
         DEALLOCATE(BINS_X)
-
     END DO
-    
+    !$OMP END PARALLEL DO
     EJ(NREP-1,NREP-1) = E1(NREP-1)
     M(NREP-1,NREP-1)  = E1(NREP-1)
     
     END SUBROUTINE MUTUALINFO_TRAJ
-
+    
     SUBROUTINE MUTUALINFO_OTHER_TRAJ(D1,D2,E1,E2,NFRAMES,NREP1,NREP2,M,EJ)
+    
     
     INTEGER, INTENT(IN)                                  :: NFRAMES
     INTEGER, INTENT(IN)                                  :: NREP1,NREP2
@@ -1632,16 +1695,16 @@ MODULE MI
     REAL, INTENT(IN), DIMENSION(0:NREP1-1)               :: E1
     REAL, INTENT(IN), DIMENSION(0:NREP2-1)               :: E2
     
-    INTEGER, DIMENSION(0:NFRAMES-1)   :: D_TEMP1
-    INTEGER, DIMENSION(0:NFRAMES-1)   :: D_TEMP2
-    INTEGER, DIMENSION(NFRAMES)       :: I_BINS1
-    INTEGER, DIMENSION(NFRAMES)       :: I_BINS2
-    INTEGER                           :: NBINS1,NBINS2
-    INTEGER                           :: I, J, K, L
+    INTEGER, DIMENSION(NFRAMES)                          :: D_TEMP1
+    INTEGER, DIMENSION(NFRAMES)                          :: D_TEMP2
+    INTEGER, DIMENSION(NFRAMES)                          :: I_BINS1
+    INTEGER, DIMENSION(NFRAMES)                          :: I_BINS2
+    INTEGER                                              :: NBINS1,NBINS2
     
     REAL, ALLOCATABLE                 :: BINS1(:)
     REAL, ALLOCATABLE                 :: BINS2(:)
     REAL, ALLOCATABLE                 :: P_TEMP(:,:)
+    INTEGER                           :: I, J, K, L
     
     REAL, INTENT(OUT), DIMENSION(0:NREP2-1,0:NREP1-1)    :: M
     REAL, INTENT(OUT), DIMENSION(0:NREP2-1,0:NREP1-1)    :: EJ
@@ -1650,11 +1713,13 @@ MODULE MI
     WRITE(*,'(A,2I10)') " NREP  : " , NREP1, NREP2
     WRITE(*,'(A,I10)')  " FRAMES: " , NFRAMES
 
+    CALL OMP_SET_NUM_THREADS(8)
+    !$OMP PARALLEL DO & 
+    !$OMP PRIVATE(D_TEMP1,D_TEMP2,P_TEMP,I,J,L,K,NBINS1,NBINS2,BINS1,BINS2,I_BINS1,I_BINS2) &
+    !$OMP SHARED(D,E1,EJ,M,NFRAMES)
     DO I = 0,NREP1-1
-        !WRITE(*,'(A,I10)') " I : " , I
-        D_TEMP1(0:NFRAMES-1) = (/ (D1(K,I), K=0,NFRAMES-1) /)
+        D_TEMP1(1:NFRAMES) = (/ (D1(K,I), K=0,NFRAMES-1) /)
         CALL UNIRNK(D_TEMP1,I_BINS1,NBINS1)
-        !WRITE(*,'(A,I10)') " NBINS1 : " , NBINS1
         ALLOCATE(BINS1(0:NBINS1))
         BINS1(0) = D_TEMP1(I_BINS1(1))
         DO K = 2,NBINS1
@@ -1662,11 +1727,9 @@ MODULE MI
         END DO
         BINS1(NBINS1) = D_TEMP1(I_BINS1(NBINS1)) 
         DO J = 0,NREP2-1
-            !WRITE(*,'(A,I10)') " J : " , J
             EJ(J,I) = 0.0
-            D_TEMP2(0:NFRAMES-1) = (/ (D2(K,J), K = 0,NFRAMES-1) /)
+            D_TEMP2(1:NFRAMES) = (/ (D2(K,J), K = 0,NFRAMES-1) /)
             CALL UNIRNK(D_TEMP2,I_BINS2,NBINS2)
-            !WRITE(*,'(A,I10)') " NBINS2 : " , NBINS2
             ALLOCATE(BINS2(0:NBINS2))
             BINS2(0) = D_TEMP2(I_BINS2(1))
             DO K = 2,NBINS2
@@ -1683,14 +1746,12 @@ MODULE MI
                 END DO
             END DO
             M(J,I) = E1(I) + E2(J) - EJ(J,I)
-            !WRITE(*,'(A)')     "DEALLOCATE BINS2"
             DEALLOCATE(BINS2)
-            !WRITE(*,'(A)')     "DEALLOCATE P_TEMP"
             DEALLOCATE(P_TEMP)
         END DO
-        !WRITE(*,'(A)')     "DEALLOCATE BINS1"
         DEALLOCATE(BINS1)
     END DO
+    !$OMP END PARALLEL DO
     
     END SUBROUTINE MUTUALINFO_OTHER_TRAJ
       

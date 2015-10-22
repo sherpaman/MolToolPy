@@ -211,15 +211,16 @@ class TimeSer:
                 self.bins = []
                 for d in np.arange(self.dim):
                         if opt:
-                                if (self.dtype != int):
-                                        self.bins.append(bins_opt(self.data[:,d,:].ravel(),self.nbins))
-                                else:
+                                
+                                if (self.dtype == int):
                                         bin0 = np.unique(self.data)
                                         bin_out = np.zeros(len(bin0)+1)
                                         bin_out[0] = bin0[0]
                                         bin_out[-1] = bin0[-1]
                                         bin_out[1:-1] = (bin0[1:]+bin0[:-1])/2
                                         self.bins, self.nbins  = bins_opt_traj(self.data)
+                                else:
+                                        self.bins.append(bins_opt(self.data[:,d,:].ravel(),self.nbins))
                         else:
                                 self.bins.append(np.linspace(np.min(self.data[:,d,:]),np.max(self.data[:,d,:]),self.nbins+1))
                 return
