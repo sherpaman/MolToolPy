@@ -3,6 +3,7 @@
 
 include makefile.conf
 
+FC=gfortran
 F2PY = f2py --fcompiler=gnu95
 
 ARCHFLAGS  +=-O3 -fopenmp
@@ -13,11 +14,14 @@ F2PY_FLAGS += -lgomp
 
 all: mi.so mi_omp.so
 
-mi.so: mi.f90
+mi.so: mi.f90 
 	${F2PY} ${F2PY_FLAGS} -c $< -m mi
 
-mi_omp.so: mi_omp.f90
+mi_omp.so: mi_omp.f90 
 	${F2PY} ${F2PY_FLAGS} -c $< -m mi_omp
 
+%.o: %.f90
+	${FC} -c $<
+
 clean:
-	${RM} *.so
+	${RM} *.so *.o *.mod
