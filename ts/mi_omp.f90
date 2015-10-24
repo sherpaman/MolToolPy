@@ -11,6 +11,9 @@ MODULE MI_OMP
     INTERFACE PROBDEF2D
         MODULE PROCEDURE II_PROBDEF2D, RR_PROBDEF2D, RI_PROBDEF2D, IR_PROBDEF2D
     END INTERFACE PROBDEF2D
+    INTERFACE DIGITALIZE
+        MODULE PROCEDURE R_DIGITALIZE, I_DIGITALIZE
+    END INTERFACE DIGITALIZE
     INTERFACE MUTUALINFO
         MODULE PROCEDURE R_MUTUALINFO, I_MUTUALINFO
     END INTERFACE MUTUALINFO
@@ -27,7 +30,7 @@ MODULE MI_OMP
         MODULE PROCEDURE I_MUTUALINFO2_SIMP, R_MUTUALINFO2_SIMP
     END INTERFACE MUTUALINFO2_SIMP
     CONTAINS
-    
+
     SUBROUTINE R_UNIRNK (XVALT, IRNGT, NUNI)
     ! __________________________________________________________
     !   UNIRNK = MERGE-SORT RANKING OF AN ARRAY, WITH REMOVAL OF
@@ -275,7 +278,7 @@ MODULE MI_OMP
           RETURN
     !
     END SUBROUTINE R_UNIRNK
-    
+
     SUBROUTINE I_UNIRNK (XVALT, IRNGT, NUNI)
     ! __________________________________________________________
     !   UNIRNK = MERGE-SORT RANKING OF AN ARRAY, WITH REMOVAL OF
@@ -549,17 +552,20 @@ MODULE MI_OMP
   
     IMPLICIT NONE
     
-    INTEGER, DIMENSION(0:N-1)                       :: D_X, D_Y
-    INTEGER                                     :: N
-    INTEGER                                     :: NBINS_X, NBINS_Y
-    REAL, DIMENSION(0:NBINS_X-1,0:NBINS_Y-1)          :: PROB
+    INTEGER, DIMENSION(0:N-1)                 :: D_X, D_Y
+    INTEGER                                   :: N
+    INTEGER                                   :: NBINS_X, NBINS_Y
+    REAL, DIMENSION(0:NBINS_X-1,0:NBINS_Y-1)  :: PROB
     REAL, DIMENSION(0:NBINS_X)                :: BINS_X
     REAL, DIMENSION(0:NBINS_Y)                :: BINS_Y
     
-    INTEGER               :: I, X, Y
+    INTEGER               :: I, J, X, Y
     REAL                  :: MIN_D_X, MIN_D_Y, MAX_D_X, MAX_D_Y
     REAL                  :: BIN_DELTA_X, BIN_DELTA_Y
+    REAL                  :: P
     
+    P = 1.0 / N
+        
     MIN_D_X = MINVAL(D_X)
     MAX_D_X = MAXVAL(D_X)
     MIN_D_Y = MINVAL(D_Y)
@@ -570,16 +576,14 @@ MODULE MI_OMP
     
     BINS_X    = (/ ( MIN_D_X + I * BIN_DELTA_X, I=0,NBINS_X) /)
     BINS_Y    = (/ ( MIN_D_Y + I * BIN_DELTA_Y, I=0,NBINS_Y) /)
-    !FORALL(I=0:NBINS_X-1, J=0:NBINS_Y-1) PROB(I,J)=0.0
+    FORALL(I=0:NBINS_X-1, J=0:NBINS_Y-1) PROB(I,J)=0.0
     
     DO I=0,N-1
         X = MIN(INT((D_X(I) - MIN_D_X) / BIN_DELTA_X),NBINS_X-1)
         Y = MIN(INT((D_Y(I) - MIN_D_Y) / BIN_DELTA_Y),NBINS_Y-1)
-        PROB(X,Y) = PROB(X,Y) + 1.0 / N
+        PROB(X,Y) = PROB(X,Y) + P
     END DO
-    
-    !FORALL(I=0:NBINS_X-1, J=0:NBINS_Y-1) PROB(I,J)=PROB(I,J)/N
-    
+        
     RETURN
     
     END SUBROUTINE I_PROB2D
@@ -588,16 +592,19 @@ MODULE MI_OMP
 
     IMPLICIT NONE
     
-    REAL   , DIMENSION(0:N-1)                       :: D_X, D_Y
-    INTEGER                                     :: N
-    INTEGER                                     :: NBINS_X, NBINS_Y
-    REAL, DIMENSION(0:NBINS_X-1,0:NBINS_Y-1)          :: PROB
+    REAL   , DIMENSION(0:N-1)                 :: D_X, D_Y
+    INTEGER                                   :: N
+    INTEGER                                   :: NBINS_X, NBINS_Y
+    REAL, DIMENSION(0:NBINS_X-1,0:NBINS_Y-1)  :: PROB
     REAL, DIMENSION(0:NBINS_X)                :: BINS_X
     REAL, DIMENSION(0:NBINS_Y)                :: BINS_Y
     
-    INTEGER               :: I, X, Y
+    INTEGER               :: I, J, X, Y
     REAL                  :: MIN_D_X, MIN_D_Y, MAX_D_X, MAX_D_Y
     REAL                  :: BIN_DELTA_X, BIN_DELTA_Y
+    REAL                  :: P
+    
+    P = 1.0 / N
     
     MIN_D_X = MINVAL(D_X)
     MAX_D_X = MAXVAL(D_X)
@@ -609,15 +616,13 @@ MODULE MI_OMP
     
     BINS_X    = (/ ( MIN_D_X + I * BIN_DELTA_X, I=0,NBINS_X) /)
     BINS_Y    = (/ ( MIN_D_Y + I * BIN_DELTA_Y, I=0,NBINS_Y) /)
-    !FORALL(I=0:NBINS_X-1, J=0:NBINS_Y-1) PROB(I,J)=0.0
+    FORALL(I=0:NBINS_X-1, J=0:NBINS_Y-1) PROB(I,J)=0.0
     
     DO I=0,N-1
         X = MIN(INT((D_X(I) - MIN_D_X) / BIN_DELTA_X),NBINS_X-1)
         Y = MIN(INT((D_Y(I) - MIN_D_Y) / BIN_DELTA_Y),NBINS_Y-1)
-        PROB(X,Y) = PROB(X,Y) + 1.0 / N
+        PROB(X,Y) = PROB(X,Y) + P
     END DO
-    
-    !FORALL(I=0:NBINS_X-1, J=0:NBINS_Y-1) PROB(I,J)=PROB(I,J)/N
     
     RETURN
         
@@ -1481,6 +1486,119 @@ MODULE MI_OMP
     OPT_BIN_TRAJ(NBINS)     = D(I_BINS(NBINS-1))
     
     END FUNCTION OPT_BIN_TRAJ
+
+    SUBROUTINE I_DIGITALIZE(D,BINS,NREP,NDIM,NFRAMES,NBINS,O)
+
+    IMPLICIT NONE
+    
+    INTEGER, INTENT(IN)  :: NREP
+    INTEGER, INTENT(IN)  :: NDIM
+    INTEGER, INTENT(IN)  :: NFRAMES
+    INTEGER, INTENT(IN)  :: NBINS
+    
+    INTEGER, INTENT(IN)  :: D(0:NFRAMES-1,0:NDIM-1,0:NREP-1)
+    REAL, INTENT(IN)     :: BINS(0:NBINS,0:NDIM-1)
+    
+    INTEGER, INTENT(OUT) :: O(0:NFRAMES-1,0:NDIM-1,0:NREP-1)
+    
+    INTEGER              :: I, K, L
+    INTEGER              :: N, M
+    
+    DO K = 0,NREP-1
+        DO L = 0,NDIM-1
+            DO I = 0,NFRAMES-1
+                M = NBINS - 1 
+                DO N = 0,NBINS
+                    IF ( BINS(N,L) > D(I,L,K) ) THEN
+                        M = N - 1
+                        EXIT
+                    END IF
+                END DO
+            O(I,L,K) = M
+            END DO
+        END DO
+    END DO
+    
+    END SUBROUTINE I_DIGITALIZE
+
+
+    SUBROUTINE R_DIGITALIZE(D,BINS,NREP,NDIM,NFRAMES,NBINS,O)
+
+    IMPLICIT NONE
+    
+    INTEGER, INTENT(IN)  :: NREP
+    INTEGER, INTENT(IN)  :: NDIM
+    INTEGER, INTENT(IN)  :: NFRAMES
+    INTEGER, INTENT(IN)  :: NBINS
+    
+    REAL, INTENT(IN)     :: D(0:NFRAMES-1,0:NDIM-1,0:NREP-1)
+    REAL, INTENT(IN)     :: BINS(0:NBINS,0:NDIM-1)
+    
+    INTEGER, INTENT(OUT) :: O(0:NFRAMES-1,0:NDIM-1,0:NREP-1)
+    
+    INTEGER              :: I, K, L
+    INTEGER              :: N, M
+    
+    DO K = 0,NREP-1
+        DO L = 0,NDIM-1
+            DO I = 0,NFRAMES-1
+                M = NBINS - 1 
+                DO N = 0,NBINS
+                    IF ( BINS(N,L) > D(I,L,K) ) THEN
+                        M = N - 1
+                        EXIT
+                    END IF
+                END DO
+            O(I,L,K) = M
+            END DO
+        END DO
+    END DO
+    
+    END SUBROUTINE R_DIGITALIZE
+    
+    SUBROUTINE TRAJ(D,TIME,NBINS,NFRAMES,NDIM,NREP,O,O1)
+    
+    INTEGER, INTENT(IN)  :: NREP
+    INTEGER, INTENT(IN)  :: NDIM
+    INTEGER, INTENT(IN)  :: NFRAMES
+    INTEGER, INTENT(IN)  :: TIME
+    !INTEGER, INTENT(IN)  :: NBINS(0:NDIM-1) ! TO IMPLEMENT A DIFFERENT NUMBER OF BINS PER DIM
+    INTEGER, INTENT(IN)  :: NBINS
+    INTEGER, INTENT(IN)  :: D(0:NFRAMES-1,0:NDIM-1,0:NREP-1)
+    
+    INTEGER, INTENT(OUT) ::  O(0:NFRAMES-TIME-1,0:NREP-1)
+    INTEGER, INTENT(OUT) :: O1(0:NFRAMES-TIME-1,0:NREP-1)
+    
+    INTEGER              :: PROD(0:NDIM)
+    INTEGER              :: PROD_T(0:TIME)
+    INTEGER              :: HASH, HASH_1
+    INTEGER              :: I, K, L, N
+    
+    PROD(0)   = 1
+    PROD_T(0) = 1
+    DO I = 1,NDIM
+        PROD(I) = PROD(I-1) * NBINS
+    END DO
+    DO I = 1,TIME
+        PROD_T(I) = PROD_T(I-1) * PROD(NDIM)
+    END DO
+    
+    DO K = 0,NREP-1
+        DO I = 0,NFRAMES-TIME-1
+            HASH = 0
+            HASH_1 = 0
+            DO N = 0,TIME-1
+                DO L = 0,NDIM-1
+                    HASH   = HASH +   ( D(I+N   ,L,K) * PROD(L) )
+                    HASH_1 = HASH_1 + ( D(I+TIME,L,K) * PROD(L) ) 
+                END DO
+            END DO
+            O(I,K)  = HASH * PROD_T(N)
+            O1(I,K) = O(I,K) + HASH_1 * PROD_T(TIME)
+        END DO
+    END DO
+    
+    END SUBROUTINE TRAJ
 
     SUBROUTINE PROBDEF_TRAJ(D,BINS,N,NBINS,PROB)
     
