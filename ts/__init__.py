@@ -3,6 +3,12 @@ import numpy as np
 import scipy.special as sp
 from mi import mi
 from mi_omp import mi_omp 
+import multiprocessing
+mi_omp.num_threads=multiprocessing.cpu_count()
+
+def set_num_threads(n):
+    mi_omp.num_threads=n
+    return
 
 def bins_opt(data,n):
         found=False
@@ -964,13 +970,13 @@ class TimeSer:
                 nd        = self.n_data-time
                 k         = TimeSer(np.zeros((rep,1,nd)),nd,1,nbins=0,bins=[],prob=None,reshape=False,dtype=int)
                 k1        = TimeSer(np.zeros((rep,1,nd)),nd,1,nbins=0,bins=[],prob=None,reshape=False,dtype=int)
-                self.digitalize_omp(force=True)
+                self.digitalize(force=True)
                 for r in replicas:
                         for l in np.arange(self.n_data-time):
                                 hash_num = 0
                                 for t in np.arange(time):
-                                        hash_num = hash_num + int(np.vdot(self.digital[r,:,l+t],prod[:-1])) * prod_t[t]
-                                hash_num1 = hash_num + int(np.vdot(self.digital[r,:,l+time],prod[:-1])) * prod_t[time]
+                                        hash_num = hash_num + int(np.dot(self.digital[r,:,l+t],prod[:-1])) * prod_t[t]
+                                hash_num1 = hash_num + int(np.dot(self.digital[r,:,l+time],prod[:-1])) * prod_t[time]
                                 k.data[r,0,l]  = hash_num
                                 k1.data[r,0,l] = hash_num1
                 
@@ -1024,8 +1030,8 @@ class TimeSer:
                 # Actually this is an issue also for the self.traj() function!!!!
                 #
                 k, k1 = mi.traj(np.transpose(self.digital),time,self.nbins)
-                k = TimeSer(np.transpose(k),nd,1,nbins=0,bins=[],prob=None,reshape=False,dtype=int)
-                k1= TimeSer(np.transpose(k1),nd,1,nbins=0,bins=[],prob=None,reshape=False,dtype=int)
+                k = TimeSer(k,len(k),1,dtype=int)
+                k1= TimeSer(k1,len(k1),1,dtype=int)
                 return k, k1
 
         def traj_omp(self,time=2,nbins=None,replicas=None):
@@ -1076,8 +1082,8 @@ class TimeSer:
                 # Actually this is an issue also for the self.traj() function!!!!
                 #
                 k, k1 = mi_omp.traj(np.transpose(self.digital),time,self.nbins)
-                k = TimeSer(np.transpose(k),nd,1,nbins=0,bins=[],prob=None,reshape=False,dtype=int)
-                k1= TimeSer(np.transpose(k1),nd,1,nbins=0,bins=[],prob=None,reshape=False,dtype=int)
+                k = TimeSer(k,len(k),1,dtype=int)
+                k1= TimeSer(k1,len(k1),1,dtype=int)
                 return k, k1
 
         def traj_shuffle(self,time=2,nbins=None,replicas=None):
@@ -1197,7 +1203,7 @@ class TimeSer:
                 contained in the Time Series using FORTRAN98 routines.
                 
                 '''
-                ok, ok1 = self.traj(time,nbins)
+                ok, ok1 = self.traj_omp(time,nbins)
                 try:
                         M,  E   = ok.mutual_info_traj_omp()
                 except:

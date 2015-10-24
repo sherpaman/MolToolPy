@@ -116,7 +116,7 @@ So the function wich starting from the original time-series generates a new time
 
 \begin{align*}
  \text{Traj} &: \vec{b}(t) \in \mathbb{R}^d \longmapsto w(t) \in \mathbb{N} \\
- { }         & w(t) = \sum_{k=0}^{\tau-1} \underbrace{\left [ \sum_{i=0}^{d-1} \overbrace{d_i(l+k)}^{\text{ ``digitalized''}} * {N_b}^i \right ]}_{\text{1-dim reduction}} * {N_b}^{k*d}
+ { }         & w(t) = \sum_{k=0}^{\tau-1} \underbrace{\left [ \sum_{i=0}^{d-1} \overbrace{b_i(t+k)}^{\text{ ``digitalized''}} * {N_b}^i \right ]}_{\text{1-dim reduction}} * {N_b}^{k*d}
 \end{align*}
 
 \end{document}
