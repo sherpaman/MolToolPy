@@ -848,7 +848,7 @@ class TimeSer:
 
         def digitalize(self,replicas=None,force=False):
                 if (not force)&(self.digital != None):
-                        print "Digitalization skipped"
+                        #print "Digitalization skipped"
                         return
                 if replicas == None:
                         replicas = np.arange(self.rep)
@@ -868,7 +868,7 @@ class TimeSer:
 
         def digitalize_for(self,replicas=None,force=False):
                 if (not force)&(self.digital != None):
-                        print "Digitalization skipped"
+                        #print "Digitalization skipped"
                         return
                 if replicas == None:
                         replicas = np.arange(self.rep)
@@ -888,7 +888,7 @@ class TimeSer:
 
         def digitalize_omp(self,replicas=None,force=False):
                 if (not force)&(self.digital != None):
-                        print "Digitalization skipped"
+                        #print "Digitalization skipped"
                         return
                 if replicas == None:
                         replicas = np.arange(self.rep)
@@ -908,7 +908,7 @@ class TimeSer:
         
         def digitalize_traj(self,replicas=None,force=False):
                 if (not force)&(self.digital != None):
-                        print "Digitalization skipped"
+                        #print "Digitalization skipped"
                         return
                 if replicas == None:
                         replicas = np.arange(self.rep)
@@ -1114,6 +1114,83 @@ class TimeSer:
                                 k.data[r,0,l]  = hash_num
                 
                 return k
+                
+        def traj_shuffle(self,time=2,nbins=None,replicas=None):
+                if nbins == None:
+                        nbins= int(self.nbins) ** int( self.dim * time )
+                if hasattr(replicas, '__iter__'):
+                        replicas = np.array(list(replicas))
+                elif replicas == None:
+                        replicas = np.arange(0,self.rep)
+                else:
+                        replicas = np.array([int(replicas)])
+                rep    = len(replicas)
+                prod_t = np.ones(time+1,dtype=int)
+                prod   = np.ones(self.dim+1,dtype=int)
+                for i in np.arange(1,self.dim+1):
+                        prod[i] = prod[i-1] * self.nbins
+                for i in np.arange(1,time+1):
+                                prod_t[i] =  prod_t[i-1] * prod[self.dim]
+                nd        = self.n_data-time
+                s         = np.random.choice(np.arange(self.n_data),self.n_data,replace=False)
+                k         = TimeSer(np.zeros((rep,1,nd)),nd,1,nbins=0,bins=[],prob=None,reshape=False,dtype=int)
+                self.digitalize_for()
+                k = mi.traj_simp(np.transpose(self.digital),time,self.nbins)
+                k = TimeSer(k,len(k),1,dtype=int)
+                return k
+        
+        def traj_shuffle_for(self,time=2,nbins=None,replicas=None):
+                if nbins == None:
+                        nbins= int(self.nbins) ** int( self.dim * time )
+                if hasattr(replicas, '__iter__'):
+                        replicas = np.array(list(replicas))
+                elif replicas == None:
+                        replicas = np.arange(0,self.rep)
+                else:
+                        replicas = np.array([int(replicas)])
+                rep    = len(replicas)
+                prod_t = np.ones(time+1,dtype=int)
+                prod   = np.ones(self.dim+1,dtype=int)
+                for i in np.arange(1,self.dim+1):
+                        prod[i] = prod[i-1] * self.nbins
+                for i in np.arange(1,time+1):
+                                prod_t[i] =  prod_t[i-1] * prod[self.dim]
+                nd        = self.n_data-time
+                s         = np.random.choice(np.arange(self.n_data),self.n_data,replace=False)
+                k         = TimeSer(np.zeros((rep,1,nd)),nd,1,nbins=0,bins=[],prob=None,reshape=False,dtype=int)
+                self.digitalize_omp()
+                k = mi_omp.traj_simp(np.transpose(self.digital),time,self.nbins)
+                k = TimeSer(k,len(k),1,dtype=int)
+                return k        
+
+        def traj_shuffle_for(self,time=2,nbins=None,replicas=None):
+                if nbins == None:
+                        nbins= int(self.nbins) ** int( self.dim * time )
+                if hasattr(replicas, '__iter__'):
+                        replicas = np.array(list(replicas))
+                elif replicas == None:
+                        replicas = np.arange(0,self.rep)
+                else:
+                        replicas = np.array([int(replicas)])
+                rep    = len(replicas)
+                prod_t = np.ones(time+1,dtype=int)
+                prod   = np.ones(self.dim+1,dtype=int)
+                for i in np.arange(1,self.dim+1):
+                        prod[i] = prod[i-1] * self.nbins
+                for i in np.arange(1,time+1):
+                                prod_t[i] =  prod_t[i-1] * prod[self.dim]
+                nd        = self.n_data-time
+                s         = np.random.choice(np.arange(self.n_data),self.n_data,replace=False)
+                k         = TimeSer(np.zeros((rep,1,nd)),nd,1,nbins=0,bins=[],prob=None,reshape=False,dtype=int)
+                self.digitalize()
+                for r in replicas:
+                        for l in np.arange(self.n_data-time):
+                                hash_num = 0
+                                for t in np.arange(time):
+                                        hash_num = hash_num + int(np.vdot(self.digital[r,:,s[l+t]],prod[:-1])) * prod_t[t]
+                                k.data[r,0,l]  = hash_num
+                
+                return k        
 
         def transfer_entropy(self,time=2,nbins=None,minfo_out=False):
                 '''
@@ -1300,7 +1377,7 @@ class TimeSer:
                                 ] = D_ij - D_ji
                 return T, D
 
-        def direction_other_for(self,other,time=2,ref=None,nbins_ref=None,replicas=None,nbins_replicas=None):
+        def transfer_entropy_other_omp(self,other,time=2,ref=None,nbins_ref=None,replicas=None,nbins_replicas=None):
                 if ref == None:
                         ref = np.arange(0,self.rep)
                 else:
@@ -1314,8 +1391,8 @@ class TimeSer:
                         replicas = np.arange(0,other.rep)
                 else:
                         replicas = np.array([int(replicas)])
-                sk, sk1  = self.traj(time,nbins=nbins_ref,replicas=ref)
-                ok, ok1  = other.traj(time,nbins=nbins_replicas,replicas=replicas)
+                sk, sk1  = self.traj_omp(time,nbins=nbins_ref,replicas=ref)
+                ok, ok1  = other.traj_omp(time,nbins=nbins_replicas,replicas=replicas)
                 M,  E    = sk.mutual_info_other_traj_omp(ok)
                 MSO, ESO = sk1.mutual_info_other_traj_omp(ok)
                 MOS, EOS = ok1.mutual_info_other_traj_omp(sk)
@@ -1341,4 +1418,4 @@ class TimeSer:
                                 else:
                                         continue
                                 D[s,o] = D_source - D_drain
-                return D
+                return [T_source, T_drain], D
