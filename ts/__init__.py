@@ -292,7 +292,7 @@ class TimeSer:
                     o = mi_omp.i_to1dim(np.transpose(self.data),self.nbins)
                 else:
                     o = mi_omp.r_to1dim(np.transpose(self.data),self.nbins)
-                other = TimeSer(o,n_data=self.n_data,dim=1,nbins=[],dtype=int)
+                other = TimeSer(o,n_data=self.n_data,dim=1,dtype=int)
                 other.calc_bins(opt=True)
                 return other
 
@@ -310,7 +310,7 @@ class TimeSer:
                 for d in np.arange(self.dim):
                         if opt:
                                 if (self.dtype == int):
-                                        bin0 = np.unique(self.data)
+                                        bin0 = np.unique(self.data[:,d,:])
                                         bin_out = np.zeros(len(bin0)+1)
                                         bin_out[0] = bin0[0]
                                         bin_out[-1] = bin0[-1]
@@ -658,6 +658,8 @@ class TimeSer:
         def mutual_info_other_for(self,other):
                 s = self._to_1dim_for()
                 o = other._to_1dim_for()
+                s.nbins = len(np.unique(s.data))
+                o.nbins = len(np.unique(o.data))
                 if s.n_data != o.n_data:
                         print "The Number of Observation in the two time series are different ({0:d} != {0:d})".format(self.n_data,other.n_data)
                         return None, None
@@ -726,6 +728,8 @@ class TimeSer:
         def mutual_info_other_omp(self,other):
                 s = self._to_1dim_omp()
                 o = other._to_1dim_omp()
+                s.nbins = len(np.unique(s.data))
+                o.nbins = len(np.unique(o.data))
                 if s.n_data != o.n_data:
                         print "The Number of Observation in the two time series are different ({0:d} != {0:d})".format(self.n_data,other.n_data)
                         return None, None
@@ -760,6 +764,8 @@ class TimeSer:
         def mutual_info_other_bootstrap(self,other,resample=100):
                 s = self._to_1dim_omp()
                 o = other._to_1dim_omp()
+                s.nbins = len(np.unique(s.data))
+                o.nbins = len(np.unique(o.data))
                 if s.n_data != o.n_data:
                         print "The Number of Observation in the two time series are different ({0:d} != {0:d})".format(self.n_data,other.n_data)
                         return None, None
