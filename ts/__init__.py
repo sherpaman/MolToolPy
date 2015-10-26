@@ -200,7 +200,7 @@ class TimeSer:
                 o = np.zeros((rep,self.n_data))
                 for r in replicas:
                         for t in np.arange(self.n_data):
-                                o[r,t]=int(np.vdot(self.digital[r,:,t],prod[:-1]))
+                                o[r,t]=int(np.dot(self.digital[r,:,t],prod[:-1]))
                 other = TimeSer(o,n_data=self.n_data,dim=1,nbins=prod[-1],dtype=int)
                 return other
 
