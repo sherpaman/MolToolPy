@@ -196,11 +196,11 @@ class TimeSer:
                 prod   = np.ones(self.dim+1,dtype=int)
                 for i in np.arange(1,self.dim+1):
                         prod[i] = prod[i-1] * self.nbins
-                self.digitalize()
+                self.digitalize_omp()
                 o = np.zeros((rep,self.n_data))
                 for r in replicas:
                         for t in np.arange(self.n_data):
-                                o[r,t]=int(np.dot(self.digital[r,:,t],prod[:-1]))
+                                o[r,t]=int(np.vdot(self.digital[r,:,t],prod[:-1]))
                 other = TimeSer(o,n_data=self.n_data,dim=1,nbins=prod[-1],dtype=int)
                 return other
 
@@ -585,28 +585,20 @@ class TimeSer:
                         if (o.dtype == int):
                                 M, E_joint =  mi.i_mutualinfo_other(d1,d2,      \
                                                         s.entropy, o.entropy,   \
-                                                        s.bins, o.bins,         \
-                                                        s.n_data,               \
-                                                        s.rep,     o.rep)
+                                                        s.bins, o.bins)
                         elif (other.dtype == float):
                                 M, E_joint = mi.ir_mutualinfo_other(d1,d2,      \
                                                         s.entropy, o.entropy,   \
-                                                        s.bins, o.bins,         \
-                                                        s.n_data,               \
-                                                        s.rep,     o.rep)
+                                                        s.bins, o.bins)
                 elif (self.dtype == float):
                         if (other.dtype == int):
                                 M, E_joint = mi.ri_mutualinfo_other(d1,d2,      \
                                                         s.entropy, o.entropy,   \
-                                                        s.bins,    o.bins,      \
-                                                        s.n_data,               \
-                                                        s.rep,     o.rep)
+                                                        s.bins,    o.bins)
                         elif (other.dtype == float):
                                 M, E_joint =  mi.r_mutualinfo_other(d1,d2,      \
                                                         s.entropy, o.entropy,   \
-                                                        s.bins, o.bins,         \
-                                                        s.n_data,               \
-                                                        s.rep,     o.rep)
+                                                        s.bins, o.bins)
                 return np.transpose(M), np.transpose(E_joint)
 
         def mutual_info_other_traj_for(self,other):
@@ -624,9 +616,7 @@ class TimeSer:
                 d1      = np.transpose(self.data)
                 d2      = np.transpose(other.data)
                 M, E_joint =  mi.mutualinfo_other_traj(d1,d2, \
-                        self.entropy, other.entropy,   \
-                        self.n_data,               \
-                        self.rep, other.rep)
+                        self.entropy, other.entropy)
                 return np.transpose(M), np.transpose(E_joint)
         
         def mutual_info_other_traj_omp(self,other):
@@ -644,20 +634,12 @@ class TimeSer:
                 d1      = np.transpose(self.data)
                 d2      = np.transpose(other.data)
                 M, E_joint =  mi_omp.mutualinfo_other_traj(d1,d2, \
-                        self.entropy, other.entropy,   \
-                        self.n_data,               \
-                        self.rep, other.rep)
+                        self.entropy, other.entropy)
                 return np.transpose(M), np.transpose(E_joint)
         
         def mutual_info_other_omp(self,other):
-                if self.dim > 1:
-                        s = self._to_1dim()
-                else:
-                        s = self
-                if other.dim > 1:
-                        o = other._to_1dim()
-                else:
-                        o = other
+                s = self._to_1dim()
+                o = other._to_1dim()
                 if s.n_data != o.n_data:
                         print "The Number of Observation in the two time series are different ({0:d} != {0:d})".format(self.n_data,other.n_data)
                         return None, None
@@ -673,30 +655,48 @@ class TimeSer:
                         if (o.dtype == int):
                                 M, E_joint =  mi_omp.i_mutualinfo_other(d1,d2,  \
                                                         s.entropy, o.entropy,   \
-                                                        s.bins, o.bins,         \
-                                                        s.n_data,               \
-                                                        s.rep,     o.rep)
+                                                        s.bins, o.bins)
                         elif (other.dtype == float):
                                 M, E_joint = mi_omp.ir_mutualinfo_other(d1,d2,  \
                                                         s.entropy, o.entropy,   \
-                                                        s.bins, o.bins,         \
-                                                        s.n_data,               \
-                                                        s.rep,     o.rep,       \
-                                                        s.nbins,   o.nbins)
+                                                        s.bins, o.bins)
                 elif (self.dtype == float):
                         if (other.dtype == int):
                                 M, E_joint = mi_omp.ri_mutualinfo_other(d1,d2,  \
                                                         s.entropy, o.entropy,   \
-                                                        s.bins,    o.bins,      \
-                                                        s.n_data,               \
-                                                        s.rep,     o.rep)
+                                                        s.bins,    o.bins)
                         elif (other.dtype == float):
                                 M, E_joint =  mi_omp.r_mutualinfo_other(d1,d2,  \
                                                         s.entropy, o.entropy,   \
-                                                        s.bins, o.bins,         \
-                                                        s.n_data,               \
-                                                        s.rep,     o.rep)
+                                                        s.bins, o.bins)
                 return np.transpose(M), np.transpose(E_joint)
+
+        def mutual_info_other_bootstrap(self,other,resample=100):
+                if self.dim > 1:
+                        s = self._to_1dim()
+                else:
+                        s = self
+                if other.dim > 1:
+                        o = other._to_1dim()
+                else:
+                        o = other
+                if s.n_data != o.n_data:
+                        print "The Number of Observation in the two time series are different ({0:d} != {0:d})".format(self.n_data,other.n_data)
+                        return None, None
+                if not s.entropy_av:
+                        s.calc_entropy()
+                if not o.entropy_av:
+                        o.calc_entropy()
+                mi = np.zeros((s.rep,o.rep,resample))
+                for n in np.arange(resample):
+                        d = []
+                        for r in np.arange(s.rep):
+                                c = np.random.choice(np.arange(s.n_data),s.n_data,replace=True)
+                                d.append(self.data[r,:,c].reshape((s.dim,s.n_data)))
+                        data = np.dstack(d).reshape((s.rep,s.dim,s.n_data))
+                        sample = TimeSer(data,s.n_data,s.dim,s.nbins,reshape=False,dtype=self.dtype)
+                        mi[:,:,n] = sample.mutual_info_other_omp(o)[0]
+                return mi
 
         def mutual_info_prob_for(self):
                 # CALCULATE MUTUAL INFO OF EACH PAIR OF REPLICAS
@@ -841,7 +841,7 @@ class TimeSer:
                                         d.append(self.data[r,:,c].reshape((self.dim,self.n_data)))
                                 data = np.dstack(d).reshape((self.rep,self.dim,self.n_data))
                                 sample = TimeSer(data,self.n_data,self.dim,self.nbins,reshape=False,dtype=self.dtype)
-                                mi[:,:,n] = sample.mutual_info_omp()[0]
+                                mi[:,:,n]= sample.mutual_info_omp()[0]
                 return mi
 
 
@@ -859,7 +859,7 @@ class TimeSer:
                                 replicas = np.array([int(replicas)])
                 rep    = len(replicas)
                 self.digital = np.zeros((rep,self.dim,self.n_data),dtype=int)
-                self.calc_bins()
+                self.calc_bins(opt=True)
                 for r in replicas:
                         for d in np.arange(self.dim):
                                 for k in np.arange(self.n_data):
@@ -879,7 +879,7 @@ class TimeSer:
                                 replicas = np.array([int(replicas)])
                 rep    = len(replicas)
                 self.digital = np.zeros((rep,self.dim,self.n_data),dtype=int)
-                self.calc_bins()
+                self.calc_bins(opt=True)
                 if self.dtype == float:
                         self.digital = np.transpose(mi.r_digitalize(np.transpose(self.data),np.transpose(np.array(self.bins))))
                 elif self.dtype == int:
@@ -899,7 +899,7 @@ class TimeSer:
                                 replicas = np.array([int(replicas)])
                 rep    = len(replicas)
                 self.digital = np.zeros((rep,self.dim,self.n_data),dtype=int)
-                self.calc_bins()
+                self.calc_bins(opt=True)
                 if self.dtype == float:
                         self.digital = np.transpose(mi_omp.r_digitalize(np.transpose(self.data),np.transpose(np.array(self.bins))))
                 elif self.dtype == int:
