@@ -204,98 +204,6 @@ class TimeSer:
                 other = TimeSer(o,n_data=self.n_data,dim=1,nbins=prod[-1],dtype=int)
                 return other
 
-        def _to_1dim_for(self,replicas=None):
-                '''
-                
-                Converts a multi-dim data time series into a 1-dim integer
-                time series. Data is initially digitized (see digitized function)
-                and the raveled into a 1-dim series. the values of the new series 
-                univocally correspond to the bin in the histogram (probability distribution).
-                of the original data.
-                
-                The function is *surjective* but not *bijective*. 
-                
-                Parameters
-                ----------
-                
-                replica : list
-                          a subset of replica to be used 
-                          Default: all replicas
-                          
-                Returns
-                -------
-                
-                other   : TimeSer
-                          1-dimentional TimeSer Object
-                
-                '''
-                if self.dim == 1:
-                        return self
-                if hasattr(replicas, '__iter__'):
-                        replicas = np.array(list(replicas))
-                elif replicas == None:
-                        replicas = np.arange(0,self.rep)
-                else:
-                        replicas = np.array([int(replicas)])
-                rep    = len(replicas)
-                prod   = np.ones(self.dim+1,dtype=int)
-                for i in np.arange(1,self.dim+1):
-                        prod[i] = prod[i-1] * self.nbins
-                o = np.zeros((rep,self.n_data))
-                if (self.dtype == int):
-                    o = mi.i_to1dim(np.transpose(self.data),self.nbins)
-                else:
-                    o = mi.r_to1dim(np.transpose(self.data),self.nbins)
-                other = TimeSer(o,n_data=self.n_data,dim=1,nbins=[],dtype=int)
-                other.calc_bins(opt=True)
-                return other
-
-        def _to_1dim_omp(self,replicas=None):
-                '''
-                
-                Converts a multi-dim data time series into a 1-dim integer
-                time series. Data is initially digitized (see digitized function)
-                and the raveled into a 1-dim series. the values of the new series 
-                univocally correspond to the bin in the histogram (probability distribution).
-                of the original data.
-                
-                The function is *surjective* but not *bijective*. 
-                
-                Parameters
-                ----------
-                
-                replica : list
-                          a subset of replica to be used 
-                          Default: all replicas
-                          
-                Returns
-                -------
-                
-                other   : TimeSer
-                          1-dimentional TimeSer Object
-                
-                '''
-                if self.dim == 1:
-                        return self
-                if hasattr(replicas, '__iter__'):
-                        replicas = np.array(list(replicas))
-                elif replicas == None:
-                        replicas = np.arange(0,self.rep)
-                else:
-                        replicas = np.array([int(replicas)])
-                rep    = len(replicas)
-                prod   = np.ones(self.dim+1,dtype=int)
-                for i in np.arange(1,self.dim+1):
-                        prod[i] = prod[i-1] * self.nbins
-                o = np.zeros((rep,self.n_data))
-                if (self.dtype == int):
-                    o = mi_omp.i_to1dim(np.transpose(self.data),self.nbins)
-                else:
-                    o = mi_omp.r_to1dim(np.transpose(self.data),self.nbins)
-                other = TimeSer(o,n_data=self.n_data,dim=1,dtype=int)
-                other.calc_bins(opt=True)
-                return other
-
         def calc_bins(self,opt=False):
                 '''
                 
@@ -656,10 +564,8 @@ class TimeSer:
 
 
         def mutual_info_other_for(self,other):
-                s = self._to_1dim_for()
-                o = other._to_1dim_for()
-                s.nbins = len(np.unique(s.data))
-                o.nbins = len(np.unique(o.data))
+                s = self._to_1dim()
+                o = other._to_1dim()
                 if s.n_data != o.n_data:
                         print "The Number of Observation in the two time series are different ({0:d} != {0:d})".format(self.n_data,other.n_data)
                         return None, None
@@ -726,10 +632,8 @@ class TimeSer:
                 return np.transpose(M), np.transpose(E_joint)
         
         def mutual_info_other_omp(self,other):
-                s = self._to_1dim_omp()
-                o = other._to_1dim_omp()
-                s.nbins = len(np.unique(s.data))
-                o.nbins = len(np.unique(o.data))
+                s = self._to_1dim()
+                o = other._to_1dim()
                 if s.n_data != o.n_data:
                         print "The Number of Observation in the two time series are different ({0:d} != {0:d})".format(self.n_data,other.n_data)
                         return None, None
@@ -762,10 +666,8 @@ class TimeSer:
                 return np.transpose(M), np.transpose(E_joint)
 
         def mutual_info_other_bootstrap(self,other,resample=100):
-                s = self._to_1dim_omp()
-                o = other._to_1dim_omp()
-                s.nbins = len(np.unique(s.data))
-                o.nbins = len(np.unique(o.data))
+                s = self._to_1dim()
+                o = other._to_1dim()
                 if s.n_data != o.n_data:
                         print "The Number of Observation in the two time series are different ({0:d} != {0:d})".format(self.n_data,other.n_data)
                         return None, None

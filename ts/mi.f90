@@ -1643,15 +1643,15 @@ MODULE MI
     !INTEGER, INTENT(IN) :: NBINS(0:NDIM-1) ! TO IMPLEMENT A DIFFERENT NUMBER OF BINS PER DIM
     INTEGER, INTENT(IN) :: NBINS
     INTEGER, INTENT(IN) :: D(0:NFRAMES-1,0:NDIM-1,0:NREP-1)
-    REAL, INTENT(IN) :: BINS(0:NBINS,0:NDIM-1)
+    REAL, INTENT(IN) :: BINS(0:NDIM-1,0:NBINS)
 
-    INTEGER, INTENT(OUT) :: O(0:NFRAMES-1,0:NREP-1)
+    INTEGER, INTENT(OUT) :: O(0:NREP-1,0:NFRAMES-1)
 
     INTEGER :: PROD(0:NDIM)
     INTEGER :: I, K, L, N ,M
 
     PROD(0) = 1
-    DO I = 1,NDIM-1
+    DO I = 1,NDIM
         PROD(I) = PROD(I-1) * NBINS
     END DO
 
@@ -1667,7 +1667,7 @@ MODULE MI
             DO I = 0,NFRAMES-1
                 M = NBINS - 1
                 DO N = 0,NBINS
-                    IF ( BINS(N,L) > D(I,L,K) ) THEN
+                    IF ( BINS(L,N) > D(I,L,K) ) THEN
                         M = N - 1
                         EXIT
                     END IF
