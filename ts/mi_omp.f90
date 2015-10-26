@@ -1635,7 +1635,7 @@ MODULE MI_OMP
 
     END SUBROUTINE R_DIGITALIZE
 
-    SUBROUTINE I_TO1DIM(D,NBINS,NFRAMES,NDIM,NREP,O)
+    SUBROUTINE I_TO1DIM(D,BINS,NFRAMES,NDIM,NREP,NBINS,O)
 
     INTEGER, INTENT(IN) :: NREP
     INTEGER, INTENT(IN) :: NDIM
@@ -1643,11 +1643,12 @@ MODULE MI_OMP
     !INTEGER, INTENT(IN) :: NBINS(0:NDIM-1) ! TO IMPLEMENT A DIFFERENT NUMBER OF BINS PER DIM
     INTEGER, INTENT(IN) :: NBINS
     INTEGER, INTENT(IN) :: D(0:NFRAMES-1,0:NDIM-1,0:NREP-1)
+    REAL, INTENT(IN) :: BINS(0:NBINS,0:NDIM-1)
 
     INTEGER, INTENT(OUT) :: O(0:NFRAMES-1,0:NREP-1)
 
     INTEGER :: PROD(0:NDIM)
-    INTEGER :: I, K, L
+    INTEGER :: I, K, L, N ,M
 
     PROD(0) = 1
     DO I = 1,NDIM-1
@@ -1655,15 +1656,23 @@ MODULE MI_OMP
     END DO
 
 
+    WRITE (*,'(A,I5)') "LAUNCHING THREADS : ", NUM_THREADS
     CALL OMP_SET_NUM_THREADS(NUM_THREADS)
 
     !$OMP PARALLEL DO &
-    !$OMP PRIVATE(HASH,HASH_1,K,I,L,N) &
-    !$OMP SHARED(D,O,O1,PROD,PROD_T,TIME,NREP,NFRAMES,NDIM)
+    !$OMP PRIVATE(I,L,K,M,N) &
+    !$OMP SHARED(D,O,NFRAMES,NBINS,BINS,NREP)
     DO K = 0,NREP-1
         DO L = 0,NDIM-1
             DO I = 0,NFRAMES-1
-                O(I,K) = O(I,K) + ( D(I,L,K) * PROD(L) )
+                M = NBINS - 1
+                DO N = 0,NBINS
+                    IF ( BINS(N,L) > D(I,L,K) ) THEN
+                        M = N - 1
+                        EXIT
+                    END IF
+                END DO
+                O(I,K) = O(I,K) + INT( M * PROD(L) )
             END DO
         END DO
     END DO
@@ -1671,7 +1680,7 @@ MODULE MI_OMP
 
     END SUBROUTINE I_TO1DIM
 
-    SUBROUTINE R_TO1DIM(D,NBINS,NFRAMES,NDIM,NREP,O)
+    SUBROUTINE R_TO1DIM(D,BINS,NFRAMES,NDIM,NREP,NBINS,O)
 
     INTEGER, INTENT(IN) :: NREP
     INTEGER, INTENT(IN) :: NDIM
@@ -1679,11 +1688,12 @@ MODULE MI_OMP
     !INTEGER, INTENT(IN) :: NBINS(0:NDIM-1) ! TO IMPLEMENT A DIFFERENT NUMBER OF BINS PER DIM
     INTEGER, INTENT(IN) :: NBINS
     REAL, INTENT(IN) :: D(0:NFRAMES-1,0:NDIM-1,0:NREP-1)
+    REAL, INTENT(IN) :: BINS(0:NBINS,0:NDIM-1)
 
     INTEGER, INTENT(OUT) :: O(0:NFRAMES-1,0:NREP-1)
 
     INTEGER :: PROD(0:NDIM)
-    INTEGER :: I, K, L
+    INTEGER :: I, K, L, N, M
 
     PROD(0) = 1
     DO I = 1,NDIM-1
@@ -1691,15 +1701,23 @@ MODULE MI_OMP
     END DO
 
 
+    WRITE (*,'(A,I5)') "LAUNCHING THREADS : ", NUM_THREADS
     CALL OMP_SET_NUM_THREADS(NUM_THREADS)
 
     !$OMP PARALLEL DO &
-    !$OMP PRIVATE(HASH,HASH_1,K,I,L,N) &
-    !$OMP SHARED(D,O,O1,PROD,PROD_T,TIME,NREP,NFRAMES,NDIM)
+    !$OMP PRIVATE(I,L,K,M,N) &
+    !$OMP SHARED(D,O,NFRAMES,NBINS,BINS,NREP)
     DO K = 0,NREP-1
         DO L = 0,NDIM-1
             DO I = 0,NFRAMES-1
-                O(I,K) = O(I,K) + INT( D(I,L,K) * PROD(L) )
+                M = NBINS - 1
+                DO N = 0,NBINS
+                    IF ( BINS(N,L) > D(I,L,K) ) THEN
+                        M = N - 1
+                        EXIT
+                    END IF
+                END DO
+                O(I,K) = O(I,K) + INT( M * PROD(L) )
             END DO
         END DO
     END DO
