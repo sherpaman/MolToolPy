@@ -1008,7 +1008,7 @@ class TimeSer:
                                         self.digital[r,d,k] = int(np.max(np.where( self.bins[d][:-1] <= self.data[r,d,k] )))
                 return
 
-        def traj(self,time=2,nbins=None,replicas=None):
+        def traj(self,time=2,replicas=None):
                 '''
                 
                 Returns two timeseries in wich each frame encodes the 
@@ -1043,12 +1043,11 @@ class TimeSer:
                 else:
                         replicas = np.array([int(replicas)])
                 rep    = len(replicas)
-                if nbins==None:
-                        nbins=self.nbins
+                self.nbins
                 prod_t = np.ones(time+1,dtype=int)
                 prod   = np.ones(self.dim+1,dtype=int)
                 for i in np.arange(1,self.dim+1):
-                        prod[i] = prod[i-1] * nbins[i-1]
+                        prod[i] = prod[i-1] * self.nbins[i-1]
                 for i in np.arange(1,time+1):
                                 prod_t[i] =  prod_t[i-1] * prod[self.dim]
                 nd        = self.n_data-time
@@ -1066,7 +1065,7 @@ class TimeSer:
                 
                 return k, k1
 
-        def traj_for(self,time=2,nbins=None,replicas=None):
+        def traj_for(self,time=2,replicas=None):
                 '''
                 
                 Returns two timeseries in wich each frame encodes the 
@@ -1100,8 +1099,6 @@ class TimeSer:
                         replicas = np.array([int(replicas)])
                 rep    = len(replicas)
                 nd        = self.n_data-time
-                if nbins==None:
-                        nbins=self.nbins
                 self.digitalize_for(force=True)
                 #
                 # There could be an issue if a multi dimensional time-series of
@@ -1115,12 +1112,12 @@ class TimeSer:
                 #
                 # Actually this is an issue also for the self.traj() function!!!!
                 #
-                k, k1 = mi.traj(np.transpose(self.digital),time,nbins)
+                k, k1 = mi.traj(np.transpose(self.digital),time,self.nbins)
                 k = TimeSer(k,len(k),1,dtype=int)
                 k1= TimeSer(k1,len(k1),1,dtype=int)
                 return k, k1
 
-        def traj_omp(self,time=2,nbins=None,replicas=None):
+        def traj_omp(self,time=2,replicas=None):
                 '''
                 
                 Returns two timeseries in wich each frame encodes the 
@@ -1154,8 +1151,6 @@ class TimeSer:
                         replicas = np.array([int(replicas)])
                 rep    = len(replicas)
                 nd        = self.n_data-time
-                if nbins==None:
-                        nbins=self.nbins
                 self.digitalize_omp(force=True)
                 #
                 # There could be an issue if a multi dimensional time-series of
@@ -1169,12 +1164,12 @@ class TimeSer:
                 #
                 # Actually this is an issue also for the self.traj() function!!!!
                 #
-                k, k1 = mi_omp.traj(np.transpose(self.digital),time,nbins)
+                k, k1 = mi_omp.traj(np.transpose(self.digital),time,self.nbins)
                 k = TimeSer(k,len(k),1,dtype=int)
                 k1= TimeSer(k1,len(k1),1,dtype=int)
                 return k, k1
 
-        def traj_shuffle(self,time=2,nbins=None,replicas=None):
+        def traj_shuffle(self,time=2,replicas=None):
                 if nbins == None:
                         nbins= int(self.nbins) ** int( self.dim * time )
                 if hasattr(replicas, '__iter__'):
@@ -1187,7 +1182,7 @@ class TimeSer:
                 prod_t = np.ones(time+1,dtype=int)
                 prod   = np.ones(self.dim+1,dtype=int)
                 for i in np.arange(1,self.dim+1):
-                        prod[i] = prod[i-1] * nbins[i]
+                        prod[i] = prod[i-1] * self.nbins[i]
                 for i in np.arange(1,time+1):
                                 prod_t[i] =  prod_t[i-1] * prod[self.dim]
                 nd        = self.n_data-time
@@ -1203,7 +1198,7 @@ class TimeSer:
                 
                 return k
                 
-        def traj_shuffle_for(self,time=2,nbins=None,replicas=None):
+        def traj_shuffle_for(self,time=2,replicas=None):
                 if nbins == None:
                         nbins= int(self.nbins) ** int( self.dim * time )
                 if hasattr(replicas, '__iter__'):
@@ -1214,15 +1209,13 @@ class TimeSer:
                         replicas = np.array([int(replicas)])
                 rep    = len(replicas)
                 nd        = self.n_data-time
-                if nbins==None:
-                        nbins=self.nbins
                 s         = np.random.choice(np.arange(self.n_data),self.n_data,replace=False)
                 self.digitalize_for()
-                k = mi.traj_simp(np.transpose(self.digital[s]),time,nbins)
+                k = mi.traj_simp(np.transpose(self.digital[s]),time,self.nbins)
                 k = TimeSer(k,len(k),1,dtype=int)
                 return k
         
-        def traj_shuffle_for(self,time=2,nbins=None,replicas=None):
+        def traj_shuffle_omp(self,time=2,nbins=None,replicas=None):
                 if nbins == None:
                         nbins= int(self.nbins) ** int( self.dim * time )
                 if hasattr(replicas, '__iter__'):
@@ -1233,15 +1226,13 @@ class TimeSer:
                         replicas = np.array([int(replicas)])
                 rep    = len(replicas)
                 nd        = self.n_data-time
-                if nbins==None:
-                        nbins=self.nbins
                 s = np.random.choice(np.arange(self.n_data),self.n_data,replace=False)
                 self.digitalize_omp()
-                k = mi_omp.traj_simp(np.transpose(self.digital[s]),time,nbins)
+                k = mi_omp.traj_simp(np.transpose(self.digital[s]),time,self.nbins)
                 k = TimeSer(k,len(k),1,dtype=int)
                 return k              
 
-        def transfer_entropy(self,time=2,nbins=None,minfo_out=False):
+        def transfer_entropy(self,time=2,minfo_out=False):
                 '''
                 
                 Calculates the transfer entropies between the replicas 
@@ -1278,14 +1269,14 @@ class TimeSer:
                 else:
                         return T, D
 
-        def transfer_entropy_for(self,time=2,nbins=None,minfo_out=False):
+        def transfer_entropy_for(self,time=2,minfo_out=False):
                 '''
                 
                 Calculates the transfer entropies between the replicas 
                 contained in the Time Series using FORTRAN98 routines.
                 
                 '''
-                ok, ok1 = self.traj(time,nbins)
+                ok, ok1 = self.traj(time)
                 try:
                         M,  E   = ok.mutual_info_traj_for()
                 except:
@@ -1322,14 +1313,14 @@ class TimeSer:
                 else:
                         return T, D
                 
-        def transfer_entropy_omp(self,time=2,nbins=None,minfo_out=False):
+        def transfer_entropy_omp(self,time=2,minfo_out=False):
                 '''
                 
                 Calculates the transfer entropies between the replicas 
                 contained in the Time Series using FORTRAN98 routines.
                 
                 '''
-                ok, ok1 = self.traj_omp(time,nbins)
+                ok, ok1 = self.traj_omp(time)
                 try:
                         M,  E   = ok.mutual_info_traj_omp()
                 except:
@@ -1368,7 +1359,7 @@ class TimeSer:
                 else:
                         return T, D
         
-        def transfer_entropy_effective(self,resample=10,time=2,nbins=None,joint=False):
+        def transfer_entropy_effective(self,resample=10,time=2,joint=False):
                 '''
                 
                 Bootstrap estimate of transfer entropy average and variance.
@@ -1391,7 +1382,7 @@ class TimeSer:
                 '''
 
                 T = np.zeros((self.rep,self.rep))
-                ok, ok1 = self.traj(time,nbins)
+                ok, ok1 = self.traj(time)
                 M,  E   = ok.mutual_info_traj_omp()
                 M1, E1  = ok1.mutual_info_other_traj_omp(ok)
                 Rate    = np.diagonal(E1 - E)
@@ -1440,8 +1431,8 @@ class TimeSer:
                         replicas = np.arange(0,other.rep)
                 else:
                         replicas = np.array([int(replicas)])
-                sk, sk1  = self.traj_omp(time,nbins=self.nbins,replicas=ref)
-                ok, ok1  = other.traj_omp(time,nbins=other.nbins,replicas=replicas)
+                sk, sk1  = self.traj_omp(time,replicas=ref)
+                ok, ok1  = other.traj_omp(time,replicas=replicas)
                 M,  E    = sk.mutual_info_other_traj_omp(ok)
                 MSO, ESO = sk1.mutual_info_other_traj_omp(ok)
                 MOS, EOS = ok1.mutual_info_other_traj_omp(sk)
