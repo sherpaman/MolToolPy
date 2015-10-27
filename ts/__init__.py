@@ -1043,7 +1043,6 @@ class TimeSer:
                 else:
                         replicas = np.array([int(replicas)])
                 rep    = len(replicas)
-                self.nbins
                 prod_t = np.ones(time+1,dtype=int)
                 prod   = np.ones(self.dim+1,dtype=int)
                 for i in np.arange(1,self.dim+1):
