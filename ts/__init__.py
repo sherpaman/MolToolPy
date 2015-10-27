@@ -77,7 +77,7 @@ class TimeSer:
                 self.digital= None
                 self.dim    = int(dim)
                 self.rep    = self._calc_rep()
-                self.nbins  = nbins
+                self.nbins  = nbins * np.ones(dim,dtype=int)
                 self.min    = np.min(data)
                 self.max    = np.max(data)
                 self.bins   = bins # [ np.linspace(np.min(self.data),np.max(self.data),nbins+1) ] # IT MUST BE A *LIST* OF *1-DIM ARRAYS*
@@ -195,13 +195,106 @@ class TimeSer:
                 rep    = len(replicas)
                 prod   = np.ones(self.dim+1,dtype=int)
                 for i in np.arange(1,self.dim+1):
-                        prod[i] = prod[i-1] * self.nbins
+                        prod[i] = prod[i-1] * self.nbins[i-1]
                 self.digitalize_omp()
                 o = np.zeros((rep,self.n_data))
                 for r in replicas:
                         for t in np.arange(self.n_data):
                                 o[r,t]=int(np.vdot(self.digital[r,:,t],prod[:-1]))
                 other = TimeSer(o,n_data=self.n_data,dim=1,nbins=prod[-1],dtype=int)
+                return other
+
+        def _to_1dim_for(self,replicas=None):
+                '''
+                
+                Converts a multi-dim data time series into a 1-dim integer
+                time series. Data is initially digitized (see digitized function)
+                and the raveled into a 1-dim series. the values of the new series 
+                univocally correspond to the bin in the histogram (probability distribution).
+                of the original data.
+                
+                The function is *surjective* but not *bijective*. 
+                
+                Parameters
+                ----------
+                
+                replica : list
+                          a subset of replica to be used 
+                          Default: all replicas
+                          
+                Returns
+                -------
+                
+                other   : TimeSer
+                          1-dimentional TimeSer Object
+                
+                '''
+                if self.dim == 1:
+                        return self
+                if hasattr(replicas, '__iter__'):
+                        replicas = np.array(list(replicas))
+                elif replicas == None:
+                        replicas = np.arange(0,self.rep)
+                else:
+                        replicas = np.array([int(replicas)])
+                rep    = len(replicas)
+                prod   = np.ones(self.dim+1,dtype=int)
+                for i in np.arange(1,self.dim+1):
+                        prod[i] = prod[i-1] * self.nbins[i-1]
+                o = np.zeros((rep,self.n_data))
+                if (self.dtype == int):
+                    o = mi.i_to1dim(np.transpose(self.data),np.transpose(np.array(self.bins)))
+                else:
+                    o = mi.r_to1dim(np.transpose(self.data),np.transpose(np.array(self.bins)))
+                other = TimeSer(o,n_data=self.n_data,dim=1,nbins=[],dtype=int)
+                other.calc_bins(opt=True)
+                return other
+
+        def _to_1dim_omp(self,replicas=None):
+                '''
+                
+                Converts a multi-dim data time series into a 1-dim integer
+                time series. Data is initially digitized (see digitized function)
+                and the raveled into a 1-dim series. the values of the new series 
+                univocally correspond to the bin in the histogram (probability distribution).
+                of the original data.
+                
+                The function is *surjective* but not *bijective*. 
+                
+                Parameters
+                ----------
+                
+                replica : list
+                          a subset of replica to be used 
+                          Default: all replicas
+                          
+                Returns
+                -------
+                
+                other   : TimeSer
+                          1-dimentional TimeSer Object
+                
+                '''
+                if self.dim == 1:
+                        return self
+                if hasattr(replicas, '__iter__'):
+                        replicas = np.array(list(replicas))
+                elif replicas == None:
+                        replicas = np.arange(0,self.rep)
+                else:
+                        replicas = np.array([int(replicas)])
+                rep    = len(replicas)
+                prod   = np.ones(self.dim+1,dtype=int)
+                for i in np.arange(1,self.dim+1):
+                        prod[i] = prod[i-1] * self.nbins[i-1]
+                o = np.zeros((rep,self.n_data))
+                self.calc_bins(opt=True)
+                if (self.dtype == int):
+                    o = mi_omp.i_to1dim(np.transpose(self.data),np.transpose(np.array(self.bins)))
+                else:
+                    o = mi_omp.r_to1dim(np.transpose(self.data),np.transpose(np.array(self.bins)))
+                other = TimeSer(o,n_data=self.n_data,dim=1,dtype=int)
+                other.calc_bins(opt=True)
                 return other
 
         def calc_bins(self,opt=False):
@@ -218,16 +311,17 @@ class TimeSer:
                 for d in np.arange(self.dim):
                         if opt:
                                 if (self.dtype == int):
-                                        bin0 = np.unique(self.data[:,d,:])
+                                        bin0 = np.unique(self.data[:,d,:]).astype(float)
                                         bin_out = np.zeros(len(bin0)+1)
                                         bin_out[0] = bin0[0]
                                         bin_out[-1] = bin0[-1]
-                                        bin_out[1:-1] = (bin0[1:]+bin0[:-1])/2
+                                        bin_out[1:-1] = (bin0[1:]+bin0[:-1])/2.
                                         self.bins.append(bin_out)
+                                        self.nbins[d] = len(self.bins[-1]) - 1 
                                 else:
-                                        self.bins.append(bins_opt(self.data[:,d,:].ravel(),self.nbins))
+                                        self.bins.append(bins_opt(self.data[:,d,:].ravel(),self.nbins[d]))
                         else:
-                                self.bins.append(np.linspace(np.min(self.data[:,d,:]),np.max(self.data[:,d,:]),self.nbins+1))
+                                self.bins.append(np.linspace(np.min(self.data[:,d,:]),np.max(self.data[:,d,:]),self.nbins[d]+1))
                 return
                                 
         def calc_prob(self):
@@ -246,10 +340,10 @@ class TimeSer:
                                 self.calc_bins()
                         if self.dim == 1:
                                 histo , null = np.histogram(DATA,bins=self.bins[0])
-                                self.prob[i] = 1.0 * histo / self.n_data
+                                self.prob[i] = 1.0 * histo / float(self.n_data)
                         else:
                                 histo , null = np.histogramdd(np.transpose(DATA),bins=self.bins)
-                                self.prob[i] = 1.0 * histo / self.n_data
+                                self.prob[i] = 1.0 * histo / float(self.n_data)
                 self.prob_av=True
                 return
         
@@ -564,8 +658,8 @@ class TimeSer:
 
 
         def mutual_info_other_for(self,other):
-                s = self._to_1dim()
-                o = other._to_1dim()
+                s = self._to_1dim_for()
+                o = other._to_1dim_for()
                 if s.n_data != o.n_data:
                         print "The Number of Observation in the two time series are different ({0:d} != {0:d})".format(self.n_data,other.n_data)
                         return None, None
@@ -632,8 +726,8 @@ class TimeSer:
                 return np.transpose(M), np.transpose(E_joint)
         
         def mutual_info_other_omp(self,other):
-                s = self._to_1dim()
-                o = other._to_1dim()
+                s = self._to_1dim_omp()
+                o = other._to_1dim_omp()
                 if s.n_data != o.n_data:
                         print "The Number of Observation in the two time series are different ({0:d} != {0:d})".format(self.n_data,other.n_data)
                         return None, None
@@ -666,8 +760,8 @@ class TimeSer:
                 return np.transpose(M), np.transpose(E_joint)
 
         def mutual_info_other_bootstrap(self,other,resample=100):
-                s = self._to_1dim()
-                o = other._to_1dim()
+                s = self._to_1dim_omp()
+                o = other._to_1dim_omp()
                 if s.n_data != o.n_data:
                         print "The Number of Observation in the two time series are different ({0:d} != {0:d})".format(self.n_data,other.n_data)
                         return None, None
@@ -949,10 +1043,12 @@ class TimeSer:
                 else:
                         replicas = np.array([int(replicas)])
                 rep    = len(replicas)
+                if nbins==None:
+                        nbins=self.nbins
                 prod_t = np.ones(time+1,dtype=int)
                 prod   = np.ones(self.dim+1,dtype=int)
                 for i in np.arange(1,self.dim+1):
-                        prod[i] = prod[i-1] * self.nbins
+                        prod[i] = prod[i-1] * nbins[i-1]
                 for i in np.arange(1,time+1):
                                 prod_t[i] =  prod_t[i-1] * prod[self.dim]
                 nd        = self.n_data-time
@@ -1004,7 +1100,9 @@ class TimeSer:
                         replicas = np.array([int(replicas)])
                 rep    = len(replicas)
                 nd        = self.n_data-time
-                self.digitalize_omp(force=True)
+                if nbins==None:
+                        nbins=self.nbins
+                self.digitalize_for(force=True)
                 #
                 # There could be an issue if a multi dimensional time-series of
                 # integer value is passed and the bins have been optimized using 
@@ -1017,7 +1115,7 @@ class TimeSer:
                 #
                 # Actually this is an issue also for the self.traj() function!!!!
                 #
-                k, k1 = mi.traj(np.transpose(self.digital),time,self.nbins)
+                k, k1 = mi.traj(np.transpose(self.digital),time,nbins)
                 k = TimeSer(k,len(k),1,dtype=int)
                 k1= TimeSer(k1,len(k1),1,dtype=int)
                 return k, k1
@@ -1056,6 +1154,8 @@ class TimeSer:
                         replicas = np.array([int(replicas)])
                 rep    = len(replicas)
                 nd        = self.n_data-time
+                if nbins==None:
+                        nbins=self.nbins
                 self.digitalize_omp(force=True)
                 #
                 # There could be an issue if a multi dimensional time-series of
@@ -1069,7 +1169,7 @@ class TimeSer:
                 #
                 # Actually this is an issue also for the self.traj() function!!!!
                 #
-                k, k1 = mi_omp.traj(np.transpose(self.digital),time,self.nbins)
+                k, k1 = mi_omp.traj(np.transpose(self.digital),time,nbins)
                 k = TimeSer(k,len(k),1,dtype=int)
                 k1= TimeSer(k1,len(k1),1,dtype=int)
                 return k, k1
@@ -1087,7 +1187,7 @@ class TimeSer:
                 prod_t = np.ones(time+1,dtype=int)
                 prod   = np.ones(self.dim+1,dtype=int)
                 for i in np.arange(1,self.dim+1):
-                        prod[i] = prod[i-1] * self.nbins
+                        prod[i] = prod[i-1] * nbins[i]
                 for i in np.arange(1,time+1):
                                 prod_t[i] =  prod_t[i-1] * prod[self.dim]
                 nd        = self.n_data-time
@@ -1103,7 +1203,7 @@ class TimeSer:
                 
                 return k
                 
-        def traj_shuffle(self,time=2,nbins=None,replicas=None):
+        def traj_shuffle_for(self,time=2,nbins=None,replicas=None):
                 if nbins == None:
                         nbins= int(self.nbins) ** int( self.dim * time )
                 if hasattr(replicas, '__iter__'):
@@ -1113,17 +1213,12 @@ class TimeSer:
                 else:
                         replicas = np.array([int(replicas)])
                 rep    = len(replicas)
-                prod_t = np.ones(time+1,dtype=int)
-                prod   = np.ones(self.dim+1,dtype=int)
-                for i in np.arange(1,self.dim+1):
-                        prod[i] = prod[i-1] * self.nbins
-                for i in np.arange(1,time+1):
-                                prod_t[i] =  prod_t[i-1] * prod[self.dim]
                 nd        = self.n_data-time
+                if nbins==None:
+                        nbins=self.nbins
                 s         = np.random.choice(np.arange(self.n_data),self.n_data,replace=False)
-                k         = TimeSer(np.zeros((rep,1,nd)),nd,1,nbins=0,bins=[],prob=None,reshape=False,dtype=int)
                 self.digitalize_for()
-                k = mi.traj_simp(np.transpose(self.digital),time,self.nbins)
+                k = mi.traj_simp(np.transpose(self.digital[s]),time,nbins)
                 k = TimeSer(k,len(k),1,dtype=int)
                 return k
         
@@ -1137,48 +1232,14 @@ class TimeSer:
                 else:
                         replicas = np.array([int(replicas)])
                 rep    = len(replicas)
-                prod_t = np.ones(time+1,dtype=int)
-                prod   = np.ones(self.dim+1,dtype=int)
-                for i in np.arange(1,self.dim+1):
-                        prod[i] = prod[i-1] * self.nbins
-                for i in np.arange(1,time+1):
-                                prod_t[i] =  prod_t[i-1] * prod[self.dim]
                 nd        = self.n_data-time
-                s         = np.random.choice(np.arange(self.n_data),self.n_data,replace=False)
-                k         = TimeSer(np.zeros((rep,1,nd)),nd,1,nbins=0,bins=[],prob=None,reshape=False,dtype=int)
+                if nbins==None:
+                        nbins=self.nbins
+                s = np.random.choice(np.arange(self.n_data),self.n_data,replace=False)
                 self.digitalize_omp()
-                k = mi_omp.traj_simp(np.transpose(self.digital),time,self.nbins)
+                k = mi_omp.traj_simp(np.transpose(self.digital[s]),time,nbins)
                 k = TimeSer(k,len(k),1,dtype=int)
-                return k        
-
-        def traj_shuffle_for(self,time=2,nbins=None,replicas=None):
-                if nbins == None:
-                        nbins= int(self.nbins) ** int( self.dim * time )
-                if hasattr(replicas, '__iter__'):
-                        replicas = np.array(list(replicas))
-                elif replicas == None:
-                        replicas = np.arange(0,self.rep)
-                else:
-                        replicas = np.array([int(replicas)])
-                rep    = len(replicas)
-                prod_t = np.ones(time+1,dtype=int)
-                prod   = np.ones(self.dim+1,dtype=int)
-                for i in np.arange(1,self.dim+1):
-                        prod[i] = prod[i-1] * self.nbins
-                for i in np.arange(1,time+1):
-                                prod_t[i] =  prod_t[i-1] * prod[self.dim]
-                nd        = self.n_data-time
-                s         = np.random.choice(np.arange(self.n_data),self.n_data,replace=False)
-                k         = TimeSer(np.zeros((rep,1,nd)),nd,1,nbins=0,bins=[],prob=None,reshape=False,dtype=int)
-                self.digitalize()
-                for r in replicas:
-                        for l in np.arange(self.n_data-time):
-                                hash_num = 0
-                                for t in np.arange(time):
-                                        hash_num = hash_num + int(np.vdot(self.digital[r,:,s[l+t]],prod[:-1])) * prod_t[t]
-                                k.data[r,0,l]  = hash_num
-                
-                return k        
+                return k              
 
         def transfer_entropy(self,time=2,nbins=None,minfo_out=False):
                 '''
@@ -1365,7 +1426,7 @@ class TimeSer:
                                 ] = D_ij - D_ji
                 return T, D
 
-        def transfer_entropy_other_omp(self,other,time=2,ref=None,nbins_ref=None,replicas=None,nbins_replicas=None):
+        def transfer_entropy_other_omp(self,other,time=2,ref=None,replicas=None):
                 if ref == None:
                         ref = np.arange(0,self.rep)
                 else:
@@ -1379,8 +1440,8 @@ class TimeSer:
                         replicas = np.arange(0,other.rep)
                 else:
                         replicas = np.array([int(replicas)])
-                sk, sk1  = self.traj_omp(time,nbins=nbins_ref,replicas=ref)
-                ok, ok1  = other.traj_omp(time,nbins=nbins_replicas,replicas=replicas)
+                sk, sk1  = self.traj_omp(time,nbins=self.nbins,replicas=ref)
+                ok, ok1  = other.traj_omp(time,nbins=other.nbins,replicas=replicas)
                 M,  E    = sk.mutual_info_other_traj_omp(ok)
                 MSO, ESO = sk1.mutual_info_other_traj_omp(ok)
                 MOS, EOS = ok1.mutual_info_other_traj_omp(sk)
@@ -1391,7 +1452,7 @@ class TimeSer:
                 rate_o   = ok1.entropy - ok.entropy
                 for s in np.arange(len(ref)):
                         for o in np.arange(len(replicas)):
-                                T_source[s,o] = rate_o[o] - (MOS[o,s] - M[o,s])
+                                T_source[s,o] = rate_o[o] - (MOS[o,s] - M[s,o])
                                 T_drain[o,s]  = rate_s[s] - (MSO[s,o] - M[s,o])
                                 if rate_o[o] != 0.0:
                                         D_source = T_source[s,o]/rate_o[o]

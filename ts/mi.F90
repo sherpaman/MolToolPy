@@ -1412,7 +1412,7 @@ MODULE MI
         D_TEMP1(0:NFRAMES-1) = (/ (D1(K,I), K=0,NFRAMES-1) /)
         DO J = 0,NREP2-1
             EJ(J,I) = 0.0
-            D_TEMP2(0:NFRAMES-1) = (/ (D2(K,J), K = 0,NFRAMES-1) /)
+            D_TEMP2(0:NFRAMES-1) = (/ (D2(K,J), K=0,NFRAMES-1) /)
             CALL PROBDEF2D(D_TEMP2,D_TEMP1,BINS2,BINS1,NFRAMES,NBINS2,NBINS1,P_TEMP)
             DO K = 0,NBINS1-1
                 DO L = 0,NBINS2-1
@@ -1637,15 +1637,15 @@ MODULE MI
     !INTEGER, INTENT(IN)  :: NBINS(0:NDIM-1) ! TO IMPLEMENT A DIFFERENT NUMBER OF BINS PER DIM
     INTEGER, INTENT(IN)  :: NBINS
     INTEGER, INTENT(IN)  :: D(0:NFRAMES-1,0:NDIM-1,0:NREP-1)
-    REAL, INTENT(IN)     :: BINS(0:NDIM-1,0:NBINS)
+    REAL, INTENT(IN)     :: BINS(0:NBINS,0:NDIM-1)
     
-    INTEGER, INTENT(OUT) :: O(0:NREP-1,0:NFRAMES-1)
+    INTEGER, INTENT(OUT) :: O(0:NFRAMES-1,0:NREP-1)
     
     INTEGER              :: PROD(0:NDIM)
     INTEGER              :: I, K, L, N ,M
     
     PROD(0)   = 1
-    DO I = 1,NDIM
+    DO I = 1,NDIM-1
         PROD(I) = PROD(I-1) * NBINS
     END DO
 
@@ -1661,7 +1661,7 @@ MODULE MI
             DO I = 0,NFRAMES-1
                 M = NBINS - 1 
                 DO N = 0,NBINS
-                    IF ( BINS(L,N) > D(I,L,K) ) THEN
+                    IF ( BINS(N,L) > D(I,L,K) ) THEN
                         M = N - 1
                         EXIT
                     END IF
@@ -1726,7 +1726,7 @@ MODULE MI
     INTEGER, INTENT(IN)  :: NFRAMES
     INTEGER, INTENT(IN)  :: TIME
     !INTEGER, INTENT(IN)  :: NBINS(0:NDIM-1) ! TO IMPLEMENT A DIFFERENT NUMBER OF BINS PER DIM
-    INTEGER, INTENT(IN)  :: NBINS
+    INTEGER, INTENT(IN)  :: NBINS(0:NDIM-1)
     INTEGER, INTENT(IN)  :: D(0:NFRAMES-1,0:NDIM-1,0:NREP-1)
     
     INTEGER, INTENT(OUT) ::  O(0:NFRAMES-TIME-1,0:NREP-1)
@@ -1740,7 +1740,7 @@ MODULE MI
     PROD(0)   = 1
     PROD_T(0) = 1
     DO I = 1,NDIM
-        PROD(I) = PROD(I-1) * NBINS
+        PROD(I) = PROD(I-1) * NBINS(I-1)
     END DO
     DO I = 1,TIME
         PROD_T(I) = PROD_T(I-1) * PROD(NDIM)
@@ -1777,7 +1777,7 @@ MODULE MI
     INTEGER, INTENT(IN)  :: NFRAMES
     INTEGER, INTENT(IN)  :: TIME
     !INTEGER, INTENT(IN)  :: NBINS(0:NDIM-1) ! TO IMPLEMENT A DIFFERENT NUMBER OF BINS PER DIM
-    INTEGER, INTENT(IN)  :: NBINS
+    INTEGER, INTENT(IN)  :: NBINS(0:NDIM-1)
     INTEGER, INTENT(IN)  :: D(0:NFRAMES-1,0:NDIM-1,0:NREP-1)
     
     INTEGER, INTENT(OUT) ::  O(0:NFRAMES-TIME-1,0:NREP-1)
@@ -1790,7 +1790,7 @@ MODULE MI
     PROD(0)   = 1
     PROD_T(0) = 1
     DO I = 1,NDIM
-        PROD(I) = PROD(I-1) * NBINS
+        PROD(I) = PROD(I-1) * NBINS(I-1)
     END DO
     DO I = 1,TIME-1
         PROD_T(I) = PROD_T(I-1) * PROD(NDIM)
@@ -1827,7 +1827,7 @@ MODULE MI
     INTEGER, INTENT(IN)  :: NFRAMES
     INTEGER, INTENT(IN)  :: TIME
     !INTEGER, INTENT(IN)  :: NBINS(0:NDIM-1) ! TO IMPLEMENT A DIFFERENT NUMBER OF BINS PER DIM
-    INTEGER, INTENT(IN)  :: NBINS
+    INTEGER, INTENT(IN)  :: NBINS(0:NDIM-1)
     INTEGER, INTENT(IN)  :: D(0:NFRAMES-1,0:NDIM-1,0:NREP-1)
     
     INTEGER, INTENT(OUT) ::  O(0:NFRAMES-TIME-1,0:NREP-1)
@@ -1839,7 +1839,7 @@ MODULE MI
     PROD(0)   = 1
     PROD_T(0) = 1
     DO I = 1,NDIM
-        PROD(I) = PROD(I-1) * NBINS
+        PROD(I) = PROD(I-1) * NBINS(I-1)
     END DO
     DO I = 1,TIME-1
         PROD_T(I) = PROD_T(I-1) * PROD(NDIM)
