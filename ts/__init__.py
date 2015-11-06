@@ -317,7 +317,7 @@ class TimeSer:
                                         bin_out[-1] = bin0[-1]
                                         bin_out[1:-1] = (bin0[1:]+bin0[:-1])/2.
                                         self.bins.append(bin_out)
-                                        self.nbins[d] = len(self.bins[-1]) - 1 
+                                        self.nbins[d] = len(self.bins[d]) - 1 
                                 else:
                                         self.bins.append(bins_opt(self.data[:,d,:].ravel(),self.nbins[d]))
                         else:
@@ -491,7 +491,7 @@ class TimeSer:
                 self.entropy_av = True
                 return
 
-        def mutual_info(self):
+        def mutual_info(self): # CURRENTLY BROKEN : NEED TO TRANSOFRM DATA TO 1-DIM
                 '''
                 
                 Calculates the mutual information of each pair of data 
@@ -559,7 +559,7 @@ class TimeSer:
                 E_joint = np.zeros((self.rep,self.rep))
                 M       = np.zeros((self.rep,self.rep))                
                 if self.dim > 1:
-                        s = self._to_1dim()
+                        s = self._to_1dim_for()
                         s.calc_entropy()
                         M, E_joint = mi.i_mutualinfo(np.transpose(s.data),s.entropy,s.bins,s.n_data,s.rep)
                 else:
@@ -598,7 +598,7 @@ class TimeSer:
                 E_joint = np.zeros((self.rep,self.rep))
                 M       = np.zeros((self.rep,self.rep))                
                 if self.dim > 1:
-                        s = self._to_1dim()
+                        s = self._to_1dim_omp()
                         s.calc_entropy()
                         M, E_joint = mi_omp.i_mutualinfo(np.transpose(s.data),s.entropy,s.bins,s.n_data,s.rep)
                 else:
@@ -1034,8 +1034,6 @@ class TimeSer:
                                          -> nbins^time = 10^9
                 
                 '''
-                if nbins == None:
-                        nbins= int(self.nbins) ** int( self.dim * time )
                 if hasattr(replicas, '__iter__'):
                         replicas = np.array(list(replicas))
                 elif replicas == None:
@@ -1238,7 +1236,7 @@ class TimeSer:
                 contained in the  Time Series.
                 
                 '''
-                ok, ok1    = self.traj(time,nbins)
+                ok, ok1    = self.traj(time)
                 M,  E      = ok.mutual_info_traj()
                 M1, E1     = ok1.mutual_info_other_traj(ok)
                 T          = np.zeros((self.rep,self.rep))

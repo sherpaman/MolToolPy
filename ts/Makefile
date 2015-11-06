@@ -3,9 +3,6 @@
 
 include makefile.conf
 
-FC=gfortran
-F2PY =f2py --fcompiler=gnu95
-
 FFLAGS +=-fopenmp
 F2PY_FLAGS +=-DF2PY_REPORT_ON_ARRAY_COPY=1
 F2PY_FLAGS +=--noarch --f90flags='${FFLAGS}'

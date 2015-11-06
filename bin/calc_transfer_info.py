@@ -12,42 +12,57 @@ parser.add_argument("-i","--inp",dest="inp",action="store",type=str,default=None
 #
 # OUTPUT FILES
 #
-parser.add_argument("-o","--out",dest="out",action="store",type=str,default=None,required=False,help="Output File Name",metavar="DAT FILE")
+parser.add_argument("-o","--out",dest="out",action="store",type=str,default=None,required=True,help="Output File Name",metavar="DAT FILE")
 #
 # VAR ARGUMENTS
 #
-parser.add_argument("-s","--skip",dest="skip",action="store",type=int,default=1,help="skipping rows", metavar="INTEGER")
+parser.add_argument("-s","--stride",dest="stride",action="store",type=int,default=1,help="striding frames", metavar="INTEGER")
+parser.add_argument("-t","--time",dest="time",action="store",type=int,default=1,help="time", metavar="INTEGER")
+parser.add_argument("-d","--ndim",dest="ndim",action="store",type=int,default=1,help="nuber of dimensions", metavar="INTEGER")
 parser.add_argument("-n","--nbins",dest="nbins",action="store",type=int ,default=10,help="number of bins", metavar="INTEGER")
 parser.add_argument("-b","--opt",dest="opt",action="store_true",default=False,help="toggle bins optimization")
-parser.add_argument("-p","--plot",dest="plot",action="store_true",default=False,help="toggle mutual info matrix plot")
+parser.add_argument("-p","--plot",dest="plot",action="store_true",default=False,help="toggle auto-saving matrix plot")
+parser.add_argument("-x","--interleave",dest="interleave",action="store_true",default=False,help="toggle interleaving of data")
 #
 #
 options = parser.parse_args()
 
-f_in  = options.inp 
+def interleave(data,ndim):
+	nfr, nrep = data.shape	
+	out = np.zeros(data.shape)
+	for i in range(nrep/ndim):
+                for j in range(ndim):
+		        out[:,ndim*i+j]   = data[:,j*(nrep/ndim)+i]
+	return out
+
+f_dat = options.dat
 f_out = options.out
-skip  = options.skip
+stride = options.stride
 
-data   = np.loadtxt(f_in)
-d_temp = data[::skip]
+dat   = np.loadtxt(f_dat)
+dat   = dat[::stride]
 
-d = ts.TimeSer(d_temp,n_data=len(d_temp),dim=1,nbins=options.nbins)
-d.calc_bins(opt=options.opt)
+if (options.interleave) & (options.ndim != 1):
+        dat = interleave(dat,options.ndim)
 
-T,D = d.transfer_entropy_for(time=3)
+DATA= ts.TimeSer(dat,len(dat),dim=options.ndim,nbins=options.nbins)
+DATA.calc_bins(opt=options.opt)
 
-#ticks = np.array([4,5,6,10,11,12,16,17,18,22,23,24,0],dtype=int)
+T, D = DATA.tranfer_entropy_omp(options.time)
 
+fig = plt.figure()
+ax  = fig.add_subplot(111)
+mat = ax.matshow(D)
+fig.colorbar(mat)
+plt.show()
+#tx = ax.get_xticks().astype(int)
+#ty = ax.get_yticks().astype(int)
+#ax.set_xticklabels(ticks[tx])
+#ax.set_yticklabels(ticks[ty])
 if options.plot:
-	fig = plt.figure()
-	ax  = fig.add_subplot(111)
-	mat = ax.matshow(D)
-	fig.colorbar(mat)
-#	tx = ax.get_xticks().astype(int)
-#	ty = ax.get_yticks().astype(int)
-#	ax.set_xticklabels(ticks[tx])
-#	ax.set_yticklabels(ticks[ty])
-	plt.show()
+        fig.savefig(f_out.split('.')[0]+".svg",format='svg')
+
+np.savetxt(f_out,D)
 
 quit()
 

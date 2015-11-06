@@ -40,7 +40,6 @@ MODULE MI
     END INTERFACE MUTUALINFO_SIMP_PROB
     CONTAINS
     
-
     SUBROUTINE R_UNIRNK (XVALT, IRNGT, NUNI)
     ! __________________________________________________________
     !   UNIRNK = MERGE-SORT RANKING OF AN ARRAY, WITH REMOVAL OF
@@ -642,7 +641,7 @@ MODULE MI
 
     IMPLICIT NONE
     
-    INTEGER, DIMENSION(0:N-1)                              :: D_X, D_Y
+    INTEGER, DIMENSION(0:N-1), INTENT(IN)                  :: D_X, D_Y
     INTEGER, INTENT(IN)                                    :: N
     INTEGER, INTENT(IN)                                    :: NBINS_X, NBINS_Y
     REAL, DIMENSION(0:NBINS_X-1,0:NBINS_Y-1) ,INTENT(OUT)  :: PROB
@@ -679,7 +678,7 @@ MODULE MI
 
     IMPLICIT NONE
     
-    REAL, DIMENSION(0:N-1)                                 :: D_X, D_Y
+    REAL, DIMENSION(0:N-1), INTENT(IN)                     :: D_X, D_Y
     INTEGER, INTENT(IN)                                    :: N
     INTEGER, INTENT(IN)                                    :: NBINS_X, NBINS_Y
     REAL, DIMENSION(0:NBINS_X-1,0:NBINS_Y-1) ,INTENT(OUT)  :: PROB
@@ -716,8 +715,8 @@ MODULE MI
 
     IMPLICIT NONE
     
-    REAL,    DIMENSION(0:N-1)                              :: D_X
-    INTEGER, DIMENSION(0:N-1)                              :: D_Y
+    REAL,    DIMENSION(0:N-1), INTENT(IN)                  :: D_X
+    INTEGER, DIMENSION(0:N-1), INTENT(IN)                  :: D_Y
     INTEGER, INTENT(IN)                                    :: N
     INTEGER, INTENT(IN)                                    :: NBINS_X, NBINS_Y
     REAL, DIMENSION(0:NBINS_X-1,0:NBINS_Y-1) ,INTENT(OUT)  :: PROB
@@ -754,8 +753,8 @@ MODULE MI
 
     IMPLICIT NONE
     
-    INTEGER, DIMENSION(0:N-1)                              :: D_X
-    REAL,    DIMENSION(0:N-1)                              :: D_Y
+    INTEGER, DIMENSION(0:N-1), INTENT(IN)                  :: D_X
+    REAL,    DIMENSION(0:N-1), INTENT(IN)                  :: D_Y
     INTEGER, INTENT(IN)                                    :: N
     INTEGER, INTENT(IN)                                    :: NBINS_X, NBINS_Y
     REAL, DIMENSION(0:NBINS_X-1,0:NBINS_Y-1) ,INTENT(OUT)  :: PROB
@@ -806,6 +805,7 @@ MODULE MI
     REAL, INTENT(OUT), DIMENSION(0:NREP-1,0:NREP-1)                     :: EJ
     REAL, INTENT(OUT), DIMENSION(0:NBINS-1,0:NBINS-1,0:NREP-1,0:NREP-1) :: PJ
 
+    WRITE (*,'(A)') "SUBROUTINE R_MUTUALINFO_PROB"
 #ifdef OMP
     WRITE (*,'(A,I5)') "LAUNCHING THREADS : ", NUM_THREADS
     CALL OMP_SET_NUM_THREADS(NUM_THREADS)
@@ -864,6 +864,7 @@ MODULE MI
     REAL, INTENT(OUT), DIMENSION(0:NREP-1,0:NREP-1)                     :: EJ
     REAL, INTENT(OUT), DIMENSION(0:NBINS-1,0:NBINS-1,0:NREP-1,0:NREP-1) :: PJ
 
+    WRITE (*,'(A)') "SUBROUTINE I_MUTUALINFO_PROB"
 #ifdef OMP
     WRITE (*,'(A,I5)') "LAUNCHING THREADS : ", NUM_THREADS
     CALL OMP_SET_NUM_THREADS(NUM_THREADS)
@@ -926,6 +927,7 @@ MODULE MI
     REAL, INTENT(OUT), DIMENSION(0:NREP2-1,0:NREP1-1)                       :: EJ
     REAL, INTENT(OUT), DIMENSION(0:NBINS2-1,0:NBINS1-1,0:NREP2-1,0:NREP1-1) :: PJ
 
+    WRITE (*,'(A)') "SUBROUTINE R_MUTUALINFO_OTHER_PROB"
 #ifdef OMP
     WRITE (*,'(A,I5)') "LAUNCHING THREADS : ", NUM_THREADS
     CALL OMP_SET_NUM_THREADS(NUM_THREADS)
@@ -981,6 +983,7 @@ MODULE MI
     REAL, INTENT(OUT), DIMENSION(0:NREP2-1,0:NREP1-1)                       :: EJ
     REAL, INTENT(OUT), DIMENSION(0:NBINS2-1,0:NBINS1-1,0:NREP2-1,0:NREP1-1) :: PJ
 
+    WRITE (*,'(A)') "SUBROUTINE I_MUTUALINFO_OTHER_PROB"
 #ifdef OMP
     WRITE (*,'(A,I5)') "LAUNCHING THREADS : ", NUM_THREADS
     CALL OMP_SET_NUM_THREADS(NUM_THREADS)
@@ -1038,7 +1041,8 @@ MODULE MI
     D_TEMP1(0:NFRAMES-1) = (/ (D(K,NREP1), K=0,NFRAMES-1) /)
     EJ(NREP1) = E1(NREP1)
     M(NREP1)  = E1(NREP1)
-
+    
+    WRITE (*,'(A)') "SUBROUTINE I_MUTUALINFO_SIMP"
 #ifdef OMP
     WRITE (*,'(A,I5)') "LAUNCHING THREADS : ", NUM_THREADS
     CALL OMP_SET_NUM_THREADS(NUM_THREADS)
@@ -1093,7 +1097,8 @@ MODULE MI
     D_TEMP1(0:NFRAMES-1) = (/ (D(K,NREP1), K=0,NFRAMES-1) /)
     EJ(NREP1) = E1(NREP1)
     M(NREP1)  = E1(NREP1)
-
+    
+    WRITE (*,'(A)') "SUBROUTINE R_MUTUALINFO_SIMP"
 #ifdef OMP
     WRITE (*,'(A,I5)') "LAUNCHING THREADS : ", NUM_THREADS
     CALL OMP_SET_NUM_THREADS(NUM_THREADS)
@@ -1145,6 +1150,7 @@ MODULE MI
     M(NREP1)  = E1(NREP1)
 
 #ifdef OMP
+    WRITE (*,'(A)') "I_MUTUALINFO_SIMP_PROB"
     WRITE (*,'(A,I5)') "LAUNCHING THREADS : ", NUM_THREADS
     CALL OMP_SET_NUM_THREADS(NUM_THREADS)
 #endif
@@ -1200,6 +1206,7 @@ MODULE MI
     EJ(NREP1) = E1(NREP1)
     M(NREP1)  = E1(NREP1)
 
+    WRITE (*,'(A)') "SUBROUTINE R_MUTUALINFO_SIMP_PROB"
 #ifdef OMP
     WRITE (*,'(A,I5)') "LAUNCHING THREADS : ", NUM_THREADS
     CALL OMP_SET_NUM_THREADS(NUM_THREADS)
@@ -1249,6 +1256,7 @@ MODULE MI
     REAL, INTENT(OUT), DIMENSION(0:NREP-1,0:NREP-1)    :: M
     REAL, INTENT(OUT), DIMENSION(0:NREP-1,0:NREP-1)    :: EJ
 
+    WRITE (*,'(A)') "SUBROUTINE R_MUTUALINFO"
 #ifdef OMP
     WRITE (*,'(A,I5)') "LAUNCHING THREADS : ", NUM_THREADS
     CALL OMP_SET_NUM_THREADS(NUM_THREADS)
@@ -1300,6 +1308,7 @@ MODULE MI
     REAL, INTENT(OUT), DIMENSION(0:NREP-1,0:NREP-1)      :: M
     REAL, INTENT(OUT), DIMENSION(0:NREP-1,0:NREP-1)      :: EJ
 
+    WRITE (*,'(A)') "SUBROUTINE I_MUTUALINFO"
 #ifdef OMP
     WRITE (*,'(A,I5)') "LAUNCHING THREADS : ", NUM_THREADS
     CALL OMP_SET_NUM_THREADS(NUM_THREADS)
@@ -1353,7 +1362,8 @@ MODULE MI
     
     REAL, INTENT(OUT), DIMENSION(0:NREP2-1,0:NREP1-1)                       :: M
     REAL, INTENT(OUT), DIMENSION(0:NREP2-1,0:NREP1-1)                       :: EJ
-
+    
+    WRITE (*,'(A)') "SUBROUTINE R_MUTUALINFO_OTHER"
 #ifdef OMP
     WRITE (*,'(A,I5)') "LAUNCHING THREADS : ", NUM_THREADS
     CALL OMP_SET_NUM_THREADS(NUM_THREADS)
@@ -1401,6 +1411,7 @@ MODULE MI
     REAL, INTENT(OUT), DIMENSION(0:NREP2-1,0:NREP1-1)                       :: M
     REAL, INTENT(OUT), DIMENSION(0:NREP2-1,0:NREP1-1)                       :: EJ
 
+    WRITE (*,'(A)') "SUBROUTINE I_MUTUALINFO_OTHER"
 #ifdef OMP
     WRITE (*,'(A,I5)') "LAUNCHING THREADS : ", NUM_THREADS
     CALL OMP_SET_NUM_THREADS(NUM_THREADS)
@@ -1448,6 +1459,7 @@ MODULE MI
     REAL, INTENT(OUT), DIMENSION(0:NREP2-1,0:NREP1-1)                       :: M
     REAL, INTENT(OUT), DIMENSION(0:NREP2-1,0:NREP1-1)                       :: EJ
 
+    WRITE (*,'(A)') "SUBROUTINE IR_MUTUALINFO_OTHER"
 #ifdef OMP
     WRITE (*,'(A,I5)') "LAUNCHING THREADS : ", NUM_THREADS
     CALL OMP_SET_NUM_THREADS(NUM_THREADS)
@@ -1495,6 +1507,7 @@ MODULE MI
     REAL, INTENT(OUT), DIMENSION(0:NREP2-1,0:NREP1-1)                       :: M
     REAL, INTENT(OUT), DIMENSION(0:NREP2-1,0:NREP1-1)                       :: EJ
 
+    WRITE (*,'(A)') "SUBROUTINE RI_MUTUALINFO_OTHER"
 #ifdef OMP
     WRITE (*,'(A,I5)') "LAUNCHING THREADS : ", NUM_THREADS
     CALL OMP_SET_NUM_THREADS(NUM_THREADS)
@@ -1561,6 +1574,7 @@ MODULE MI
     INTEGER              :: I, K, L
     INTEGER              :: N, M
 
+    WRITE (*,'(A)') "SUBROUTINE I_DIGITALIZE"
 #ifdef OMP
     WRITE (*,'(A,I5)') "LAUNCHING THREADS : ", NUM_THREADS
     CALL OMP_SET_NUM_THREADS(NUM_THREADS)
@@ -1604,6 +1618,7 @@ MODULE MI
     INTEGER              :: I, K, L
     INTEGER              :: N, M
     
+    WRITE (*,'(A)') "SUBROUTINE R_DIGITALIZE"
 #ifdef OMP
     WRITE (*,'(A,I5)') "LAUNCHING THREADS : ", NUM_THREADS
     CALL OMP_SET_NUM_THREADS(NUM_THREADS)
@@ -1649,6 +1664,7 @@ MODULE MI
         PROD(I) = PROD(I-1) * NBINS
     END DO
 
+    WRITE (*,'(A)') "SUBROUTINE I_TO1DIM"
 #ifdef OMP
     WRITE (*,'(A,I5)') "LAUNCHING THREADS : ", NUM_THREADS
     CALL OMP_SET_NUM_THREADS(NUM_THREADS)
@@ -1694,6 +1710,7 @@ MODULE MI
         PROD(I) = PROD(I-1) * NBINS
     END DO
 
+    WRITE (*,'(A)') "SUBROUTINE R_TO1DIM"
 #ifdef OMP
     WRITE (*,'(A,I5)') "LAUNCHING THREADS : ", NUM_THREADS
     CALL OMP_SET_NUM_THREADS(NUM_THREADS)
@@ -1736,7 +1753,8 @@ MODULE MI
     INTEGER              :: PROD_T(0:TIME)
     INTEGER              :: HASH, HASH_1
     INTEGER              :: I, K, L, N
-    
+
+    WRITE (*,'(A)') "SUBROUTINE TRAJ"
     PROD(0)   = 1
     PROD_T(0) = 1
     DO I = 1,NDIM
@@ -1745,7 +1763,6 @@ MODULE MI
     DO I = 1,TIME
         PROD_T(I) = PROD_T(I-1) * PROD(NDIM)
     END DO
-
 #ifdef OMP
     CALL OMP_SET_NUM_THREADS(NUM_THREADS)
 #endif      
@@ -1769,6 +1786,68 @@ MODULE MI
     !$OMP END PARALLEL DO
     
     END SUBROUTINE TRAJ
+    
+    SUBROUTINE TRAJ2(D,TIME,NBINS,NFRAMES,NDIM,NREP,O,O1)
+    
+    INTEGER, INTENT(IN)  :: NREP
+    INTEGER, INTENT(IN)  :: NDIM
+    INTEGER, INTENT(IN)  :: NFRAMES
+    INTEGER, INTENT(IN)  :: TIME
+    !INTEGER, INTENT(IN)  :: NBINS(0:NDIM-1) ! TO IMPLEMENT A DIFFERENT NUMBER OF BINS PER DIM
+    INTEGER, INTENT(IN)  :: NBINS(0:NDIM-1)
+    INTEGER, INTENT(IN)  :: D(0:NFRAMES-1,0:NDIM-1,0:NREP-1)
+    
+    INTEGER, INTENT(OUT) ::  O(0:NFRAMES-TIME-1,0:NREP-1)
+    INTEGER, INTENT(OUT) :: O1(0:NFRAMES-TIME-1,0:NREP-1)
+    
+    INTEGER              :: PROD(0:NDIM)
+    INTEGER              :: PROD_T(0:TIME)
+    INTEGER              :: I, K, L, N
+
+    WRITE (*,'(A)') "SUBROUTINE TRAJ2"
+    PROD(0)   = 1
+    PROD_T(0) = 1
+    DO I = 1,NDIM
+        PROD(I) = PROD(I-1) * NBINS(I-1)
+    END DO
+    DO I = 1,TIME
+        PROD_T(I) = PROD_T(I-1) * PROD(NDIM)
+    END DO
+    !$OMP PARALLEL DO SHARED(O,O1)
+    DO K =0,NREP-1
+        DO I = 0,NFRAMES-TIME-1
+            O(I,K)  = 0
+            O1(I,K) = 0
+        END DO
+    END DO
+    !$OMP END PARALLEL DO
+#ifdef OMP
+    CALL OMP_SET_NUM_THREADS(NUM_THREADS)
+#endif      
+    !$OMP PARALLEL DO &
+    !$OMP PRIVATE(I,K,L,N) &
+    !$OMP SHARED(D,O,O1,PROD,PROD_T,TIME,NREP,NFRAMES,NDIM)    
+    DO K = 0,NREP-1
+        DO L = 0,NDIM-1
+            DO I = 0,NFRAMES-TIME-1    
+                DO N = 0,TIME-1
+                    O(I,K) = O(I,K) + ( D(I+N,L,K) * PROD(L) ) * PROD_T(N)
+                END DO
+                O1(I,K) = O1(I,K) + ( D(I+TIME,L,K) * PROD(L) ) * PROD_T(TIME)
+            END DO
+        END DO
+    END DO
+
+    !$OMP PARALLEL DO SHARED(O,O1)
+    DO K =0,NREP-1
+        DO I = 0,NFRAMES-TIME-1
+            O1(I,K) = O1(I,K) + O(I,K)  
+        END DO
+    END DO
+    !$OMP END PARALLEL DO
+    
+    END SUBROUTINE TRAJ2
+
 
     SUBROUTINE TRAJ_SIMP(D,TIME,NBINS,NFRAMES,NDIM,NREP,O)
     
@@ -1786,7 +1865,8 @@ MODULE MI
     INTEGER              :: PROD_T(0:TIME-1)
     INTEGER              :: HASH
     INTEGER              :: I, K, L, N
-    
+
+    WRITE (*,'(A)') "SUBROUTINE TRAJ_SIMP"
     PROD(0)   = 1
     PROD_T(0) = 1
     DO I = 1,NDIM
@@ -1795,6 +1875,7 @@ MODULE MI
     DO I = 1,TIME-1
         PROD_T(I) = PROD_T(I-1) * PROD(NDIM)
     END DO
+
 
 #ifdef OMP
     CALL OMP_SET_NUM_THREADS(NUM_THREADS)
@@ -1836,6 +1917,7 @@ MODULE MI
     INTEGER              :: PROD_T(0:TIME-1)
     INTEGER              :: I, K, L, N
     
+    WRITE (*,'(A)') "SUBROUTINE TRAJ_SIMP2"
     PROD(0)   = 1
     PROD_T(0) = 1
     DO I = 1,NDIM
@@ -1844,12 +1926,12 @@ MODULE MI
     DO I = 1,TIME-1
         PROD_T(I) = PROD_T(I-1) * PROD(NDIM)
     END DO
-
     DO K =0,NREP-1
         DO I = 0,NFRAMES-TIME-1
             O(I,K) = 0
         END DO
     END DO
+    
 #ifdef OMP
     CALL OMP_SET_NUM_THREADS(NUM_THREADS)
 #endif      
@@ -1953,6 +2035,8 @@ MODULE MI
     REAL, DIMENSION(:), ALLOCATABLE          :: P_TEMP
     
     P = 1.0/NFRAMES
+    
+    WRITE (*,'(A)') "ENTROPY_TRAJ"
 #ifdef OMP
     CALL OMP_SET_NUM_THREADS(NUM_THREADS)
 #endif      
@@ -2001,6 +2085,7 @@ MODULE MI
     REAL, INTENT(OUT), DIMENSION(0:NREP-1,0:NREP-1)      :: M
     REAL, INTENT(OUT), DIMENSION(0:NREP-1,0:NREP-1)      :: EJ
 
+    WRITE (*,'(A)') "SUBROUTINE MUTUALINFO_TRAJ"
 #ifdef OMP
     WRITE (*,'(A,I5)') "LAUNCHING THREADS : ", NUM_THREADS
     CALL OMP_SET_NUM_THREADS(NUM_THREADS)
@@ -2082,6 +2167,7 @@ MODULE MI
     REAL, INTENT(OUT), DIMENSION(0:NREP2-1,0:NREP1-1)    :: M
     REAL, INTENT(OUT), DIMENSION(0:NREP2-1,0:NREP1-1)    :: EJ
 
+    WRITE (*,'(A)') "SUBROUTINE MUTUALINFO_OTHER_TRAJ"
 #ifdef OMP
     WRITE (*,'(A,I5)') "LAUNCHING THREADS : ", NUM_THREADS
     CALL OMP_SET_NUM_THREADS(NUM_THREADS)
