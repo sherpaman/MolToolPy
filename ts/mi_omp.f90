@@ -24,6 +24,9 @@ MODULE MI_OMP
     INTERFACE MUTUALINFO
         MODULE PROCEDURE R_MUTUALINFO, I_MUTUALINFO
     END INTERFACE MUTUALINFO
+    INTERFACE MUTUALINFO_WEIGHT
+        MODULE PROCEDURE R_MUTUALINFO_WEIGHT, I_MUTUALINFO_WEIGHT
+    END INTERFACE MUTUALINFO_WEIGHT
     INTERFACE DIGITALIZE
         MODULE PROCEDURE R_DIGITALIZE, I_DIGITALIZE
     END INTERFACE DIGITALIZE
@@ -1347,6 +1350,162 @@ MODULE MI_OMP
 
     END SUBROUTINE I_MUTUALINFO
 
+    SUBROUTINE R_MUTUALINFO_WEIGHT(D,E1,W,BINS,NFRAMES,NREP,NBINS,M,EJ)
+
+    INTEGER, INTENT(IN) :: NBINS
+    INTEGER, INTENT(IN) :: NFRAMES
+    INTEGER, INTENT(IN) :: NREP
+    REAL, INTENT(IN), DIMENSION(0:NFRAMES-1,0:NREP-1) :: D
+    REAL, INTENT(IN), DIMENSION(0:NREP-1) :: E1
+    REAL, INTENT(IN), DIMENSION(0:NFRAMES-1) :: W
+    REAL, INTENT(IN), DIMENSION(0:NBINS) :: BINS
+
+    REAL, DIMENSION(0:NFRAMES-1) :: D_TEMP1
+    REAL, DIMENSION(0:NFRAMES-1) :: D_TEMP2
+    REAL, DIMENSION(0:NBINS-1,0:NBINS-1) :: P_TEMP
+
+    REAL :: P, SUM_W, L_SUM_W
+    INTEGER :: I, J, K
+    INTEGER :: L, X, Y
+
+    REAL, INTENT(OUT), DIMENSION(0:NREP-1,0:NREP-1) :: M
+    REAL, INTENT(OUT), DIMENSION(0:NREP-1,0:NREP-1) :: EJ
+
+    P = 1.0 / FLOAT(NFRAMES)
+    SUM_W = SUM(W)
+    L_SUM_W = LOG(SUM_W)
+
+    WRITE (*,'(A)') "SUBROUTINE R_MUTUALINFO_WEIGHT"
+
+    WRITE (*,'(A,I5)') "LAUNCHING THREADS : ", NUM_THREADS
+    CALL OMP_SET_NUM_THREADS(NUM_THREADS)
+
+    !$OMP PARALLEL DO &
+    !$OMP PRIVATE(D_TEMP1,D_TEMP2,P_TEMP,I,J,L,K) &
+    !$OMP SHARED(D,W,SUM_W,E1,EJ,M,NFRAMES,NBINS,BINS)
+    DO I = 0,NREP-2
+        EJ(I,I) = E1(I)
+        M(I,I) = E1(I)
+        D_TEMP1(0:NFRAMES-1) = (/ (D(K,I), K=0,NFRAMES-1) /)
+        DO J = I+1,NREP-1
+            EJ(J,I) = 0.0
+            D_TEMP2(0:NFRAMES-1) = (/ (D(K,J), K = 0,NFRAMES-1) /)
+            FORALL(K=0:NBINS-1, L=0:NBINS-1) P_TEMP(K,L)=0.0
+            DO K=0,NFRAMES-1
+                X = NBINS-1
+                Y = NBINS-1
+                DO L=1,NBINS-1
+                    IF ( BINS(L) > D_TEMP1(K) ) THEN
+                        X = L - 1
+                        EXIT
+                    END IF
+                END DO
+                DO L=1,NBINS-1
+                    IF ( BINS(L) > D_TEMP2(K) ) THEN
+                        Y = L - 1
+                        EXIT
+                    END IF
+                END DO
+                P_TEMP(X,Y) = P_TEMP(X,Y) + P * W(K)
+            END DO
+            DO K = 0,NBINS-1
+                DO L = 0,NBINS-1
+                    IF (P_TEMP(L,K) > 0) THEN
+                        EJ(J,I) = EJ(J,I) - P_TEMP(L,K) * LOG(P_TEMP(L,K))
+                    END IF
+                END DO
+            END DO
+            EJ(J,I) = EJ(J,I)/SUM_W + L_SUM_W
+            EJ(I,J) = EJ(J,I)
+            M(J,I) = E1(I) + E1(J) - EJ(J,I)
+            M(I,J) = M(J,I)
+        END DO
+    END DO
+    !$OMP END PARALLEL DO
+
+    EJ(NREP-1,NREP-1) = E1(NREP-1)
+    M(NREP-1,NREP-1) = E1(NREP-1)
+
+    END SUBROUTINE R_MUTUALINFO_WEIGHT
+
+    SUBROUTINE I_MUTUALINFO_WEIGHT(D,E1,W,BINS,NFRAMES,NREP,NBINS,M,EJ)
+
+    INTEGER, INTENT(IN) :: NBINS
+    INTEGER, INTENT(IN) :: NFRAMES
+    INTEGER, INTENT(IN) :: NREP
+    INTEGER, INTENT(IN), DIMENSION(0:NFRAMES-1,0:NREP-1):: D
+    REAL, INTENT(IN), DIMENSION(0:NREP-1) :: E1
+    REAL, INTENT(IN), DIMENSION(0:NFRAMES-1) :: W
+    REAL, INTENT(IN), DIMENSION(0:NBINS) :: BINS
+
+    INTEGER, DIMENSION(0:NFRAMES-1) :: D_TEMP1
+    INTEGER, DIMENSION(0:NFRAMES-1) :: D_TEMP2
+    REAL, DIMENSION(0:NBINS-1,0:NBINS-1) :: P_TEMP
+
+    REAL :: P, SUM_W, L_SUM_W
+    INTEGER :: I, J, K
+    INTEGER :: L, X, Y
+
+    REAL, INTENT(OUT), DIMENSION(0:NREP-1,0:NREP-1) :: M
+    REAL, INTENT(OUT), DIMENSION(0:NREP-1,0:NREP-1) :: EJ
+
+    P = 1.0 / FLOAT(NFRAMES)
+    SUM_W = SUM(W)
+    L_SUM_W = LOG(SUM_W)
+
+    WRITE (*,'(A)') "SUBROUTINE I_MUTUALINFO_WEIGHT"
+
+    WRITE (*,'(A,I5)') "LAUNCHING THREADS : ", NUM_THREADS
+    CALL OMP_SET_NUM_THREADS(NUM_THREADS)
+
+    !$OMP PARALLEL DO &
+    !$OMP PRIVATE(D_TEMP1,D_TEMP2,P_TEMP,I,J,L,K) &
+    !$OMP SHARED(D,W,SUM_W,E1,EJ,M,NFRAMES,NBINS,BINS)
+    DO I = 0,NREP-2
+        EJ(I,I) = E1(I)
+        M(I,I) = E1(I)
+        D_TEMP1(0:NFRAMES-1) = (/ (D(K,I), K=0,NFRAMES-1) /)
+        DO J = I+1,NREP-1
+            EJ(J,I) = 0.0
+            D_TEMP2(0:NFRAMES-1) = (/ (D(K,J), K = 0,NFRAMES-1) /)
+            FORALL(K=0:NBINS-1, L=0:NBINS-1) P_TEMP(K,L)=0.0
+            DO K=0,NFRAMES-1
+                X = NBINS-1
+                Y = NBINS-1
+                DO L=1,NBINS-1
+                    IF ( BINS(L) > D_TEMP1(K) ) THEN
+                        X = L - 1
+                        EXIT
+                    END IF
+                END DO
+                DO L=1,NBINS-1
+                    IF ( BINS(L) > D_TEMP2(K) ) THEN
+                        Y = L - 1
+                        EXIT
+                    END IF
+                END DO
+                P_TEMP(X,Y) = P_TEMP(X,Y) + P * W(K)
+            END DO
+            DO K = 0,NBINS-1
+                DO L = 0,NBINS-1
+                    IF (P_TEMP(L,K) > 0) THEN
+                        EJ(J,I) = EJ(J,I) - P_TEMP(L,K) * LOG(P_TEMP(L,K))
+                    END IF
+                END DO
+            END DO
+            EJ(J,I) = EJ(J,I)/SUM_W + L_SUM_W
+            EJ(I,J) = EJ(J,I)
+            M(J,I) = E1(I) + E1(J) - EJ(J,I)
+            M(I,J) = M(J,I)
+        END DO
+    END DO
+    !$OMP END PARALLEL DO
+
+    EJ(NREP-1,NREP-1) = E1(NREP-1)
+    M(NREP-1,NREP-1) = E1(NREP-1)
+
+    END SUBROUTINE I_MUTUALINFO_WEIGHT
+
     SUBROUTINE R_MUTUALINFO_OTHER(D1,D2,E1,E2,BINS1,BINS2,NFRAMES,NREP1,NREP2,NBINS1,NBINS2,M,EJ)
 
     INTEGER, INTENT(IN) :: NBINS1,NBINS2
@@ -1538,6 +1697,298 @@ MODULE MI_OMP
     !$OMP END PARALLEL DO
 
     END SUBROUTINE RI_MUTUALINFO_OTHER
+
+    SUBROUTINE R_MUTUALINFO_OTHER_WEIGTH(D1,D2,E1,E2,W,BINS1,BINS2,NFRAMES,NREP1,NREP2,NBINS1,NBINS2,M,EJ)
+
+    INTEGER, INTENT(IN) :: NBINS1,NBINS2
+    INTEGER, INTENT(IN) :: NREP1, NREP2
+    REAL, INTENT(IN), DIMENSION(0:NBINS1) :: BINS1
+    REAL, INTENT(IN), DIMENSION(0:NBINS2) :: BINS2
+    REAL, INTENT(IN), DIMENSION(0:NREP1-1) :: E1
+    REAL, INTENT(IN), DIMENSION(0:NREP2-1) :: E2
+    INTEGER, INTENT(IN) :: NFRAMES
+    REAL, INTENT(IN), DIMENSION(0:NFRAMES-1,0:NREP1-1) :: D1
+    REAL, INTENT(IN), DIMENSION(0:NFRAMES-1,0:NREP2-1) :: D2
+    REAL, INTENT(IN), DIMENSION(0:NFRAMES-1) :: W
+
+    REAL, DIMENSION(0:NFRAMES-1) :: D_TEMP1
+    REAL, DIMENSION(0:NFRAMES-1) :: D_TEMP2
+    REAL, DIMENSION(0:NBINS2-1,0:NBINS1-1) :: P_TEMP
+    INTEGER :: I, J, K, L
+    INTEGER :: X, Y
+    REAL :: P, SUM_W, L_SUM_W
+
+    REAL, INTENT(OUT), DIMENSION(0:NREP2-1,0:NREP1-1) :: M
+    REAL, INTENT(OUT), DIMENSION(0:NREP2-1,0:NREP1-1) :: EJ
+
+    P = 1.0 / FLOAT(NFRAMES)
+    SUM_W = SUM(W)
+    L_SUM_W = LOG(SUM_W)
+
+    WRITE (*,'(A)') "SUBROUTINE R_MUTUALINFO_OTHER_WEIGTH"
+
+    WRITE (*,'(A,I5)') "LAUNCHING THREADS : ", NUM_THREADS
+    CALL OMP_SET_NUM_THREADS(NUM_THREADS)
+
+    !$OMP PARALLEL DO &
+    !$OMP PRIVATE(D_TEMP1,D_TEMP2,P_TEMP,I,J,L,K) &
+    !$OMP SHARED(D1,D2,E1,E2,EJ,M,NFRAMES,NBINS1,NBINS2,BINS1,BINS2,P,SUM_W,W)
+    DO I = 0,NREP1-1
+        D_TEMP1(0:NFRAMES-1) = (/ (D1(K,I), K=0,NFRAMES-1) /)
+        DO J = 0,NREP2-1
+            EJ(J,I) = 0.0
+            D_TEMP2(0:NFRAMES-1) = (/ (D2(K,J), K = 0,NFRAMES-1) /)
+            FORALL(K=0:NBINS2-1, L=0:NBINS1-1) P_TEMP(K,L)=0.0
+            DO K=0,NFRAMES-1
+                X = NBINS1-1
+                Y = NBINS2-1
+                DO L=1,NBINS1-1
+                    IF ( BINS1(L) > D_TEMP1(K) ) THEN
+                        X = L - 1
+                        EXIT
+                    END IF
+                END DO
+                DO L=1,NBINS2-1
+                    IF ( BINS2(L) > D_TEMP2(K) ) THEN
+                        Y = L - 1
+                        EXIT
+                    END IF
+                END DO
+                P_TEMP(Y,X) = P_TEMP(Y,X) + P * W(K)
+            END DO
+            DO K = 0,NBINS1-1
+                DO L = 0,NBINS2-1
+                    IF (P_TEMP(L,K) > 0) THEN
+                        EJ(J,I) = EJ(J,I) - P_TEMP(L,K) * LOG(P_TEMP(L,K))
+                    END IF
+                END DO
+            END DO
+            EJ(J,I) = EJ(J,I)/SUM_W + L_SUM_W
+            M(J,I) = E1(I) + E2(J) - EJ(J,I)
+        END DO
+    END DO
+    !$OMP END PARALLEL DO
+
+    END SUBROUTINE R_MUTUALINFO_OTHER_WEIGTH
+
+    SUBROUTINE I_MUTUALINFO_OTHER_WEIGTH(D1,D2,E1,E2,W,BINS1,BINS2,NFRAMES,NREP1,NREP2,NBINS1,NBINS2,M,EJ)
+
+    INTEGER, INTENT(IN) :: NBINS1,NBINS2
+    INTEGER, INTENT(IN) :: NREP1, NREP2
+    REAL, INTENT(IN), DIMENSION(0:NBINS1) :: BINS1
+    REAL, INTENT(IN), DIMENSION(0:NBINS2) :: BINS2
+    REAL, INTENT(IN), DIMENSION(0:NREP1-1) :: E1
+    REAL, INTENT(IN), DIMENSION(0:NREP2-1) :: E2
+    INTEGER, INTENT(IN) :: NFRAMES
+    INTEGER, INTENT(IN), DIMENSION(0:NFRAMES-1,0:NREP1-1) :: D1
+    INTEGER, INTENT(IN), DIMENSION(0:NFRAMES-1,0:NREP2-1) :: D2
+    REAL, INTENT(IN), DIMENSION(0:NFRAMES-1) :: W
+
+    INTEGER, DIMENSION(0:NFRAMES-1) :: D_TEMP1
+    INTEGER, DIMENSION(0:NFRAMES-1) :: D_TEMP2
+    REAL, DIMENSION(0:NBINS2-1,0:NBINS1-1) :: P_TEMP
+    INTEGER :: I, J, K, L
+    INTEGER :: X, Y
+    REAL :: P, SUM_W, L_SUM_W
+
+    REAL, INTENT(OUT), DIMENSION(0:NREP2-1,0:NREP1-1) :: M
+    REAL, INTENT(OUT), DIMENSION(0:NREP2-1,0:NREP1-1) :: EJ
+
+    P = 1.0 / FLOAT(NFRAMES)
+    SUM_W = SUM(W)
+    L_SUM_W = LOG(SUM_W)
+
+    WRITE (*,'(A)') "SUBROUTINE I_MUTUALINFO_OTHER_WEIGTH"
+
+    WRITE (*,'(A,I5)') "LAUNCHING THREADS : ", NUM_THREADS
+    CALL OMP_SET_NUM_THREADS(NUM_THREADS)
+
+    !$OMP PARALLEL DO &
+    !$OMP PRIVATE(D_TEMP1,D_TEMP2,P_TEMP,I,J,L,K) &
+    !$OMP SHARED(D1,D2,E1,E2,EJ,M,NFRAMES,NBINS1,NBINS2,BINS1,BINS2,P,SUM_W,W)
+    DO I = 0,NREP1-1
+        D_TEMP1(0:NFRAMES-1) = (/ (D1(K,I), K=0,NFRAMES-1) /)
+        DO J = 0,NREP2-1
+            EJ(J,I) = 0.0
+            D_TEMP2(0:NFRAMES-1) = (/ (D2(K,J), K = 0,NFRAMES-1) /)
+            FORALL(K=0:NBINS2-1, L=0:NBINS1-1) P_TEMP(K,L)=0.0
+            DO K=0,NFRAMES-1
+                X = NBINS1-1
+                Y = NBINS2-1
+                DO L=1,NBINS1-1
+                    IF ( BINS1(L) > D_TEMP1(K) ) THEN
+                        X = L - 1
+                        EXIT
+                    END IF
+                END DO
+                DO L=1,NBINS2-1
+                    IF ( BINS2(L) > D_TEMP2(K) ) THEN
+                        Y = L - 1
+                        EXIT
+                    END IF
+                END DO
+                P_TEMP(Y,X) = P_TEMP(Y,X) + P * W(K)
+            END DO
+            DO K = 0,NBINS1-1
+                DO L = 0,NBINS2-1
+                    IF (P_TEMP(L,K) > 0) THEN
+                        EJ(J,I) = EJ(J,I) - P_TEMP(L,K) * LOG(P_TEMP(L,K))
+                    END IF
+                END DO
+            END DO
+            EJ(J,I) = EJ(J,I)/SUM_W + L_SUM_W
+            M(J,I) = E1(I) + E2(J) - EJ(J,I)
+        END DO
+    END DO
+    !$OMP END PARALLEL DO
+
+    END SUBROUTINE I_MUTUALINFO_OTHER_WEIGTH
+
+    SUBROUTINE IR_MUTUALINFO_OTHER_WEIGTH(D1,D2,E1,E2,W,BINS1,BINS2,NFRAMES,NREP1,NREP2,NBINS1,NBINS2,M,EJ)
+
+    INTEGER, INTENT(IN) :: NBINS1,NBINS2
+    INTEGER, INTENT(IN) :: NREP1, NREP2
+    REAL, INTENT(IN), DIMENSION(0:NBINS1) :: BINS1
+    REAL, INTENT(IN), DIMENSION(0:NBINS2) :: BINS2
+    REAL, INTENT(IN), DIMENSION(0:NREP1-1) :: E1
+    REAL, INTENT(IN), DIMENSION(0:NREP2-1) :: E2
+    INTEGER, INTENT(IN) :: NFRAMES
+    INTEGER, INTENT(IN), DIMENSION(0:NFRAMES-1,0:NREP1-1) :: D1
+    REAL, INTENT(IN), DIMENSION(0:NFRAMES-1,0:NREP2-1) :: D2
+    REAL, INTENT(IN), DIMENSION(0:NFRAMES-1) :: W
+
+    INTEGER, DIMENSION(0:NFRAMES-1) :: D_TEMP1
+    REAL, DIMENSION(0:NFRAMES-1) :: D_TEMP2
+    REAL, DIMENSION(0:NBINS2-1,0:NBINS1-1) :: P_TEMP
+    INTEGER :: I, J, K, L
+    INTEGER :: X, Y
+    REAL :: P, SUM_W, L_SUM_W
+
+    REAL, INTENT(OUT), DIMENSION(0:NREP2-1,0:NREP1-1) :: M
+    REAL, INTENT(OUT), DIMENSION(0:NREP2-1,0:NREP1-1) :: EJ
+
+    P = 1.0 / FLOAT(NFRAMES)
+    SUM_W = SUM(W)
+    L_SUM_W = LOG(SUM_W)
+
+    WRITE (*,'(A)') "SUBROUTINE IR_MUTUALINFO_OTHER_WEIGTH"
+
+    WRITE (*,'(A,I5)') "LAUNCHING THREADS : ", NUM_THREADS
+    CALL OMP_SET_NUM_THREADS(NUM_THREADS)
+
+    !$OMP PARALLEL DO &
+    !$OMP PRIVATE(D_TEMP1,D_TEMP2,P_TEMP,I,J,L,K) &
+    !$OMP SHARED(D1,D2,E1,E2,EJ,M,NFRAMES,NBINS1,NBINS2,BINS1,BINS2,P,SUM_W,W)
+    DO I = 0,NREP1-1
+        D_TEMP1(0:NFRAMES-1) = (/ (D1(K,I), K=0,NFRAMES-1) /)
+        DO J = 0,NREP2-1
+            EJ(J,I) = 0.0
+            D_TEMP2(0:NFRAMES-1) = (/ (D2(K,J), K = 0,NFRAMES-1) /)
+            FORALL(K=0:NBINS2-1, L=0:NBINS1-1) P_TEMP(K,L)=0.0
+            DO K=0,NFRAMES-1
+                X = NBINS1-1
+                Y = NBINS2-1
+                DO L=1,NBINS1-1
+                    IF ( BINS1(L) > D_TEMP1(K) ) THEN
+                        X = L - 1
+                        EXIT
+                    END IF
+                END DO
+                DO L=1,NBINS2-1
+                    IF ( BINS2(L) > D_TEMP2(K) ) THEN
+                        Y = L - 1
+                        EXIT
+                    END IF
+                END DO
+                P_TEMP(Y,X) = P_TEMP(Y,X) + P * W(K)
+            END DO
+            DO K = 0,NBINS1-1
+                DO L = 0,NBINS2-1
+                    IF (P_TEMP(L,K) > 0) THEN
+                        EJ(J,I) = EJ(J,I) - P_TEMP(L,K) * LOG(P_TEMP(L,K))
+                    END IF
+                END DO
+            END DO
+            EJ(J,I) = EJ(J,I)/SUM_W + L_SUM_W
+            M(J,I) = E1(I) + E2(J) - EJ(J,I)
+        END DO
+    END DO
+    !$OMP END PARALLEL DO
+
+    END SUBROUTINE IR_MUTUALINFO_OTHER_WEIGTH
+
+    SUBROUTINE RI_MUTUALINFO_OTHER_WEIGTH(D1,D2,E1,E2,W,BINS1,BINS2,NFRAMES,NREP1,NREP2,NBINS1,NBINS2,M,EJ)
+
+    INTEGER, INTENT(IN) :: NBINS1,NBINS2
+    INTEGER, INTENT(IN) :: NREP1, NREP2
+    REAL, INTENT(IN), DIMENSION(0:NBINS1) :: BINS1
+    REAL, INTENT(IN), DIMENSION(0:NBINS2) :: BINS2
+    REAL, INTENT(IN), DIMENSION(0:NREP1-1) :: E1
+    REAL, INTENT(IN), DIMENSION(0:NREP2-1) :: E2
+    INTEGER, INTENT(IN) :: NFRAMES
+    REAL, INTENT(IN), DIMENSION(0:NFRAMES-1,0:NREP1-1) :: D1
+    INTEGER, INTENT(IN), DIMENSION(0:NFRAMES-1,0:NREP2-1) :: D2
+    REAL, INTENT(IN), DIMENSION(0:NFRAMES-1) :: W
+
+    REAL, DIMENSION(0:NFRAMES-1) :: D_TEMP1
+    INTEGER, DIMENSION(0:NFRAMES-1) :: D_TEMP2
+    REAL, DIMENSION(0:NBINS2-1,0:NBINS1-1) :: P_TEMP
+    INTEGER :: I, J, K, L
+    INTEGER :: X, Y
+    REAL :: P, SUM_W, L_SUM_W
+
+    REAL, INTENT(OUT), DIMENSION(0:NREP2-1,0:NREP1-1) :: M
+    REAL, INTENT(OUT), DIMENSION(0:NREP2-1,0:NREP1-1) :: EJ
+
+    P = 1.0 / FLOAT(NFRAMES)
+    SUM_W = SUM(W)
+    L_SUM_W = LOG(SUM_W)
+
+    WRITE (*,'(A)') "SUBROUTINE RI_MUTUALINFO_OTHER_WEIGTH"
+
+    WRITE (*,'(A,I5)') "LAUNCHING THREADS : ", NUM_THREADS
+    CALL OMP_SET_NUM_THREADS(NUM_THREADS)
+
+    !$OMP PARALLEL DO &
+    !$OMP PRIVATE(D_TEMP1,D_TEMP2,P_TEMP,I,J,L,K) &
+    !$OMP SHARED(D1,D2,E1,E2,EJ,M,NFRAMES,NBINS1,NBINS2,BINS1,BINS2,P,SUM_W,W)
+    DO I = 0,NREP1-1
+        D_TEMP1(0:NFRAMES-1) = (/ (D1(K,I), K=0,NFRAMES-1) /)
+        DO J = 0,NREP2-1
+            EJ(J,I) = 0.0
+            D_TEMP2(0:NFRAMES-1) = (/ (D2(K,J), K = 0,NFRAMES-1) /)
+            FORALL(K=0:NBINS2-1, L=0:NBINS1-1) P_TEMP(K,L)=0.0
+            DO K=0,NFRAMES-1
+                X = NBINS1-1
+                Y = NBINS2-1
+                DO L=1,NBINS1-1
+                    IF ( BINS1(L) > D_TEMP1(K) ) THEN
+                        X = L - 1
+                        EXIT
+                    END IF
+                END DO
+                DO L=1,NBINS2-1
+                    IF ( BINS2(L) > D_TEMP2(K) ) THEN
+                        Y = L - 1
+                        EXIT
+                    END IF
+                END DO
+                P_TEMP(Y,X) = P_TEMP(Y,X) + P * W(K)
+            END DO
+            DO K = 0,NBINS1-1
+                DO L = 0,NBINS2-1
+                    IF (P_TEMP(L,K) > 0) THEN
+                        EJ(J,I) = EJ(J,I) - P_TEMP(L,K) * LOG(P_TEMP(L,K))
+                    END IF
+                END DO
+            END DO
+            EJ(J,I) = EJ(J,I)/SUM_W + L_SUM_W
+            M(J,I) = E1(I) + E2(J) - EJ(J,I)
+        END DO
+    END DO
+    !$OMP END PARALLEL DO
+
+    END SUBROUTINE RI_MUTUALINFO_OTHER_WEIGTH
 
     FUNCTION OPT_BIN_TRAJ(D,NFRAMES)
 
@@ -1791,75 +2242,12 @@ MODULE MI_OMP
 
     END SUBROUTINE TRAJ
 
-    SUBROUTINE TRAJ2(D,TIME,NBINS,NFRAMES,NDIM,NREP,O,O1)
-
-    INTEGER, INTENT(IN) :: NREP
-    INTEGER, INTENT(IN) :: NDIM
-    INTEGER, INTENT(IN) :: NFRAMES
-    INTEGER, INTENT(IN) :: TIME
-    !INTEGER, INTENT(IN) :: NBINS(0:NDIM-1) ! TO IMPLEMENT A DIFFERENT NUMBER OF BINS PER DIM
-    INTEGER, INTENT(IN) :: NBINS(0:NDIM-1)
-    INTEGER, INTENT(IN) :: D(0:NFRAMES-1,0:NDIM-1,0:NREP-1)
-
-    INTEGER, INTENT(OUT) :: O(0:NFRAMES-TIME-1,0:NREP-1)
-    INTEGER, INTENT(OUT) :: O1(0:NFRAMES-TIME-1,0:NREP-1)
-
-    INTEGER :: PROD(0:NDIM)
-    INTEGER :: PROD_T(0:TIME)
-    INTEGER :: I, K, L, N
-
-    WRITE (*,'(A)') "SUBROUTINE TRAJ2"
-    PROD(0) = 1
-    PROD_T(0) = 1
-    DO I = 1,NDIM
-        PROD(I) = PROD(I-1) * NBINS(I-1)
-    END DO
-    DO I = 1,TIME
-        PROD_T(I) = PROD_T(I-1) * PROD(NDIM)
-    END DO
-    !$OMP PARALLEL DO SHARED(O,O1)
-    DO K =0,NREP-1
-        DO I = 0,NFRAMES-TIME-1
-            O(I,K) = 0
-            O1(I,K) = 0
-        END DO
-    END DO
-    !$OMP END PARALLEL DO
-
-    CALL OMP_SET_NUM_THREADS(NUM_THREADS)
-
-    !$OMP PARALLEL DO &
-    !$OMP PRIVATE(I,K,L,N) &
-    !$OMP SHARED(D,O,O1,PROD,PROD_T,TIME,NREP,NFRAMES,NDIM)
-    DO K = 0,NREP-1
-        DO L = 0,NDIM-1
-            DO I = 0,NFRAMES-TIME-1
-                DO N = 0,TIME-1
-                    O(I,K) = O(I,K) + ( D(I+N,L,K) * PROD(L) ) * PROD_T(N)
-                END DO
-                O1(I,K) = O1(I,K) + ( D(I+TIME,L,K) * PROD(L) ) * PROD_T(TIME)
-            END DO
-        END DO
-    END DO
-
-    !$OMP PARALLEL DO SHARED(O,O1)
-    DO K =0,NREP-1
-        DO I = 0,NFRAMES-TIME-1
-            O1(I,K) = O1(I,K) + O(I,K)
-        END DO
-    END DO
-    !$OMP END PARALLEL DO
-
-    END SUBROUTINE TRAJ2
-
-
     SUBROUTINE TRAJ_SIMP(D,TIME,NBINS,NFRAMES,NDIM,NREP,O)
 
     INTEGER, INTENT(IN) :: NREP
     INTEGER, INTENT(IN) :: NDIM
     INTEGER, INTENT(IN) :: NFRAMES
     INTEGER, INTENT(IN) :: TIME
-    !INTEGER, INTENT(IN) :: NBINS(0:NDIM-1) ! TO IMPLEMENT A DIFFERENT NUMBER OF BINS PER DIM
     INTEGER, INTENT(IN) :: NBINS(0:NDIM-1)
     INTEGER, INTENT(IN) :: D(0:NFRAMES-1,0:NDIM-1,0:NREP-1)
 
@@ -1904,56 +2292,6 @@ MODULE MI_OMP
     !$OMP END PARALLEL DO
 
     END SUBROUTINE TRAJ_SIMP
-
-    SUBROUTINE TRAJ_SIMP2(D,TIME,NBINS,NFRAMES,NDIM,NREP,O)
-
-    INTEGER, INTENT(IN) :: NREP
-    INTEGER, INTENT(IN) :: NDIM
-    INTEGER, INTENT(IN) :: NFRAMES
-    INTEGER, INTENT(IN) :: TIME
-    !INTEGER, INTENT(IN) :: NBINS(0:NDIM-1) ! TO IMPLEMENT A DIFFERENT NUMBER OF BINS PER DIM
-    INTEGER, INTENT(IN) :: NBINS(0:NDIM-1)
-    INTEGER, INTENT(IN) :: D(0:NFRAMES-1,0:NDIM-1,0:NREP-1)
-
-    INTEGER, INTENT(OUT) :: O(0:NFRAMES-TIME-1,0:NREP-1)
-
-    INTEGER :: PROD(0:NDIM)
-    INTEGER :: PROD_T(0:TIME-1)
-    INTEGER :: I, K, L, N
-
-    WRITE (*,'(A)') "SUBROUTINE TRAJ_SIMP2"
-    PROD(0) = 1
-    PROD_T(0) = 1
-    DO I = 1,NDIM
-        PROD(I) = PROD(I-1) * NBINS(I-1)
-    END DO
-    DO I = 1,TIME-1
-        PROD_T(I) = PROD_T(I-1) * PROD(NDIM)
-    END DO
-    DO K =0,NREP-1
-        DO I = 0,NFRAMES-TIME-1
-            O(I,K) = 0
-        END DO
-    END DO
-
-
-    CALL OMP_SET_NUM_THREADS(NUM_THREADS)
-
-    !$OMP PARALLEL DO &
-    !$OMP PRIVATE(HASH,HASH_1,K,I,L,N) &
-    !$OMP SHARED(D,O,PROD,PROD_T,TIME,NREP,NFRAMES,NDIM)
-    DO K = 0,NREP-1
-        DO L = 0,NDIM-1
-            DO I = 0,NFRAMES-TIME-1
-                DO N = 0,TIME-1
-                    O(I,K) = O(I,K) + ( D(I+N,L,K) * PROD(L) ) * PROD_T(N)
-                END DO
-            END DO
-        END DO
-    END DO
-    !$OMP END PARALLEL DO
-
-    END SUBROUTINE TRAJ_SIMP2
 
     SUBROUTINE PROBDEF_TRAJ(D,BINS,N,NBINS,PROB)
 
@@ -2068,6 +2406,67 @@ MODULE MI_OMP
 
     END SUBROUTINE ENTROPY_TRAJ
 
+    SUBROUTINE ENTROPY_TRAJ_WEIGHT(D,W,NFRAMES,NREP,E)
+
+    INTEGER, INTENT(IN) :: NFRAMES
+    INTEGER, INTENT(IN) :: NREP
+    INTEGER, INTENT(IN) :: D(0:NFRAMES-1,0:NREP-1)
+    REAL, INTENT(IN) :: W(0:NFRAMES-1)
+    REAL, INTENT(OUT) :: E(0:NREP-1)
+
+    INTEGER, DIMENSION(NFRAMES) :: D_TEMP
+    INTEGER, DIMENSION(NFRAMES) :: I_BINS
+    INTEGER :: NBINS
+    INTEGER :: I, J, S1, S2
+    INTEGER :: K, X
+    REAL :: P, SUM_W, L_SUM_W
+
+    REAL, DIMENSION(:), ALLOCATABLE :: BINS
+    REAL, DIMENSION(:), ALLOCATABLE :: P_TEMP
+
+    P = 1.0 / FLOAT(NFRAMES)
+    SUM_W = SUM(W)
+    L_SUM_W = LOG(SUM_W)
+
+    WRITE (*,'(A)') "ENTROPY_TRAJ_WEIGHT"
+
+    CALL OMP_SET_NUM_THREADS(NUM_THREADS)
+
+    !$OMP PARALLEL DO &
+    !$OMP PRIVATE(D_TEMP,BINS,P_TEMP,I_BINS,NBINS,K,S1,S2) &
+    !$OMP SHARED(D,E,NFRAMES,P,W,SUM_W)
+    DO I = 0,NREP-1
+        D_TEMP(1:NFRAMES) = (/ (D(J,I), J=0,NFRAMES-1) /)
+        CALL UNIRNK(D_TEMP,I_BINS,NBINS)
+        ALLOCATE(BINS(0:NBINS), STAT=S1)
+        ALLOCATE(P_TEMP(0:NBINS-1), STAT=S2)
+        BINS(0) = D_TEMP(I_BINS(1))
+        BINS(1:NBINS-1) = (/ ( FLOAT( D_TEMP(I_BINS(K)) + D_TEMP(I_BINS(K-1)) ) / 2.0 , K = 2,NBINS) /)
+        BINS(NBINS) = D_TEMP(I_BINS(NBINS))
+        FORALL(J=0:NBINS-1) P_TEMP(J)=0.0
+        DO J=1,NFRAMES
+            X = NBINS-1
+            DO K=0,NBINS-1
+                IF ( BINS(K) > D_TEMP(J) ) THEN
+                    X = K - 1
+                    EXIT
+                END IF
+            END DO
+            P_TEMP(X) = P_TEMP(X) + P * W(J)
+        END DO
+        DO K = 0,NBINS-1
+            IF (P_TEMP(K) > 0) THEN
+                E(I) = E(I) - P_TEMP(K) * LOG(P_TEMP(K))
+            END IF
+        END DO
+        E(I) = E(I)/SUM_W + L_SUM_W
+        DEALLOCATE(P_TEMP, STAT=S2)
+        DEALLOCATE(BINS, STAT=S1)
+    END DO
+    !$OMP END PARALLEL DO
+
+    END SUBROUTINE ENTROPY_TRAJ_WEIGHT
+
     SUBROUTINE MUTUALINFO_TRAJ(D,E1,NFRAMES,NREP,M,EJ)
 
     INTEGER, INTENT(IN) :: NFRAMES
@@ -2147,6 +2546,110 @@ MODULE MI_OMP
 
     END SUBROUTINE MUTUALINFO_TRAJ
 
+    SUBROUTINE MUTUALINFO_TRAJ_WEIGHT(D,E1,W,NFRAMES,NREP,M,EJ)
+
+    INTEGER, INTENT(IN) :: NFRAMES
+    INTEGER, INTENT(IN) :: NREP
+    INTEGER, INTENT(IN), DIMENSION(0:NFRAMES-1,0:NREP-1) :: D
+    REAL, INTENT(IN), DIMENSION(0:NREP-1) :: E1
+    REAL, INTENT(IN), DIMENSION(0:NFRAMES-1) :: W
+
+    REAL, DIMENSION(:), ALLOCATABLE :: BINS_X
+    REAL, DIMENSION(:), ALLOCATABLE :: BINS_Y
+    REAL, DIMENSION(:,:), ALLOCATABLE :: P_TEMP
+    INTEGER, DIMENSION(NFRAMES) :: D_TEMP1
+    INTEGER, DIMENSION(NFRAMES) :: D_TEMP2
+    INTEGER, DIMENSION(NFRAMES) :: I_BINS_X
+    INTEGER, DIMENSION(NFRAMES) :: I_BINS_Y
+
+    INTEGER :: NBINS_X, NBINS_Y
+    INTEGER :: I, J, K, L
+    INTEGER :: X, Y
+    REAL :: P, SUM_W, L_SUM_W
+
+    REAL, INTENT(OUT), DIMENSION(0:NREP-1,0:NREP-1) :: M
+    REAL, INTENT(OUT), DIMENSION(0:NREP-1,0:NREP-1) :: EJ
+
+    P = 1.0 / FLOAT(NFRAMES)
+    SUM_W = SUM(W)
+    L_SUM_W = LOG(SUM_W)
+
+    WRITE (*,'(A)') "SUBROUTINE MUTUALINFO_TRAJ_WEIGHT"
+
+    WRITE (*,'(A,I5)') "LAUNCHING THREADS : ", NUM_THREADS
+    CALL OMP_SET_NUM_THREADS(NUM_THREADS)
+
+    !$OMP PARALLEL DO &
+    !$OMP PRIVATE(D_TEMP1,D_TEMP2,P_TEMP,I,J,L,K,NBINS_X,NBINS_Y,BINS_X,BINS_Y,I_BINS_X,I_BINS_Y) &
+    !$OMP SHARED(D,E1,EJ,M,NFRAMES)
+    DO I = 0,NREP-2
+        EJ(I,I) = E1(I)
+        M(I,I) = E1(I)
+        !
+        ! SINCE WE ARE USING THE UNIRNK ROUTINE (FROM THE DATAPACK LIBRARY)
+        ! THE TEMPORARY TRAJECTORY HAS TO BE USED THE 1-BASED INDEXING
+        ! THEN, TO CALCULATE JOINT DISTRIBUTION, WHE USE A MODIFIED
+        ! PROBDEF2D_TRAJ ROUTINE.
+        !
+        D_TEMP1(1:NFRAMES) = (/ (D(K,I), K=0,NFRAMES-1) /)
+        CALL UNIRNK(D_TEMP1,I_BINS_X,NBINS_X)
+        ALLOCATE(BINS_X(0:NBINS_X))
+        BINS_X(0) = D_TEMP1(I_BINS_X(1))
+        DO K = 2,NBINS_X
+            BINS_X(K) = ( D_TEMP1(I_BINS_X(K)) + D_TEMP1(I_BINS_X(K-1)) ) / 2.0
+        END DO
+        BINS_X(NBINS_X) = D_TEMP1(I_BINS_X(NBINS_X))
+        DO J = I+1,NREP-1
+            EJ(J,I) = 0.0
+            D_TEMP2(1:NFRAMES) = (/ (D(K,J), K = 0,NFRAMES-1) /)
+            CALL UNIRNK(D_TEMP2,I_BINS_Y,NBINS_Y)
+            ALLOCATE(BINS_Y(0:NBINS_Y))
+            BINS_Y(0) = D_TEMP2(I_BINS_Y(1))
+            DO K = 2,NBINS_Y
+                BINS_Y(K) = ( D_TEMP2(I_BINS_Y(K)) + D_TEMP2(I_BINS_Y(K-1)) ) / 2.0
+            END DO
+            BINS_Y(NBINS_Y) = D_TEMP2(I_BINS_Y(NBINS_Y))
+            ALLOCATE(P_TEMP(0:NBINS_X-1,0:NBINS_Y-1))
+            FORALL(L=0:NBINS_Y-1, K=0:NBINS_X-1) P_TEMP(K,L)=0.0
+            DO K=1,NFRAMES
+                X = NBINS_X-1
+                Y = NBINS_Y-1
+                DO L=1,NBINS_X-1
+                    IF ( BINS_X(L) > D_TEMP1(K) ) THEN
+                        X = K - 1
+                        EXIT
+                    END IF
+                END DO
+                DO L=1,NBINS_Y-1
+                    IF ( BINS_Y(L) > D_TEMP2(K) ) THEN
+                        Y = K - 1
+                        EXIT
+                    END IF
+                END DO
+                P_TEMP(X,Y) = P_TEMP(X,Y) + P * W(K-1) ! 1-BASED INDEXING
+            END DO
+            DO K = 0,NBINS_Y-1
+                DO L = 0,NBINS_X-1
+                    IF (P_TEMP(L,K) > 0) THEN
+                        EJ(J,I) = EJ(J,I) - P_TEMP(L,K) * LOG(P_TEMP(L,K))
+                    END IF
+                END DO
+            END DO
+            EJ(J,I) = EJ(J,I)/SUM_W + L_SUM_W
+            EJ(I,J) = EJ(J,I)
+            M(J,I) = E1(I) + E1(J) - EJ(J,I)
+            M(I,J) = M(J,I)
+            DEALLOCATE(BINS_Y)
+            DEALLOCATE(P_TEMP)
+        END DO
+        DEALLOCATE(BINS_X)
+    END DO
+    !$OMP END PARALLEL DO
+    EJ(NREP-1,NREP-1) = E1(NREP-1)
+    M(NREP-1,NREP-1) = E1(NREP-1)
+
+    END SUBROUTINE MUTUALINFO_TRAJ_WEIGHT
+
     SUBROUTINE MUTUALINFO_OTHER_TRAJ(D1,D2,E1,E2,NFRAMES,NREP1,NREP2,M,EJ)
 
 
@@ -2216,5 +2719,100 @@ MODULE MI_OMP
     !$OMP END PARALLEL DO
 
     END SUBROUTINE MUTUALINFO_OTHER_TRAJ
+
+    SUBROUTINE MUTUALINFO_OTHER_TRAJ_WEIGHT(D1,D2,E1,E2,W,NFRAMES,NREP1,NREP2,M,EJ)
+
+
+    INTEGER, INTENT(IN) :: NFRAMES
+    INTEGER, INTENT(IN) :: NREP1,NREP2
+    INTEGER, INTENT(IN), DIMENSION(0:NFRAMES-1,0:NREP1-1):: D1
+    INTEGER, INTENT(IN), DIMENSION(0:NFRAMES-1,0:NREP2-1):: D2
+    REAL, INTENT(IN), DIMENSION(0:NREP1-1) :: E1
+    REAL, INTENT(IN), DIMENSION(0:NREP2-1) :: E2
+    REAL, INTENT(IN), DIMENSION(0:NFRAMES-1) :: W
+
+    INTEGER, DIMENSION(NFRAMES) :: D_TEMP1
+    INTEGER, DIMENSION(NFRAMES) :: D_TEMP2
+    INTEGER, DIMENSION(NFRAMES) :: I_BINS1
+    INTEGER, DIMENSION(NFRAMES) :: I_BINS2
+    INTEGER :: NBINS1,NBINS2
+
+    REAL, ALLOCATABLE :: BINS1(:)
+    REAL, ALLOCATABLE :: BINS2(:)
+    REAL, ALLOCATABLE :: P_TEMP(:,:)
+    INTEGER :: I, J, K, L
+    INTEGER :: X, Y
+    REAL :: P, SUM_W, L_SUM_W
+
+    REAL, INTENT(OUT), DIMENSION(0:NREP2-1,0:NREP1-1) :: M
+    REAL, INTENT(OUT), DIMENSION(0:NREP2-1,0:NREP1-1) :: EJ
+
+    P = 1.0 / FLOAT(NFRAMES)
+    SUM_W = SUM(W)
+    L_SUM_W = LOG(SUM_W)
+
+    WRITE (*,'(A)') "SUBROUTINE MUTUALINFO_OTHER_TRAJ"
+
+    WRITE (*,'(A,I5)') "LAUNCHING THREADS : ", NUM_THREADS
+    CALL OMP_SET_NUM_THREADS(NUM_THREADS)
+
+    !$OMP PARALLEL DO &
+    !$OMP PRIVATE(D_TEMP1,D_TEMP2,P_TEMP,I,J,L,K,NBINS1,NBINS2,BINS1,BINS2,I_BINS1,I_BINS2) &
+    !$OMP SHARED(D,E1,EJ,M,NFRAMES)
+    DO I = 0,NREP1-1
+        D_TEMP1(1:NFRAMES) = (/ (D1(K,I), K=0,NFRAMES-1) /)
+        CALL UNIRNK(D_TEMP1,I_BINS1,NBINS1)
+        ALLOCATE(BINS1(0:NBINS1))
+        BINS1(0) = D_TEMP1(I_BINS1(1))
+        DO K = 2,NBINS1
+            BINS1(K) = ( D_TEMP1(I_BINS1(K)) + D_TEMP1(I_BINS1(K-1)) ) / 2.0
+        END DO
+        BINS1(NBINS1) = D_TEMP1(I_BINS1(NBINS1))
+        DO J = 0,NREP2-1
+            EJ(J,I) = 0.0
+            D_TEMP2(1:NFRAMES) = (/ (D2(K,J), K = 0,NFRAMES-1) /)
+            CALL UNIRNK(D_TEMP2,I_BINS2,NBINS2)
+            ALLOCATE(BINS2(0:NBINS2))
+            BINS2(0) = D_TEMP2(I_BINS2(1))
+            DO K = 2,NBINS2
+                BINS2(K) = ( D_TEMP2(I_BINS2(K)) + D_TEMP2(I_BINS2(K-1)) ) / 2.0
+            END DO
+            BINS2(NBINS2) = D_TEMP2(I_BINS2(NBINS2))
+            ALLOCATE(P_TEMP(0:NBINS1-1,0:NBINS2-1))
+            FORALL(K=0:NBINS2-1, L=0:NBINS1-1) P_TEMP(L,K)=0.0
+            DO K=1,NFRAMES
+                X = NBINS1-1
+                Y = NBINS2-1
+                DO L=1,NBINS1-1
+                    IF ( BINS1(L) > D_TEMP1(K) ) THEN
+                        X = K - 1
+                        EXIT
+                    END IF
+                END DO
+                DO L=1,NBINS2-1
+                    IF ( BINS2(L) > D_TEMP2(K) ) THEN
+                        Y = K - 1
+                        EXIT
+                    END IF
+                END DO
+                P_TEMP(X,Y) = P_TEMP(X,Y) + P * W(K-1) ! 1-BASED INDEXING
+            END DO
+            DO K = 0,NBINS2-1
+                DO L = 0,NBINS1-1
+                    IF (P_TEMP(L,K) > 0) THEN
+                        EJ(J,I) = EJ(J,I) - ( P_TEMP(L,K) * LOG(P_TEMP(L,K)) )
+                    END IF
+                END DO
+            END DO
+            EJ(J,I) = EJ(J,I)/SUM_W + L_SUM_W
+            M(J,I) = E1(I) + E2(J) - EJ(J,I)
+            DEALLOCATE(BINS2)
+            DEALLOCATE(P_TEMP)
+        END DO
+        DEALLOCATE(BINS1)
+    END DO
+    !$OMP END PARALLEL DO
+
+    END SUBROUTINE MUTUALINFO_OTHER_TRAJ_WEIGHT
 
 END MODULE
