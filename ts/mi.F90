@@ -1,9 +1,11 @@
 #ifdef OMP
 MODULE MI_OMP
+    IMPLICIT NONE
     INTEGER :: NUM_THREADS = 8
 #endif
 #ifndef OMP
 MODULE MI
+    IMPLICIT NONE
 #endif
     INTERFACE UNIRNK
       MODULE PROCEDURE R_UNIRNK, I_UNIRNK
@@ -41,6 +43,7 @@ MODULE MI
     INTERFACE MUTUALINFO_SIMP_PROB
         MODULE PROCEDURE I_MUTUALINFO_SIMP_PROB, R_MUTUALINFO_SIMP_PROB
     END INTERFACE MUTUALINFO_SIMP_PROB
+
     CONTAINS
     
     SUBROUTINE R_UNIRNK (XVALT, IRNGT, NUNI)
@@ -54,14 +57,14 @@ MODULE MI
     !   OUT OF THE STANDARD LOOP, AND USE DEDICATED CODING.
     ! __________________________________________________________
     ! __________________________________________________________
-          REAL, DIMENSION (:), INTENT (IN) :: XVALT
+          REAL(KIND=8), DIMENSION (:), INTENT (IN) :: XVALT
           INTEGER, DIMENSION (:), INTENT (OUT) :: IRNGT
           INTEGER, INTENT (OUT) :: NUNI
     ! __________________________________________________________
           INTEGER, DIMENSION (SIZE(IRNGT)) :: JWRKT
           INTEGER :: LMTNA, LMTNC, IRNG, IRNG1, IRNG2
           INTEGER :: NVAL, IIND, IWRKD, IWRK, IWRKF, JINDA, IINDA, IINDB
-          REAL :: XTST, XVALA, XVALB
+          REAL(KIND=8) :: XTST, XVALA, XVALB
     !
     !
           NVAL = MIN (SIZE(XVALT), SIZE(IRNGT))
@@ -542,8 +545,8 @@ MODULE MI
     FUNCTION R_NEARLESS (XVAL) RESULT (R_NL)
     !  NEAREST VALUE LESS THAN GIVEN VALUE
     ! __________________________________________________________
-          REAL, INTENT (IN) :: XVAL
-          REAL :: R_NL
+          REAL(KIND=8), INTENT (IN) :: XVAL
+          REAL(KIND=8) :: R_NL
     ! __________________________________________________________
           R_NL = NEAREST (XVAL, -1.0)
           RETURN
@@ -567,14 +570,14 @@ MODULE MI
     INTEGER, DIMENSION(0:N-1)                 :: D_X, D_Y
     INTEGER                                   :: N
     INTEGER                                   :: NBINS_X, NBINS_Y
-    REAL, DIMENSION(0:NBINS_X-1,0:NBINS_Y-1)  :: PROB
-    REAL, DIMENSION(0:NBINS_X)                :: BINS_X
-    REAL, DIMENSION(0:NBINS_Y)                :: BINS_Y
+    REAL(KIND=8), DIMENSION(0:NBINS_X-1,0:NBINS_Y-1)  :: PROB
+    REAL(KIND=8), DIMENSION(0:NBINS_X)                :: BINS_X
+    REAL(KIND=8), DIMENSION(0:NBINS_Y)                :: BINS_Y
     
     INTEGER               :: I, J, X, Y
-    REAL                  :: MIN_D_X, MIN_D_Y, MAX_D_X, MAX_D_Y
-    REAL                  :: BIN_DELTA_X, BIN_DELTA_Y
-    REAL                  :: P
+    REAL(KIND=8)                  :: MIN_D_X, MIN_D_Y, MAX_D_X, MAX_D_Y
+    REAL(KIND=8)                  :: BIN_DELTA_X, BIN_DELTA_Y
+    REAL(KIND=8)                  :: P
     
     P = 1.0 / N
         
@@ -604,17 +607,17 @@ MODULE MI
 
     IMPLICIT NONE
     
-    REAL   , DIMENSION(0:N-1)                 :: D_X, D_Y
+    REAL(KIND=8)   , DIMENSION(0:N-1)                 :: D_X, D_Y
     INTEGER                                   :: N
     INTEGER                                   :: NBINS_X, NBINS_Y
-    REAL, DIMENSION(0:NBINS_X-1,0:NBINS_Y-1)  :: PROB
-    REAL, DIMENSION(0:NBINS_X)                :: BINS_X
-    REAL, DIMENSION(0:NBINS_Y)                :: BINS_Y
+    REAL(KIND=8), DIMENSION(0:NBINS_X-1,0:NBINS_Y-1)  :: PROB
+    REAL(KIND=8), DIMENSION(0:NBINS_X)                :: BINS_X
+    REAL(KIND=8), DIMENSION(0:NBINS_Y)                :: BINS_Y
     
     INTEGER               :: I, J, X, Y
-    REAL                  :: MIN_D_X, MIN_D_Y, MAX_D_X, MAX_D_Y
-    REAL                  :: BIN_DELTA_X, BIN_DELTA_Y
-    REAL                  :: P
+    REAL(KIND=8)                  :: MIN_D_X, MIN_D_Y, MAX_D_X, MAX_D_Y
+    REAL(KIND=8)                  :: BIN_DELTA_X, BIN_DELTA_Y
+    REAL(KIND=8)                  :: P
     
     P = 1.0 / N
     
@@ -647,12 +650,12 @@ MODULE MI
     INTEGER, DIMENSION(0:N-1), INTENT(IN)                  :: D_X, D_Y
     INTEGER, INTENT(IN)                                    :: N
     INTEGER, INTENT(IN)                                    :: NBINS_X, NBINS_Y
-    REAL, DIMENSION(0:NBINS_X-1,0:NBINS_Y-1) ,INTENT(OUT)  :: PROB
-    REAL, DIMENSION(0:NBINS_X), INTENT(IN)                 :: BINS_X
-    REAL, DIMENSION(0:NBINS_Y), INTENT(IN)                 :: BINS_Y
+    REAL(KIND=8), DIMENSION(0:NBINS_X-1,0:NBINS_Y-1) ,INTENT(OUT)  :: PROB
+    REAL(KIND=8), DIMENSION(0:NBINS_X), INTENT(IN)                 :: BINS_X
+    REAL(KIND=8), DIMENSION(0:NBINS_Y), INTENT(IN)                 :: BINS_Y
     
     INTEGER               :: I, J, K, X, Y
-    REAL                  :: P 
+    REAL(KIND=8)                  :: P 
     
     P = 1.0 / N
     
@@ -681,15 +684,15 @@ MODULE MI
 
     IMPLICIT NONE
     
-    REAL, DIMENSION(0:N-1), INTENT(IN)                     :: D_X, D_Y
+    REAL(KIND=8), DIMENSION(0:N-1), INTENT(IN)                     :: D_X, D_Y
     INTEGER, INTENT(IN)                                    :: N
     INTEGER, INTENT(IN)                                    :: NBINS_X, NBINS_Y
-    REAL, DIMENSION(0:NBINS_X-1,0:NBINS_Y-1) ,INTENT(OUT)  :: PROB
-    REAL, DIMENSION(0:NBINS_X), INTENT(IN)                 :: BINS_X
-    REAL, DIMENSION(0:NBINS_Y), INTENT(IN)                 :: BINS_Y
+    REAL(KIND=8), DIMENSION(0:NBINS_X-1,0:NBINS_Y-1) ,INTENT(OUT)  :: PROB
+    REAL(KIND=8), DIMENSION(0:NBINS_X), INTENT(IN)                 :: BINS_X
+    REAL(KIND=8), DIMENSION(0:NBINS_Y), INTENT(IN)                 :: BINS_Y
     
     INTEGER               :: I, J, K, X, Y
-    REAL                  :: P 
+    REAL(KIND=8)                  :: P 
     
     P = 1.0 / N
     
@@ -718,16 +721,16 @@ MODULE MI
 
     IMPLICIT NONE
     
-    REAL,    DIMENSION(0:N-1), INTENT(IN)                  :: D_X
+    REAL(KIND=8),    DIMENSION(0:N-1), INTENT(IN)                  :: D_X
     INTEGER, DIMENSION(0:N-1), INTENT(IN)                  :: D_Y
     INTEGER, INTENT(IN)                                    :: N
     INTEGER, INTENT(IN)                                    :: NBINS_X, NBINS_Y
-    REAL, DIMENSION(0:NBINS_X-1,0:NBINS_Y-1) ,INTENT(OUT)  :: PROB
-    REAL, DIMENSION(0:NBINS_X), INTENT(IN)                 :: BINS_X
-    REAL, DIMENSION(0:NBINS_Y), INTENT(IN)                 :: BINS_Y
+    REAL(KIND=8), DIMENSION(0:NBINS_X-1,0:NBINS_Y-1) ,INTENT(OUT)  :: PROB
+    REAL(KIND=8), DIMENSION(0:NBINS_X), INTENT(IN)                 :: BINS_X
+    REAL(KIND=8), DIMENSION(0:NBINS_Y), INTENT(IN)                 :: BINS_Y
     
     INTEGER               :: I, J, K, X, Y
-    REAL                  :: P 
+    REAL(KIND=8)                  :: P 
     
     P = 1.0 / N
     
@@ -757,15 +760,15 @@ MODULE MI
     IMPLICIT NONE
     
     INTEGER, DIMENSION(0:N-1), INTENT(IN)                  :: D_X
-    REAL,    DIMENSION(0:N-1), INTENT(IN)                  :: D_Y
+    REAL(KIND=8),    DIMENSION(0:N-1), INTENT(IN)                  :: D_Y
     INTEGER, INTENT(IN)                                    :: N
     INTEGER, INTENT(IN)                                    :: NBINS_X, NBINS_Y
-    REAL, DIMENSION(0:NBINS_X-1,0:NBINS_Y-1) ,INTENT(OUT)  :: PROB
-    REAL, DIMENSION(0:NBINS_X), INTENT(IN)                 :: BINS_X
-    REAL, DIMENSION(0:NBINS_Y), INTENT(IN)                 :: BINS_Y
+    REAL(KIND=8), DIMENSION(0:NBINS_X-1,0:NBINS_Y-1) ,INTENT(OUT)  :: PROB
+    REAL(KIND=8), DIMENSION(0:NBINS_X), INTENT(IN)                 :: BINS_X
+    REAL(KIND=8), DIMENSION(0:NBINS_Y), INTENT(IN)                 :: BINS_Y
     
     INTEGER               :: I, J, K, X, Y
-    REAL                  :: P 
+    REAL(KIND=8)                  :: P 
     
     P = 1.0 / N
     
@@ -795,19 +798,23 @@ MODULE MI
     INTEGER, INTENT(IN)                                :: NBINS
     INTEGER, INTENT(IN)                                :: NFRAMES
     INTEGER, INTENT(IN)                                :: NREP
-    REAL, INTENT(IN), DIMENSION(0:NFRAMES-1,0:NREP-1)  :: D
-    REAL, INTENT(IN), DIMENSION(0:NREP-1)              :: E1
-    REAL, INTENT(IN), DIMENSION(0:NBINS)               :: BINS
+    REAL(KIND=8), INTENT(IN), DIMENSION(0:NFRAMES-1,0:NREP-1)  :: D
+    REAL(KIND=8), INTENT(IN), DIMENSION(0:NREP-1)              :: E1
+    REAL(KIND=8), INTENT(IN), DIMENSION(0:NBINS)               :: BINS
     
-    REAL, DIMENSION(0:NFRAMES-1)                     :: D_TEMP1
-    REAL, DIMENSION(0:NFRAMES-1)                     :: D_TEMP2
-    REAL, DIMENSION(0:NBINS-1,0:NBINS-1)             :: P_TEMP
-    INTEGER                                           :: I, J, K
+    REAL(KIND=8), DIMENSION(0:NFRAMES-1)                     :: D_TEMP1
+    REAL(KIND=8), DIMENSION(0:NFRAMES-1)                     :: D_TEMP2
+    REAL(KIND=8), DIMENSION(0:NBINS-1,0:NBINS-1)             :: P_TEMP
+    INTEGER                                          :: I, J, K, L
+    INTEGER                                          :: X, Y
     
-    REAL, INTENT(OUT), DIMENSION(0:NREP-1,0:NREP-1)                     :: M
-    REAL, INTENT(OUT), DIMENSION(0:NREP-1,0:NREP-1)                     :: EJ
-    REAL, INTENT(OUT), DIMENSION(0:NBINS-1,0:NBINS-1,0:NREP-1,0:NREP-1) :: PJ
-
+    REAL(KIND=8), INTENT(OUT), DIMENSION(0:NREP-1,0:NREP-1)                     :: M
+    REAL(KIND=8), INTENT(OUT), DIMENSION(0:NREP-1,0:NREP-1)                     :: EJ
+    REAL(KIND=8), INTENT(OUT), DIMENSION(0:NBINS-1,0:NBINS-1,0:NREP-1,0:NREP-1) :: PJ
+REAL(KIND=8)  :: L_NFRAMES
+    
+    L_NFRAMES = LOG(FLOAT(NFRAMES))
+    
     WRITE (*,'(A)') "SUBROUTINE R_MUTUALINFO_PROB"
 #ifdef OMP
     WRITE (*,'(A,I5)') "LAUNCHING THREADS : ", NUM_THREADS
@@ -828,22 +835,40 @@ MODULE MI
                 END DO
             END DO 
             D_TEMP2(0:NFRAMES-1) = (/ (D(K,J), K = 0,NFRAMES-1) /)
-            CALL PROBDEF2D(D_TEMP2,D_TEMP1,BINS,BINS,NFRAMES,NBINS,NBINS,P_TEMP)
+            FORALL(K=0:NBINS-1, L=0:NBINS-1) P_TEMP(K,L)=0.0
+            DO K=0,NFRAMES-1
+                X = NBINS-1
+                Y = NBINS-1
+                DO L=1,NBINS-1
+                    IF ( BINS(L) > D_TEMP1(K) )  THEN
+                        X = L - 1
+                        EXIT
+                    END IF
+                END DO
+                DO L=1,NBINS-1
+                    IF ( BINS(L) > D_TEMP2(K) ) THEN
+                        Y = L - 1
+                        EXIT
+                    END IF
+                END DO
+                P_TEMP(Y,X) = P_TEMP(Y,X) + 1.0
+            END DO 
             DO K = 0,NBINS-1
                 DO L = 0,NBINS-1
-                    PJ(L,K,J,I) = P_TEMP(L,K)
-                    PJ(L,K,I,J) = P_TEMP(L,K)
-                    IF (P_TEMP(L,K) > 0) THEN
-                        EJ(J,I) = EJ(J,I) - P_TEMP(L,K) * LOG(P_TEMP(L,K))
+                    PJ(L,K,J,I) = P_TEMP(L,K)/NFRAMES
+                    PJ(K,L,I,J) = P_TEMP(K,L)/NFRAMES
+                    IF (P_TEMP(L,K) > 1) THEN
+                        EJ(J,I) = EJ(J,I) - LOG(P_TEMP(L,K)) * P_TEMP(L,K)
                     END IF
                 END DO
             END DO
-            EJ(I,J) = EJ(J,I) 
+            EJ(J,I) = L_NFRAMES + EJ(J,I)/NFRAMES  
             M(J,I)  = E1(I) + E1(J) - EJ(J,I)
             M(I,J)  = M(J,I)
         END DO
     END DO
     !$OMP END PARALLEL DO
+    
     EJ(NREP-1,NREP-1) = E1(NREP-1)
     M(NREP-1,NREP-1)  = E1(NREP-1)
     
@@ -855,18 +880,22 @@ MODULE MI
     INTEGER, INTENT(IN)                                  :: NFRAMES
     INTEGER, INTENT(IN)                                  :: NREP
     INTEGER, INTENT(IN), DIMENSION(0:NFRAMES-1,0:NREP-1) :: D
-    REAL, INTENT(IN), DIMENSION(0:NREP-1)                :: E1
-    REAL, INTENT(IN), DIMENSION(0:NBINS)                 :: BINS
+    REAL(KIND=8), INTENT(IN), DIMENSION(0:NREP-1)                :: E1
+    REAL(KIND=8), INTENT(IN), DIMENSION(0:NBINS)                 :: BINS
     
     INTEGER, DIMENSION(0:NFRAMES-1)                     :: D_TEMP1
     INTEGER, DIMENSION(0:NFRAMES-1)                     :: D_TEMP2
-    REAL, DIMENSION(0:NBINS-1,0:NBINS-1)                :: P_TEMP
+    REAL(KIND=8), DIMENSION(0:NBINS-1,0:NBINS-1)                :: P_TEMP
     INTEGER                                             :: I, J, K, L
+    INTEGER                                             :: X, Y
     
-    REAL, INTENT(OUT), DIMENSION(0:NREP-1,0:NREP-1)                     :: M
-    REAL, INTENT(OUT), DIMENSION(0:NREP-1,0:NREP-1)                     :: EJ
-    REAL, INTENT(OUT), DIMENSION(0:NBINS-1,0:NBINS-1,0:NREP-1,0:NREP-1) :: PJ
-
+    REAL(KIND=8), INTENT(OUT), DIMENSION(0:NREP-1,0:NREP-1)                     :: M
+    REAL(KIND=8), INTENT(OUT), DIMENSION(0:NREP-1,0:NREP-1)                     :: EJ
+    REAL(KIND=8), INTENT(OUT), DIMENSION(0:NBINS-1,0:NBINS-1,0:NREP-1,0:NREP-1) :: PJ
+    REAL(KIND=8)  :: L_NFRAMES
+    
+    L_NFRAMES = LOG(FLOAT(NFRAMES))
+    
     WRITE (*,'(A)') "SUBROUTINE I_MUTUALINFO_PROB"
 #ifdef OMP
     WRITE (*,'(A,I5)') "LAUNCHING THREADS : ", NUM_THREADS
@@ -887,18 +916,34 @@ MODULE MI
                 END DO
             END DO 
             D_TEMP2(0:NFRAMES-1) = (/ (D(K,J), K = 0,NFRAMES-1) /)
-            CALL PROBDEF2D(D_TEMP2,D_TEMP1,BINS,BINS,NFRAMES,NBINS,NBINS,P_TEMP)
+            FORALL(K=0:NBINS-1, L=0:NBINS-1) P_TEMP(K,L)=0.0
+            DO K=0,NFRAMES-1
+                X = NBINS-1
+                Y = NBINS-1
+                DO L=1,NBINS-1
+                    IF ( BINS(L) > D_TEMP1(K) )  THEN
+                        X = L - 1
+                        EXIT
+                    END IF
+                END DO
+                DO L=1,NBINS-1
+                    IF ( BINS(L) > D_TEMP2(K) ) THEN
+                        Y = L - 1
+                        EXIT
+                    END IF
+                END DO
+                P_TEMP(Y,X) = P_TEMP(Y,X) + 1.0
+            END DO 
             DO K = 0,NBINS-1
                 DO L = 0,NBINS-1
-                    
-                    PJ(L,K,J,I) = P_TEMP(L,K)
-                    PJ(L,K,I,J) = P_TEMP(L,K)
-                    IF (P_TEMP(L,K) > 0) THEN
-                        EJ(J,I) = EJ(J,I) - P_TEMP(L,K) * LOG(P_TEMP(L,K))
+                    PJ(L,K,J,I) = P_TEMP(L,K)/NFRAMES
+                    PJ(K,L,I,J) = P_TEMP(K,L)/NFRAMES
+                    IF (P_TEMP(L,K) > 1) THEN
+                        EJ(J,I) = EJ(J,I) - LOG(P_TEMP(L,K)) * P_TEMP(L,K)
                     END IF
                 END DO
             END DO
-            EJ(I,J) = EJ(J,I) 
+            EJ(J,I) = L_NFRAMES + EJ(J,I)/NFRAMES  
             M(J,I)  = E1(I) + E1(J) - EJ(J,I)
             M(I,J)  = M(J,I)
         END DO
@@ -913,22 +958,22 @@ MODULE MI
 
     INTEGER, INTENT(IN)                                   :: NBINS1,NBINS2
     INTEGER, INTENT(IN)                                   :: NREP1, NREP2
-    REAL, INTENT(IN), DIMENSION(0:NBINS1)                 :: BINS1
-    REAL, INTENT(IN), DIMENSION(0:NBINS2)                 :: BINS2
-    REAL, INTENT(IN), DIMENSION(0:NREP1-1)                :: E1
-    REAL, INTENT(IN), DIMENSION(0:NREP2-1)                :: E2
+    REAL(KIND=8), INTENT(IN), DIMENSION(0:NBINS1)                 :: BINS1
+    REAL(KIND=8), INTENT(IN), DIMENSION(0:NBINS2)                 :: BINS2
+    REAL(KIND=8), INTENT(IN), DIMENSION(0:NREP1-1)                :: E1
+    REAL(KIND=8), INTENT(IN), DIMENSION(0:NREP2-1)                :: E2
     INTEGER, INTENT(IN)                                   :: NFRAMES
-    REAL, INTENT(IN), DIMENSION(0:NFRAMES-1,0:NREP1-1)    :: D1
-    REAL, INTENT(IN), DIMENSION(0:NFRAMES-1,0:NREP2-1)    :: D2
+    REAL(KIND=8), INTENT(IN), DIMENSION(0:NFRAMES-1,0:NREP1-1)    :: D1
+    REAL(KIND=8), INTENT(IN), DIMENSION(0:NFRAMES-1,0:NREP2-1)    :: D2
         
-    REAL, DIMENSION(0:NFRAMES-1)                     :: D_TEMP1
-    REAL, DIMENSION(0:NFRAMES-1)                     :: D_TEMP2
-    REAL, DIMENSION(0:NBINS2-1,0:NBINS1-1)           :: P_TEMP
+    REAL(KIND=8), DIMENSION(0:NFRAMES-1)                     :: D_TEMP1
+    REAL(KIND=8), DIMENSION(0:NFRAMES-1)                     :: D_TEMP2
+    REAL(KIND=8), DIMENSION(0:NBINS2-1,0:NBINS1-1)           :: P_TEMP
     INTEGER                                          :: I, J, K, L 
     
-    REAL, INTENT(OUT), DIMENSION(0:NREP2-1,0:NREP1-1)                       :: M
-    REAL, INTENT(OUT), DIMENSION(0:NREP2-1,0:NREP1-1)                       :: EJ
-    REAL, INTENT(OUT), DIMENSION(0:NBINS2-1,0:NBINS1-1,0:NREP2-1,0:NREP1-1) :: PJ
+    REAL(KIND=8), INTENT(OUT), DIMENSION(0:NREP2-1,0:NREP1-1)                       :: M
+    REAL(KIND=8), INTENT(OUT), DIMENSION(0:NREP2-1,0:NREP1-1)                       :: EJ
+    REAL(KIND=8), INTENT(OUT), DIMENSION(0:NBINS2-1,0:NBINS1-1,0:NREP2-1,0:NREP1-1) :: PJ
 
     WRITE (*,'(A)') "SUBROUTINE R_MUTUALINFO_OTHER_PROB"
 #ifdef OMP
@@ -954,7 +999,7 @@ MODULE MI
                     PJ(L,K,J,I) = P_TEMP(L,K)
                     PJ(L,K,I,J) = P_TEMP(L,K)
                     IF (P_TEMP(L,K) > 0) THEN
-                        EJ(J,I) = EJ(J,I) - P_TEMP(L,K) * LOG(P_TEMP(L,K))
+                        EJ(J,I) = EJ(J,I) - LOG(P_TEMP(L,K)) * P_TEMP(L,K)
                     END IF
                 END DO
             END DO
@@ -972,19 +1017,19 @@ MODULE MI
     INTEGER, INTENT(IN)                                   :: NREP1, NREP2
     INTEGER, INTENT(IN), DIMENSION(0:NFRAMES-1,0:NREP1-1) :: D1
     INTEGER, INTENT(IN), DIMENSION(0:NFRAMES-1,0:NREP2-1) :: D2
-    REAL, INTENT(IN), DIMENSION(0:NREP1-1)                :: E1
-    REAL, INTENT(IN), DIMENSION(0:NREP2-1)                :: E2
-    REAL, INTENT(IN), DIMENSION(0:NBINS1)                 :: BINS1
-    REAL, INTENT(IN), DIMENSION(0:NBINS2)                 :: BINS2
+    REAL(KIND=8), INTENT(IN), DIMENSION(0:NREP1-1)                :: E1
+    REAL(KIND=8), INTENT(IN), DIMENSION(0:NREP2-1)                :: E2
+    REAL(KIND=8), INTENT(IN), DIMENSION(0:NBINS1)                 :: BINS1
+    REAL(KIND=8), INTENT(IN), DIMENSION(0:NBINS2)                 :: BINS2
 
     INTEGER, DIMENSION(0:NFRAMES-1)                     :: D_TEMP1
     INTEGER, DIMENSION(0:NFRAMES-1)                     :: D_TEMP2
-    REAL, DIMENSION(0:NBINS2-1,0:NBINS1-1)              :: P_TEMP
+    REAL(KIND=8), DIMENSION(0:NBINS2-1,0:NBINS1-1)              :: P_TEMP
     INTEGER                                             :: I, J, K, L
     
-    REAL, INTENT(OUT), DIMENSION(0:NREP2-1,0:NREP1-1)                       :: M
-    REAL, INTENT(OUT), DIMENSION(0:NREP2-1,0:NREP1-1)                       :: EJ
-    REAL, INTENT(OUT), DIMENSION(0:NBINS2-1,0:NBINS1-1,0:NREP2-1,0:NREP1-1) :: PJ
+    REAL(KIND=8), INTENT(OUT), DIMENSION(0:NREP2-1,0:NREP1-1)                       :: M
+    REAL(KIND=8), INTENT(OUT), DIMENSION(0:NREP2-1,0:NREP1-1)                       :: EJ
+    REAL(KIND=8), INTENT(OUT), DIMENSION(0:NBINS2-1,0:NBINS1-1,0:NREP2-1,0:NREP1-1) :: PJ
 
     WRITE (*,'(A)') "SUBROUTINE I_MUTUALINFO_OTHER_PROB"
 #ifdef OMP
@@ -1010,7 +1055,7 @@ MODULE MI
                     PJ(L,K,J,I) = P_TEMP(L,K)
                     PJ(L,K,I,J) = P_TEMP(L,K)
                     IF (P_TEMP(L,K) > 0) THEN
-                        EJ(J,I) = EJ(J,I) - P_TEMP(L,K) * LOG(P_TEMP(L,K))
+                        EJ(J,I) = EJ(J,I) - LOG(P_TEMP(L,K)) * P_TEMP(L,K)
                     END IF
                 END DO
             END DO
@@ -1029,17 +1074,17 @@ MODULE MI
     INTEGER, INTENT(IN)                                  :: NFRAMES
     
     INTEGER, INTENT(IN), DIMENSION(0:NFRAMES-1,0:NREP-1) :: D
-    REAL, INTENT(IN), DIMENSION(0:NREP-1)                :: E1
-    REAL, INTENT(IN), DIMENSION(0:NBINS)                 :: BINS
+    REAL(KIND=8), INTENT(IN), DIMENSION(0:NREP-1)                :: E1
+    REAL(KIND=8), INTENT(IN), DIMENSION(0:NBINS)                 :: BINS
     
-    REAL, DIMENSION(0:NFRAMES-1)                     :: D_TEMP1
-    REAL, DIMENSION(0:NFRAMES-1)                     :: D_TEMP2
-    REAL, DIMENSION(0:NBINS-1,0:NBINS-1)             :: P_TEMP
+    REAL(KIND=8), DIMENSION(0:NFRAMES-1)                     :: D_TEMP1
+    REAL(KIND=8), DIMENSION(0:NFRAMES-1)                     :: D_TEMP2
+    REAL(KIND=8), DIMENSION(0:NBINS-1,0:NBINS-1)             :: P_TEMP
     INTEGER                                          :: I, K, L
     
-    REAL, INTENT(OUT), DIMENSION(0:NREP-1)                     :: M
-    REAL, INTENT(OUT), DIMENSION(0:NREP-1)                     :: EJ
-    REAL, INTENT(OUT), DIMENSION(0:NBINS-1,0:NBINS-1,0:NREP-1) :: PJ
+    REAL(KIND=8), INTENT(OUT), DIMENSION(0:NREP-1)                     :: M
+    REAL(KIND=8), INTENT(OUT), DIMENSION(0:NREP-1)                     :: EJ
+    REAL(KIND=8), INTENT(OUT), DIMENSION(0:NBINS-1,0:NBINS-1,0:NREP-1) :: PJ
 
     D_TEMP1(0:NFRAMES-1) = (/ (D(K,NREP1), K=0,NFRAMES-1) /)
     EJ(NREP1) = E1(NREP1)
@@ -1051,7 +1096,7 @@ MODULE MI
     CALL OMP_SET_NUM_THREADS(NUM_THREADS)
 #endif
     !$OMP PARALLEL DO &
-    !$OMP PRIVATE(D_TEMP1,D_TEMP2,P_TEMP,I,J,L,K) &
+    !$OMP PRIVATE(D_TEMP1,D_TEMP2,P_TEMP,I,L,K) &
     !$OMP SHARED(D,E1,EJ,NREP1,NFRAMES,NBINS,BINS) 
     DO I = 0,NREP-1
         IF (I /= NREP1) THEN
@@ -1067,7 +1112,7 @@ MODULE MI
                 DO L = 0,NBINS-1
                     PJ(L,K,I) = P_TEMP(L,K)
                     IF (P_TEMP(L,K) > 0) THEN
-                        EJ(I) = EJ(I) - P_TEMP(L,K) * LOG(P_TEMP(L,K))
+                        EJ(I) = EJ(I) - LOG(P_TEMP(L,K)) * P_TEMP(L,K)
                     END IF
                 END DO
             END DO
@@ -1085,17 +1130,17 @@ MODULE MI
     INTEGER, INTENT(IN)                               :: NREP
     INTEGER, INTENT(IN)                               :: NFRAMES
     
-    REAL, INTENT(IN), DIMENSION(0:NFRAMES-1,0:NREP-1) :: D
-    REAL, INTENT(IN), DIMENSION(0:NREP-1)             :: E1
-    REAL, INTENT(IN), DIMENSION(0:NBINS)              :: BINS
+    REAL(KIND=8), INTENT(IN), DIMENSION(0:NFRAMES-1,0:NREP-1) :: D
+    REAL(KIND=8), INTENT(IN), DIMENSION(0:NREP-1)             :: E1
+    REAL(KIND=8), INTENT(IN), DIMENSION(0:NBINS)              :: BINS
 
-    REAL, DIMENSION(0:NFRAMES-1)                     :: D_TEMP1
-    REAL, DIMENSION(0:NFRAMES-1)                     :: D_TEMP2
-    REAL, DIMENSION(0:NBINS-1,0:NBINS-1)             :: P_TEMP
+    REAL(KIND=8), DIMENSION(0:NFRAMES-1)                     :: D_TEMP1
+    REAL(KIND=8), DIMENSION(0:NFRAMES-1)                     :: D_TEMP2
+    REAL(KIND=8), DIMENSION(0:NBINS-1,0:NBINS-1)             :: P_TEMP
     INTEGER                                          :: I, K, L
     
-    REAL, INTENT(OUT), DIMENSION(0:NREP-1)                     :: M
-    REAL, INTENT(OUT), DIMENSION(0:NREP-1)                     :: EJ
+    REAL(KIND=8), INTENT(OUT), DIMENSION(0:NREP-1)                     :: M
+    REAL(KIND=8), INTENT(OUT), DIMENSION(0:NREP-1)                     :: EJ
 
     D_TEMP1(0:NFRAMES-1) = (/ (D(K,NREP1), K=0,NFRAMES-1) /)
     EJ(NREP1) = E1(NREP1)
@@ -1107,7 +1152,7 @@ MODULE MI
     CALL OMP_SET_NUM_THREADS(NUM_THREADS)
 #endif    
     !$OMP PARALLEL DO &
-    !$OMP PRIVATE(D_TEMP1,D_TEMP2,P_TEMP,I,J,L,K) &
+    !$OMP PRIVATE(D_TEMP1,D_TEMP2,P_TEMP,I,L,K) &
     !$OMP SHARED(D,E1,EJ,NREP1,NFRAMES,NBINS,BINS) 
     DO I = 0,NREP-1
         IF (I /= NREP1) THEN
@@ -1117,7 +1162,7 @@ MODULE MI
             DO K = 0,NBINS-1
                 DO L = 0,NBINS-1
                     IF (P_TEMP(L,K) > 0) THEN
-                        EJ(I) = EJ(I) - P_TEMP(L,K) * LOG(P_TEMP(L,K))
+                        EJ(I) = EJ(I) - LOG(P_TEMP(L,K)) * P_TEMP(L,K)
                     END IF
                 END DO
             END DO
@@ -1136,17 +1181,17 @@ MODULE MI
     INTEGER, INTENT(IN)                               :: NFRAMES
     
     INTEGER, INTENT(IN), DIMENSION(0:NFRAMES-1,0:NREP-1) :: D
-    REAL, INTENT(IN), DIMENSION(0:NREP-1)                :: E1
-    REAL, INTENT(IN), DIMENSION(0:NBINS)                 :: BINS
+    REAL(KIND=8), INTENT(IN), DIMENSION(0:NREP-1)                :: E1
+    REAL(KIND=8), INTENT(IN), DIMENSION(0:NBINS)                 :: BINS
 
-    REAL, DIMENSION(0:NFRAMES-1)                     :: D_TEMP1
-    REAL, DIMENSION(0:NFRAMES-1)                     :: D_TEMP2
-    REAL, DIMENSION(0:NBINS,0:NBINS)                 :: P_TEMP
+    REAL(KIND=8), DIMENSION(0:NFRAMES-1)                     :: D_TEMP1
+    REAL(KIND=8), DIMENSION(0:NFRAMES-1)                     :: D_TEMP2
+    REAL(KIND=8), DIMENSION(0:NBINS,0:NBINS)                 :: P_TEMP
     INTEGER                                          :: I, K, L
     
-    REAL, INTENT(OUT), DIMENSION(0:NREP-1)                     :: M
-    REAL, INTENT(OUT), DIMENSION(0:NREP-1)                     :: EJ
-    REAL, INTENT(OUT), DIMENSION(0:NBINS-1,0:NBINS-1,0:NREP-1) :: PJ
+    REAL(KIND=8), INTENT(OUT), DIMENSION(0:NREP-1)                     :: M
+    REAL(KIND=8), INTENT(OUT), DIMENSION(0:NREP-1)                     :: EJ
+    REAL(KIND=8), INTENT(OUT), DIMENSION(0:NBINS-1,0:NBINS-1,0:NREP-1) :: PJ
 
     D_TEMP1(0:NFRAMES-1) = (/ (D(K,NREP1), K=0,NFRAMES-1) /)
     EJ(NREP1) = E1(NREP1)
@@ -1158,7 +1203,7 @@ MODULE MI
     CALL OMP_SET_NUM_THREADS(NUM_THREADS)
 #endif
     !$OMP PARALLEL DO &
-    !$OMP PRIVATE(D_TEMP1,D_TEMP2,P_TEMP,I,J,L,K) &
+    !$OMP PRIVATE(D_TEMP1,D_TEMP2,P_TEMP,I,L,K) &
     !$OMP SHARED(D,E1,EJ,PJ,NREP1,NFRAMES,NBINS,BINS)    
     DO I = 0,NREP-1
         IF (I /= NREP1) THEN
@@ -1174,7 +1219,7 @@ MODULE MI
                 DO L = 0,NBINS-1
                     PJ(L,K,I) = P_TEMP(L,K)
                     IF (P_TEMP(L,K) > 0) THEN
-                        EJ(I) = EJ(I) - P_TEMP(L,K) * LOG(P_TEMP(L,K))
+                        EJ(I) = EJ(I) - LOG(P_TEMP(L,K)) * P_TEMP(L,K)
                     END IF
                 END DO
             END DO
@@ -1192,18 +1237,18 @@ MODULE MI
     INTEGER, INTENT(IN)                               :: NREP
     INTEGER, INTENT(IN)                               :: NFRAMES
     
-    REAL, INTENT(IN), DIMENSION(0:NFRAMES-1,0:NREP-1) :: D
-    REAL, INTENT(IN), DIMENSION(0:NREP-1)             :: E1
-    REAL, INTENT(IN), DIMENSION(0:NBINS)              :: BINS
+    REAL(KIND=8), INTENT(IN), DIMENSION(0:NFRAMES-1,0:NREP-1) :: D
+    REAL(KIND=8), INTENT(IN), DIMENSION(0:NREP-1)             :: E1
+    REAL(KIND=8), INTENT(IN), DIMENSION(0:NBINS)              :: BINS
 
-    REAL, DIMENSION(0:NFRAMES-1)                     :: D_TEMP1
-    REAL, DIMENSION(0:NFRAMES-1)                     :: D_TEMP2
-    REAL, DIMENSION(0:NBINS,0:NBINS)                 :: P_TEMP
+    REAL(KIND=8), DIMENSION(0:NFRAMES-1)                     :: D_TEMP1
+    REAL(KIND=8), DIMENSION(0:NFRAMES-1)                     :: D_TEMP2
+    REAL(KIND=8), DIMENSION(0:NBINS,0:NBINS)                 :: P_TEMP
     INTEGER                                          :: I, K, L
     
-    REAL, INTENT(OUT), DIMENSION(0:NREP-1)                     :: M
-    REAL, INTENT(OUT), DIMENSION(0:NREP-1)                     :: EJ
-    REAL, INTENT(OUT), DIMENSION(0:NBINS-1,0:NBINS-1,0:NREP-1) :: PJ
+    REAL(KIND=8), INTENT(OUT), DIMENSION(0:NREP-1)                     :: M
+    REAL(KIND=8), INTENT(OUT), DIMENSION(0:NREP-1)                     :: EJ
+    REAL(KIND=8), INTENT(OUT), DIMENSION(0:NBINS-1,0:NBINS-1,0:NREP-1) :: PJ
 
     D_TEMP1(0:NFRAMES-1) = (/ (D(K,NREP1), K=0,NFRAMES-1) /)
     EJ(NREP1) = E1(NREP1)
@@ -1215,7 +1260,7 @@ MODULE MI
     CALL OMP_SET_NUM_THREADS(NUM_THREADS)
 #endif
     !$OMP PARALLEL DO &
-    !$OMP PRIVATE(D_TEMP1,D_TEMP2,P_TEMP,I,J,L,K) &
+    !$OMP PRIVATE(D_TEMP1,D_TEMP2,P_TEMP,I,L,K) &
     !$OMP SHARED(D,E1,EJ,PJ,NREP1,NFRAMES,NBINS,BINS)    
     DO I = 0,NREP-1
         IF (I /= NREP1) THEN
@@ -1231,7 +1276,7 @@ MODULE MI
                 DO L = 0,NBINS-1
                     PJ(L,K,I) = P_TEMP(L,K)
                     IF (P_TEMP(L,K) > 0) THEN
-                        EJ(I) = EJ(I) - P_TEMP(L,K) * LOG(P_TEMP(L,K))
+                        EJ(I) = EJ(I) - LOG(P_TEMP(L,K)) * P_TEMP(L,K)
                     END IF
                 END DO
             END DO
@@ -1247,19 +1292,23 @@ MODULE MI
     INTEGER, INTENT(IN)                                :: NBINS
     INTEGER, INTENT(IN)                                :: NFRAMES
     INTEGER, INTENT(IN)                                :: NREP
-    REAL, INTENT(IN), DIMENSION(0:NFRAMES-1,0:NREP-1)  :: D
-    REAL, INTENT(IN), DIMENSION(0:NREP-1)              :: E1
-    REAL, INTENT(IN), DIMENSION(0:NBINS)               :: BINS
+    REAL(KIND=8), INTENT(IN), DIMENSION(0:NFRAMES-1,0:NREP-1)  :: D
+    REAL(KIND=8), INTENT(IN), DIMENSION(0:NREP-1)              :: E1
+    REAL(KIND=8), INTENT(IN), DIMENSION(0:NBINS)               :: BINS
     
-    REAL, DIMENSION(0:NFRAMES-1)                       :: D_TEMP1
-    REAL, DIMENSION(0:NFRAMES-1)                       :: D_TEMP2
-    REAL, DIMENSION(0:NBINS-1,0:NBINS-1)               :: P_TEMP
-    INTEGER                                            :: I, J, K
+    REAL(KIND=8), DIMENSION(0:NFRAMES-1)                       :: D_TEMP1
+    REAL(KIND=8), DIMENSION(0:NFRAMES-1)                       :: D_TEMP2
+    REAL(KIND=8), DIMENSION(0:NBINS-1,0:NBINS-1)               :: P_TEMP
+    INTEGER                                            :: I, J, K, L
+    INTEGER                                            :: X, Y
+    REAL(KIND=8)                                               :: L_NFRAMES
     
-    REAL, INTENT(OUT), DIMENSION(0:NREP-1,0:NREP-1)    :: M
-    REAL, INTENT(OUT), DIMENSION(0:NREP-1,0:NREP-1)    :: EJ
-
-    WRITE (*,'(A)') "SUBROUTINE R_MUTUALINFO"
+    REAL(KIND=8), INTENT(OUT), DIMENSION(0:NREP-1,0:NREP-1)      :: M
+    REAL(KIND=8), INTENT(OUT), DIMENSION(0:NREP-1,0:NREP-1)      :: EJ
+    
+    L_NFRAMES = LOG(FLOAT(NFRAMES))
+    
+    WRITE (*,'(A)') "SUBROUTINE I_MUTUALINFO"
 #ifdef OMP
     WRITE (*,'(A,I5)') "LAUNCHING THREADS : ", NUM_THREADS
     CALL OMP_SET_NUM_THREADS(NUM_THREADS)
@@ -1274,14 +1323,32 @@ MODULE MI
         DO J = I+1,NREP-1
             EJ(J,I) = 0.0
             D_TEMP2(0:NFRAMES-1) = (/ (D(K,J), K = 0,NFRAMES-1) /)
-            CALL PROBDEF2D(D_TEMP2,D_TEMP1,BINS,BINS,NFRAMES,NBINS,NBINS,P_TEMP)
+            FORALL(K=0:NBINS-1, L=0:NBINS-1) P_TEMP(K,L)=0.0
+            DO K=0,NFRAMES-1
+                X = NBINS-1
+                Y = NBINS-1
+                DO L=1,NBINS-1
+                    IF ( BINS(L) > D_TEMP1(K) )  THEN
+                        X = L - 1
+                        EXIT
+                    END IF
+                END DO
+                DO L=1,NBINS-1
+                    IF ( BINS(L) > D_TEMP2(K) ) THEN
+                        Y = L - 1
+                        EXIT
+                    END IF
+                END DO
+                P_TEMP(X,Y) = P_TEMP(X,Y) + 1.0
+            END DO 
             DO K = 0,NBINS-1
                 DO L = 0,NBINS-1
-                    IF (P_TEMP(L,K) > 0) THEN
-                        EJ(J,I) = EJ(J,I) - P_TEMP(L,K) * LOG(P_TEMP(L,K))
+                    IF (P_TEMP(L,K) > 1) THEN
+                        EJ(J,I) = EJ(J,I) - LOG(P_TEMP(L,K)) * P_TEMP(L,K)
                     END IF
                 END DO
             END DO
+            EJ(J,I) = L_NFRAMES + EJ(I,J)/NFRAMES
             EJ(I,J) = EJ(J,I) 
             M(J,I)  = E1(I) + E1(J) - EJ(J,I)
             M(I,J)  = M(J,I)
@@ -1300,17 +1367,21 @@ MODULE MI
     INTEGER, INTENT(IN)                                  :: NFRAMES
     INTEGER, INTENT(IN)                                  :: NREP
     INTEGER, INTENT(IN), DIMENSION(0:NFRAMES-1,0:NREP-1) :: D
-    REAL, INTENT(IN), DIMENSION(0:NREP-1)                :: E1
-    REAL, INTENT(IN), DIMENSION(0:NBINS)                 :: BINS
+    REAL(KIND=8), INTENT(IN), DIMENSION(0:NREP-1)                :: E1
+    REAL(KIND=8), INTENT(IN), DIMENSION(0:NBINS)                 :: BINS
     
     INTEGER, DIMENSION(0:NFRAMES-1)                      :: D_TEMP1
     INTEGER, DIMENSION(0:NFRAMES-1)                      :: D_TEMP2
-    REAL, DIMENSION(0:NBINS-1,0:NBINS-1)                 :: P_TEMP
+    REAL(KIND=8), DIMENSION(0:NBINS-1,0:NBINS-1)                 :: P_TEMP
     INTEGER                                              :: I, J, K, L
+    INTEGER                                              :: X, Y
+    REAL(KIND=8)                                                 :: L_NFRAMES
     
-    REAL, INTENT(OUT), DIMENSION(0:NREP-1,0:NREP-1)      :: M
-    REAL, INTENT(OUT), DIMENSION(0:NREP-1,0:NREP-1)      :: EJ
-
+    REAL(KIND=8), INTENT(OUT), DIMENSION(0:NREP-1,0:NREP-1)      :: M
+    REAL(KIND=8), INTENT(OUT), DIMENSION(0:NREP-1,0:NREP-1)      :: EJ
+    
+    L_NFRAMES = LOG(FLOAT(NFRAMES))
+    
     WRITE (*,'(A)') "SUBROUTINE I_MUTUALINFO"
 #ifdef OMP
     WRITE (*,'(A,I5)') "LAUNCHING THREADS : ", NUM_THREADS
@@ -1326,14 +1397,32 @@ MODULE MI
         DO J = I+1,NREP-1
             EJ(J,I) = 0.0
             D_TEMP2(0:NFRAMES-1) = (/ (D(K,J), K = 0,NFRAMES-1) /)
-            CALL PROBDEF2D(D_TEMP2,D_TEMP1,BINS,BINS,NFRAMES,NBINS,NBINS,P_TEMP)
+            FORALL(K=0:NBINS-1, L=0:NBINS-1) P_TEMP(K,L)=0.0
+            DO K=0,NFRAMES-1
+                X = NBINS-1
+                Y = NBINS-1
+                DO L=1,NBINS-1
+                    IF ( BINS(L) > D_TEMP1(K) )  THEN
+                        X = L - 1
+                        EXIT
+                    END IF
+                END DO
+                DO L=1,NBINS-1
+                    IF ( BINS(L) > D_TEMP2(K) ) THEN
+                        Y = L - 1
+                        EXIT
+                    END IF
+                END DO
+                P_TEMP(X,Y) = P_TEMP(X,Y) + 1.0
+            END DO 
             DO K = 0,NBINS-1
                 DO L = 0,NBINS-1
-                    IF (P_TEMP(L,K) > 0) THEN
-                        EJ(J,I) = EJ(J,I) - P_TEMP(L,K) * LOG(P_TEMP(L,K))
+                    IF (P_TEMP(L,K) > 1) THEN
+                        EJ(J,I) = EJ(J,I) - LOG(P_TEMP(L,K)) * P_TEMP(L,K)
                     END IF
                 END DO
             END DO
+            EJ(J,I) = L_NFRAMES + EJ(I,J)/NFRAMES
             EJ(I,J) = EJ(J,I) 
             M(J,I)  = E1(I) + E1(J) - EJ(J,I)
             M(I,J)  = M(J,I)
@@ -1351,21 +1440,21 @@ MODULE MI
     INTEGER, INTENT(IN)                                :: NBINS
     INTEGER, INTENT(IN)                                :: NFRAMES
     INTEGER, INTENT(IN)                                :: NREP
-    REAL, INTENT(IN), DIMENSION(0:NFRAMES-1,0:NREP-1)  :: D
-    REAL, INTENT(IN), DIMENSION(0:NREP-1)              :: E1
-    REAL, INTENT(IN), DIMENSION(0:NFRAMES-1)           :: W
-    REAL, INTENT(IN), DIMENSION(0:NBINS)               :: BINS
+    REAL(KIND=8), INTENT(IN), DIMENSION(0:NFRAMES-1,0:NREP-1)  :: D
+    REAL(KIND=8), INTENT(IN), DIMENSION(0:NREP-1)              :: E1
+    REAL(KIND=8), INTENT(IN), DIMENSION(0:NFRAMES-1)           :: W
+    REAL(KIND=8), INTENT(IN), DIMENSION(0:NBINS)               :: BINS
     
-    REAL, DIMENSION(0:NFRAMES-1)                       :: D_TEMP1
-    REAL, DIMENSION(0:NFRAMES-1)                       :: D_TEMP2
-    REAL, DIMENSION(0:NBINS-1,0:NBINS-1)               :: P_TEMP
+    REAL(KIND=8), DIMENSION(0:NFRAMES-1)                       :: D_TEMP1
+    REAL(KIND=8), DIMENSION(0:NFRAMES-1)                       :: D_TEMP2
+    REAL(KIND=8), DIMENSION(0:NBINS-1,0:NBINS-1)               :: P_TEMP
     
-    REAL                                               :: P, SUM_W, L_SUM_W
+    REAL(KIND=8)                                               :: P, SUM_W, L_SUM_W
     INTEGER                                            :: I, J, K
     INTEGER                                            :: L, X, Y
     
-    REAL, INTENT(OUT), DIMENSION(0:NREP-1,0:NREP-1)    :: M
-    REAL, INTENT(OUT), DIMENSION(0:NREP-1,0:NREP-1)    :: EJ
+    REAL(KIND=8), INTENT(OUT), DIMENSION(0:NREP-1,0:NREP-1)    :: M
+    REAL(KIND=8), INTENT(OUT), DIMENSION(0:NREP-1,0:NREP-1)    :: EJ
     
     P = 1.0 / FLOAT(NFRAMES)
     SUM_W = SUM(W)
@@ -1407,7 +1496,7 @@ MODULE MI
             DO K = 0,NBINS-1
                 DO L = 0,NBINS-1
                     IF (P_TEMP(L,K) > 0) THEN
-                        EJ(J,I) = EJ(J,I) - P_TEMP(L,K) * LOG(P_TEMP(L,K))
+                        EJ(J,I) = EJ(J,I) - LOG(P_TEMP(L,K)) * P_TEMP(L,K)
                     END IF
                 END DO
             END DO
@@ -1430,20 +1519,20 @@ MODULE MI
     INTEGER, INTENT(IN)                                 :: NFRAMES
     INTEGER, INTENT(IN)                                 :: NREP
     INTEGER, INTENT(IN), DIMENSION(0:NFRAMES-1,0:NREP-1):: D
-    REAL, INTENT(IN), DIMENSION(0:NREP-1)               :: E1
-    REAL, INTENT(IN), DIMENSION(0:NFRAMES-1)            :: W
-    REAL, INTENT(IN), DIMENSION(0:NBINS)                :: BINS
+    REAL(KIND=8), INTENT(IN), DIMENSION(0:NREP-1)               :: E1
+    REAL(KIND=8), INTENT(IN), DIMENSION(0:NFRAMES-1)            :: W
+    REAL(KIND=8), INTENT(IN), DIMENSION(0:NBINS)                :: BINS
     
     INTEGER, DIMENSION(0:NFRAMES-1)                    :: D_TEMP1
     INTEGER, DIMENSION(0:NFRAMES-1)                    :: D_TEMP2
-    REAL, DIMENSION(0:NBINS-1,0:NBINS-1)               :: P_TEMP
+    REAL(KIND=8), DIMENSION(0:NBINS-1,0:NBINS-1)               :: P_TEMP
     
-    REAL                                               :: P, SUM_W, L_SUM_W
+    REAL(KIND=8)                                               :: P, SUM_W, L_SUM_W
     INTEGER                                            :: I, J, K
     INTEGER                                            :: L, X, Y
     
-    REAL, INTENT(OUT), DIMENSION(0:NREP-1,0:NREP-1)    :: M
-    REAL, INTENT(OUT), DIMENSION(0:NREP-1,0:NREP-1)    :: EJ
+    REAL(KIND=8), INTENT(OUT), DIMENSION(0:NREP-1,0:NREP-1)    :: M
+    REAL(KIND=8), INTENT(OUT), DIMENSION(0:NREP-1,0:NREP-1)    :: EJ
     
     P = 1.0 / FLOAT(NFRAMES)
     SUM_W = SUM(W)
@@ -1485,7 +1574,7 @@ MODULE MI
             DO K = 0,NBINS-1
                 DO L = 0,NBINS-1
                     IF (P_TEMP(L,K) > 0) THEN
-                        EJ(J,I) = EJ(J,I) - P_TEMP(L,K) * LOG(P_TEMP(L,K))
+                        EJ(J,I) = EJ(J,I) - LOG(P_TEMP(L,K)) * P_TEMP(L,K)
                     END IF
                 END DO
             END DO
@@ -1506,27 +1595,31 @@ MODULE MI
 
     INTEGER, INTENT(IN)                                   :: NBINS1,NBINS2
     INTEGER, INTENT(IN)                                   :: NREP1, NREP2
-    REAL, INTENT(IN), DIMENSION(0:NBINS1)                 :: BINS1
-    REAL, INTENT(IN), DIMENSION(0:NBINS2)                 :: BINS2
-    REAL, INTENT(IN), DIMENSION(0:NREP1-1)                :: E1
-    REAL, INTENT(IN), DIMENSION(0:NREP2-1)                :: E2
+    REAL(KIND=8), INTENT(IN), DIMENSION(0:NBINS1)                 :: BINS1
+    REAL(KIND=8), INTENT(IN), DIMENSION(0:NBINS2)                 :: BINS2
+    REAL(KIND=8), INTENT(IN), DIMENSION(0:NREP1-1)                :: E1
+    REAL(KIND=8), INTENT(IN), DIMENSION(0:NREP2-1)                :: E2
     INTEGER, INTENT(IN)                                   :: NFRAMES
-    REAL, INTENT(IN), DIMENSION(0:NFRAMES-1,0:NREP1-1)    :: D1
-    REAL, INTENT(IN), DIMENSION(0:NFRAMES-1,0:NREP2-1)    :: D2
+    REAL(KIND=8), INTENT(IN), DIMENSION(0:NFRAMES-1,0:NREP1-1)    :: D1
+    REAL(KIND=8), INTENT(IN), DIMENSION(0:NFRAMES-1,0:NREP2-1)    :: D2
         
-    REAL, DIMENSION(0:NFRAMES-1)                     :: D_TEMP1
-    REAL, DIMENSION(0:NFRAMES-1)                     :: D_TEMP2
-    REAL, DIMENSION(0:NBINS2-1,0:NBINS1-1)           :: P_TEMP
+    REAL(KIND=8), DIMENSION(0:NFRAMES-1)                     :: D_TEMP1
+    REAL(KIND=8), DIMENSION(0:NFRAMES-1)                     :: D_TEMP2
+    REAL(KIND=8), DIMENSION(0:NBINS2-1,0:NBINS1-1)           :: P_TEMP
     INTEGER                                          :: I, J, K, L 
+    INTEGER                                          :: X, Y
+    REAL(KIND=8)                                             :: L_NFRAMES
     
-    REAL, INTENT(OUT), DIMENSION(0:NREP2-1,0:NREP1-1)                       :: M
-    REAL, INTENT(OUT), DIMENSION(0:NREP2-1,0:NREP1-1)                       :: EJ
+    REAL(KIND=8), INTENT(OUT), DIMENSION(0:NREP2-1,0:NREP1-1)   :: M
+    REAL(KIND=8), INTENT(OUT), DIMENSION(0:NREP2-1,0:NREP1-1)   :: EJ
+    
+    L_NFRAMES = LOG(FLOAT(NFRAMES))
     
     WRITE (*,'(A)') "SUBROUTINE R_MUTUALINFO_OTHER"
 #ifdef OMP
     WRITE (*,'(A,I5)') "LAUNCHING THREADS : ", NUM_THREADS
     CALL OMP_SET_NUM_THREADS(NUM_THREADS)
-#endif    
+#endif
     !$OMP PARALLEL DO &
     !$OMP PRIVATE(D_TEMP1,D_TEMP2,P_TEMP,I,J,L,K) &
     !$OMP SHARED(D1,D2,E1,E2,EJ,M,NFRAMES,NBINS1,NBINS2,BINS1,BINS2)
@@ -1535,18 +1628,36 @@ MODULE MI
         DO J = 0,NREP2-1
             EJ(J,I) = 0.0
             D_TEMP2(0:NFRAMES-1) = (/ (D2(K,J), K = 0,NFRAMES-1) /)
-            CALL PROBDEF2D(D_TEMP2,D_TEMP1,BINS2,BINS1,NFRAMES,NBINS2,NBINS1,P_TEMP)
+            FORALL(K=0:NBINS2-1, L=0:NBINS1-1) P_TEMP(K,L)=0.0
+            DO K=0,NFRAMES-1
+                X = NBINS1-1
+                Y = NBINS2-1
+                DO L=1,NBINS1-1
+                    IF ( BINS1(L) > D_TEMP1(K) )  THEN
+                        X = L - 1
+                        EXIT
+                    END IF
+                END DO
+                DO L=1,NBINS2-1
+                    IF ( BINS2(L) > D_TEMP2(K) ) THEN
+                        Y = L - 1
+                        EXIT
+                    END IF
+                END DO
+                P_TEMP(Y,X) = P_TEMP(Y,X) + 1.0
+            END DO
             DO K = 0,NBINS1-1
                 DO L = 0,NBINS2-1
-                    IF (P_TEMP(L,K) > 0) THEN
-                        EJ(J,I) = EJ(J,I) - P_TEMP(L,K) * LOG(P_TEMP(L,K))
+                    IF (P_TEMP(L,K) > 1) THEN
+                        EJ(J,I) = EJ(J,I) - LOG(P_TEMP(L,K)) * P_TEMP(L,K)
                     END IF
                 END DO
             END DO
+            EJ(J,I) = L_NFRAMES + EJ(I,J)/NFRAMES
             M(J,I) = E1(I) + E2(J) - EJ(J,I)
         END DO
     END DO
-    !$OMP END PARALLEL DO  
+    !$OMP END PARALLEL DO
      
     END SUBROUTINE R_MUTUALINFO_OTHER
 
@@ -1557,19 +1668,25 @@ MODULE MI
     INTEGER, INTENT(IN)                                   :: NREP1, NREP2
     INTEGER, INTENT(IN), DIMENSION(0:NFRAMES-1,0:NREP1-1) :: D1
     INTEGER, INTENT(IN), DIMENSION(0:NFRAMES-1,0:NREP2-1) :: D2
-    REAL, INTENT(IN), DIMENSION(0:NREP1-1)                :: E1
-    REAL, INTENT(IN), DIMENSION(0:NREP2-1)                :: E2
-    REAL, INTENT(IN), DIMENSION(0:NBINS1)                 :: BINS1
-    REAL, INTENT(IN), DIMENSION(0:NBINS2)                 :: BINS2
-
+    REAL(KIND=8), INTENT(IN), DIMENSION(0:NREP1-1)                :: E1
+    REAL(KIND=8), INTENT(IN), DIMENSION(0:NREP2-1)                :: E2
+    REAL(KIND=8), INTENT(IN), DIMENSION(0:NBINS1)                 :: BINS1
+    REAL(KIND=8), INTENT(IN), DIMENSION(0:NBINS2)                 :: BINS2
+    
     INTEGER, DIMENSION(0:NFRAMES-1)                     :: D_TEMP1
     INTEGER, DIMENSION(0:NFRAMES-1)                     :: D_TEMP2
-    REAL, DIMENSION(0:NBINS2-1,0:NBINS1-1)              :: P_TEMP
+    ! DIMENSION OF PROB ARRAY ARE INVERTED BECAUSE THIS ROUTINE IS DERIVATIVE
+    ! OF A ROUTINE THAT PASS PROB AS AN OUTPUT TO PYTHON
+    REAL(KIND=8), DIMENSION(0:NBINS2-1,0:NBINS1-1)              :: P_TEMP  
     INTEGER                                             :: I, J, K, L
+    INTEGER                                             :: X, Y
+    REAL(KIND=8)                                                :: L_NFRAMES
     
-    REAL, INTENT(OUT), DIMENSION(0:NREP2-1,0:NREP1-1)                       :: M
-    REAL, INTENT(OUT), DIMENSION(0:NREP2-1,0:NREP1-1)                       :: EJ
-
+    REAL(KIND=8), INTENT(OUT), DIMENSION(0:NREP2-1,0:NREP1-1)   :: M
+    REAL(KIND=8), INTENT(OUT), DIMENSION(0:NREP2-1,0:NREP1-1)   :: EJ
+    
+    L_NFRAMES = LOG(FLOAT(NFRAMES))
+    
     WRITE (*,'(A)') "SUBROUTINE I_MUTUALINFO_OTHER"
 #ifdef OMP
     WRITE (*,'(A,I5)') "LAUNCHING THREADS : ", NUM_THREADS
@@ -1582,15 +1699,33 @@ MODULE MI
         D_TEMP1(0:NFRAMES-1) = (/ (D1(K,I), K=0,NFRAMES-1) /)
         DO J = 0,NREP2-1
             EJ(J,I) = 0.0
-            D_TEMP2(0:NFRAMES-1) = (/ (D2(K,J), K=0,NFRAMES-1) /)
-            CALL PROBDEF2D(D_TEMP2,D_TEMP1,BINS2,BINS1,NFRAMES,NBINS2,NBINS1,P_TEMP)
+            D_TEMP2(0:NFRAMES-1) = (/ (D2(K,J), K = 0,NFRAMES-1) /)
+            FORALL(K=0:NBINS2-1, L=0:NBINS1-1) P_TEMP(K,L)=0.0
+            DO K=0,NFRAMES-1
+                X = NBINS1-1
+                Y = NBINS2-1
+                DO L=1,NBINS1-1
+                    IF ( BINS1(L) > D_TEMP1(K) )  THEN
+                        X = L - 1
+                        EXIT
+                    END IF
+                END DO
+                DO L=1,NBINS2-1
+                    IF ( BINS2(L) > D_TEMP2(K) ) THEN
+                        Y = L - 1
+                        EXIT
+                    END IF
+                END DO
+                P_TEMP(Y,X) = P_TEMP(Y,X) + 1.0
+            END DO
             DO K = 0,NBINS1-1
                 DO L = 0,NBINS2-1
-                    IF (P_TEMP(L,K) > 0) THEN
-                        EJ(J,I) = EJ(J,I) - P_TEMP(L,K) * LOG(P_TEMP(L,K))
+                    IF (P_TEMP(L,K) > 1) THEN
+                        EJ(J,I) = EJ(J,I) - LOG(P_TEMP(L,K)) * P_TEMP(L,K)
                     END IF
                 END DO
             END DO
+            EJ(J,I) = L_NFRAMES + EJ(I,J)/NFRAMES
             M(J,I) = E1(I) + E2(J) - EJ(J,I)
         END DO
     END DO
@@ -1604,20 +1739,24 @@ MODULE MI
     INTEGER, INTENT(IN)                                   :: NFRAMES
     INTEGER, INTENT(IN)                                   :: NREP1, NREP2
     INTEGER, INTENT(IN), DIMENSION(0:NFRAMES-1,0:NREP1-1) :: D1
-    REAL, INTENT(IN), DIMENSION(0:NFRAMES-1,0:NREP2-1)    :: D2
-    REAL, INTENT(IN), DIMENSION(0:NREP1-1)                :: E1
-    REAL, INTENT(IN), DIMENSION(0:NREP2-1)                :: E2
-    REAL, INTENT(IN), DIMENSION(0:NBINS1)                 :: BINS1
-    REAL, INTENT(IN), DIMENSION(0:NBINS2)                 :: BINS2
+    REAL(KIND=8), INTENT(IN), DIMENSION(0:NFRAMES-1,0:NREP2-1)    :: D2
+    REAL(KIND=8), INTENT(IN), DIMENSION(0:NREP1-1)                :: E1
+    REAL(KIND=8), INTENT(IN), DIMENSION(0:NREP2-1)                :: E2
+    REAL(KIND=8), INTENT(IN), DIMENSION(0:NBINS1)                 :: BINS1
+    REAL(KIND=8), INTENT(IN), DIMENSION(0:NBINS2)                 :: BINS2
 
     INTEGER, DIMENSION(0:NFRAMES-1)                     :: D_TEMP1
-    REAL, DIMENSION(0:NFRAMES-1)                     :: D_TEMP2
-    REAL, DIMENSION(0:NBINS2-1,0:NBINS1-1)              :: P_TEMP
+    REAL(KIND=8), DIMENSION(0:NFRAMES-1)                        :: D_TEMP2
+    REAL(KIND=8), DIMENSION(0:NBINS2-1,0:NBINS1-1)              :: P_TEMP
     INTEGER                                             :: I, J, K, L
+    INTEGER                                             :: X, Y
+    REAL(KIND=8)                                                :: L_NFRAMES
     
-    REAL, INTENT(OUT), DIMENSION(0:NREP2-1,0:NREP1-1)                       :: M
-    REAL, INTENT(OUT), DIMENSION(0:NREP2-1,0:NREP1-1)                       :: EJ
-
+    REAL(KIND=8), INTENT(OUT), DIMENSION(0:NREP2-1,0:NREP1-1)   :: M
+    REAL(KIND=8), INTENT(OUT), DIMENSION(0:NREP2-1,0:NREP1-1)   :: EJ
+    
+    L_NFRAMES = LOG(FLOAT(NFRAMES))
+    
     WRITE (*,'(A)') "SUBROUTINE IR_MUTUALINFO_OTHER"
 #ifdef OMP
     WRITE (*,'(A,I5)') "LAUNCHING THREADS : ", NUM_THREADS
@@ -1631,14 +1770,32 @@ MODULE MI
         DO J = 0,NREP2-1
             EJ(J,I) = 0.0
             D_TEMP2(0:NFRAMES-1) = (/ (D2(K,J), K = 0,NFRAMES-1) /)
-            CALL PROBDEF2D(D_TEMP2,D_TEMP1,BINS2,BINS1,NFRAMES,NBINS2,NBINS1,P_TEMP)
+            FORALL(K=0:NBINS2-1, L=0:NBINS1-1) P_TEMP(K,L)=0.0
+            DO K=0,NFRAMES-1
+                X = NBINS1-1
+                Y = NBINS2-1
+                DO L=1,NBINS1-1
+                    IF ( BINS1(L) > D_TEMP1(K) )  THEN
+                        X = L - 1
+                        EXIT
+                    END IF
+                END DO
+                DO L=1,NBINS2-1
+                    IF ( BINS2(L) > D_TEMP2(K) ) THEN
+                        Y = L - 1
+                        EXIT
+                    END IF
+                END DO
+                P_TEMP(Y,X) = P_TEMP(Y,X) + 1.0
+            END DO
             DO K = 0,NBINS1-1
                 DO L = 0,NBINS2-1
-                    IF (P_TEMP(L,K) > 0) THEN
-                        EJ(J,I) = EJ(J,I) - P_TEMP(L,K) * LOG(P_TEMP(L,K))
+                    IF (P_TEMP(L,K) > 1) THEN
+                        EJ(J,I) = EJ(J,I) - LOG(P_TEMP(L,K)) * P_TEMP(L,K)
                     END IF
                 END DO
             END DO
+            EJ(J,I) = L_NFRAMES + EJ(I,J)/NFRAMES
             M(J,I) = E1(I) + E2(J) - EJ(J,I)
         END DO
     END DO
@@ -1651,21 +1808,25 @@ MODULE MI
     INTEGER, INTENT(IN)                                   :: NBINS1, NBINS2
     INTEGER, INTENT(IN)                                   :: NFRAMES
     INTEGER, INTENT(IN)                                   :: NREP1, NREP2
-    REAL, INTENT(IN), DIMENSION(0:NFRAMES-1,0:NREP1-1)    :: D1
+    REAL(KIND=8), INTENT(IN), DIMENSION(0:NFRAMES-1,0:NREP1-1)    :: D1
     INTEGER, INTENT(IN), DIMENSION(0:NFRAMES-1,0:NREP2-1) :: D2
-    REAL, INTENT(IN), DIMENSION(0:NREP1-1)                :: E1
-    REAL, INTENT(IN), DIMENSION(0:NREP2-1)                :: E2
-    REAL, INTENT(IN), DIMENSION(0:NBINS1)                 :: BINS1
-    REAL, INTENT(IN), DIMENSION(0:NBINS2)                 :: BINS2
+    REAL(KIND=8), INTENT(IN), DIMENSION(0:NREP1-1)                :: E1
+    REAL(KIND=8), INTENT(IN), DIMENSION(0:NREP2-1)                :: E2
+    REAL(KIND=8), INTENT(IN), DIMENSION(0:NBINS1)                 :: BINS1
+    REAL(KIND=8), INTENT(IN), DIMENSION(0:NBINS2)                 :: BINS2
 
-    REAL, DIMENSION(0:NFRAMES-1)                        :: D_TEMP1
+    REAL(KIND=8), DIMENSION(0:NFRAMES-1)                        :: D_TEMP1
     INTEGER, DIMENSION(0:NFRAMES-1)                     :: D_TEMP2
-    REAL, DIMENSION(0:NBINS2-1,0:NBINS1-1)              :: P_TEMP
+    REAL(KIND=8), DIMENSION(0:NBINS2-1,0:NBINS1-1)              :: P_TEMP
     INTEGER                                             :: I, J, K, L
+    INTEGER                                             :: X, Y
+    REAL(KIND=8)                                                :: L_NFRAMES
     
-    REAL, INTENT(OUT), DIMENSION(0:NREP2-1,0:NREP1-1)                       :: M
-    REAL, INTENT(OUT), DIMENSION(0:NREP2-1,0:NREP1-1)                       :: EJ
-
+    REAL(KIND=8), INTENT(OUT), DIMENSION(0:NREP2-1,0:NREP1-1)   :: M
+    REAL(KIND=8), INTENT(OUT), DIMENSION(0:NREP2-1,0:NREP1-1)   :: EJ
+    
+    L_NFRAMES = LOG(FLOAT(NFRAMES))
+    
     WRITE (*,'(A)') "SUBROUTINE RI_MUTUALINFO_OTHER"
 #ifdef OMP
     WRITE (*,'(A,I5)') "LAUNCHING THREADS : ", NUM_THREADS
@@ -1679,14 +1840,32 @@ MODULE MI
         DO J = 0,NREP2-1
             EJ(J,I) = 0.0
             D_TEMP2(0:NFRAMES-1) = (/ (D2(K,J), K = 0,NFRAMES-1) /)
-            CALL PROBDEF2D(D_TEMP2,D_TEMP1,BINS2,BINS1,NFRAMES,NBINS2,NBINS1,P_TEMP)
+            FORALL(K=0:NBINS2-1, L=0:NBINS1-1) P_TEMP(K,L)=0.0
+            DO K=0,NFRAMES-1
+                X = NBINS1-1
+                Y = NBINS2-1
+                DO L=1,NBINS1-1
+                    IF ( BINS1(L) > D_TEMP1(K) )  THEN
+                        X = L - 1
+                        EXIT
+                    END IF
+                END DO
+                DO L=1,NBINS2-1
+                    IF ( BINS2(L) > D_TEMP2(K) ) THEN
+                        Y = L - 1
+                        EXIT
+                    END IF
+                END DO
+                P_TEMP(Y,X) = P_TEMP(Y,X) + 1.0
+            END DO
             DO K = 0,NBINS1-1
                 DO L = 0,NBINS2-1
-                    IF (P_TEMP(L,K) > 0) THEN
-                        EJ(J,I) = EJ(J,I) - P_TEMP(L,K) * LOG(P_TEMP(L,K))
+                    IF (P_TEMP(L,K) > 1) THEN
+                        EJ(J,I) = EJ(J,I) - LOG(P_TEMP(L,K)) * P_TEMP(L,K)
                     END IF
                 END DO
             END DO
+            EJ(J,I) = L_NFRAMES + EJ(I,J)/NFRAMES
             M(J,I) = E1(I) + E2(J) - EJ(J,I)
         END DO
     END DO
@@ -1698,24 +1877,24 @@ MODULE MI
 
     INTEGER, INTENT(IN)                                   :: NBINS1,NBINS2
     INTEGER, INTENT(IN)                                   :: NREP1, NREP2
-    REAL, INTENT(IN), DIMENSION(0:NBINS1)                 :: BINS1
-    REAL, INTENT(IN), DIMENSION(0:NBINS2)                 :: BINS2
-    REAL, INTENT(IN), DIMENSION(0:NREP1-1)                :: E1
-    REAL, INTENT(IN), DIMENSION(0:NREP2-1)                :: E2
+    REAL(KIND=8), INTENT(IN), DIMENSION(0:NBINS1)                 :: BINS1
+    REAL(KIND=8), INTENT(IN), DIMENSION(0:NBINS2)                 :: BINS2
+    REAL(KIND=8), INTENT(IN), DIMENSION(0:NREP1-1)                :: E1
+    REAL(KIND=8), INTENT(IN), DIMENSION(0:NREP2-1)                :: E2
     INTEGER, INTENT(IN)                                   :: NFRAMES
-    REAL, INTENT(IN), DIMENSION(0:NFRAMES-1,0:NREP1-1)    :: D1
-    REAL, INTENT(IN), DIMENSION(0:NFRAMES-1,0:NREP2-1)    :: D2
-    REAL, INTENT(IN), DIMENSION(0:NFRAMES-1)              :: W
+    REAL(KIND=8), INTENT(IN), DIMENSION(0:NFRAMES-1,0:NREP1-1)    :: D1
+    REAL(KIND=8), INTENT(IN), DIMENSION(0:NFRAMES-1,0:NREP2-1)    :: D2
+    REAL(KIND=8), INTENT(IN), DIMENSION(0:NFRAMES-1)              :: W
         
-    REAL, DIMENSION(0:NFRAMES-1)                     :: D_TEMP1
-    REAL, DIMENSION(0:NFRAMES-1)                     :: D_TEMP2
-    REAL, DIMENSION(0:NBINS2-1,0:NBINS1-1)           :: P_TEMP
+    REAL(KIND=8), DIMENSION(0:NFRAMES-1)                     :: D_TEMP1
+    REAL(KIND=8), DIMENSION(0:NFRAMES-1)                     :: D_TEMP2
+    REAL(KIND=8), DIMENSION(0:NBINS2-1,0:NBINS1-1)           :: P_TEMP
     INTEGER                                          :: I, J, K, L 
     INTEGER                                          :: X, Y
-    REAL                                             :: P, SUM_W, L_SUM_W
+    REAL(KIND=8)                                             :: P, SUM_W, L_SUM_W
     
-    REAL, INTENT(OUT), DIMENSION(0:NREP2-1,0:NREP1-1)  :: M
-    REAL, INTENT(OUT), DIMENSION(0:NREP2-1,0:NREP1-1)  :: EJ
+    REAL(KIND=8), INTENT(OUT), DIMENSION(0:NREP2-1,0:NREP1-1)  :: M
+    REAL(KIND=8), INTENT(OUT), DIMENSION(0:NREP2-1,0:NREP1-1)  :: EJ
     
     P = 1.0 / FLOAT(NFRAMES)
     SUM_W = SUM(W)
@@ -1755,7 +1934,7 @@ MODULE MI
             DO K = 0,NBINS1-1
                 DO L = 0,NBINS2-1
                     IF (P_TEMP(L,K) > 0) THEN
-                        EJ(J,I) = EJ(J,I) - P_TEMP(L,K) * LOG(P_TEMP(L,K))
+                        EJ(J,I) = EJ(J,I) - LOG(P_TEMP(L,K)) * P_TEMP(L,K)
                     END IF
                 END DO
             END DO
@@ -1771,24 +1950,24 @@ MODULE MI
 
     INTEGER, INTENT(IN)                                   :: NBINS1,NBINS2
     INTEGER, INTENT(IN)                                   :: NREP1, NREP2
-    REAL, INTENT(IN), DIMENSION(0:NBINS1)                 :: BINS1
-    REAL, INTENT(IN), DIMENSION(0:NBINS2)                 :: BINS2
-    REAL, INTENT(IN), DIMENSION(0:NREP1-1)                :: E1
-    REAL, INTENT(IN), DIMENSION(0:NREP2-1)                :: E2
+    REAL(KIND=8), INTENT(IN), DIMENSION(0:NBINS1)                 :: BINS1
+    REAL(KIND=8), INTENT(IN), DIMENSION(0:NBINS2)                 :: BINS2
+    REAL(KIND=8), INTENT(IN), DIMENSION(0:NREP1-1)                :: E1
+    REAL(KIND=8), INTENT(IN), DIMENSION(0:NREP2-1)                :: E2
     INTEGER, INTENT(IN)                                   :: NFRAMES
     INTEGER, INTENT(IN), DIMENSION(0:NFRAMES-1,0:NREP1-1)    :: D1
     INTEGER, INTENT(IN), DIMENSION(0:NFRAMES-1,0:NREP2-1)    :: D2
-    REAL, INTENT(IN), DIMENSION(0:NFRAMES-1)              :: W
+    REAL(KIND=8), INTENT(IN), DIMENSION(0:NFRAMES-1)              :: W
         
     INTEGER, DIMENSION(0:NFRAMES-1)                     :: D_TEMP1
     INTEGER, DIMENSION(0:NFRAMES-1)                     :: D_TEMP2
-    REAL, DIMENSION(0:NBINS2-1,0:NBINS1-1)           :: P_TEMP
+    REAL(KIND=8), DIMENSION(0:NBINS2-1,0:NBINS1-1)           :: P_TEMP
     INTEGER                                          :: I, J, K, L 
     INTEGER                                          :: X, Y
-    REAL                                             :: P, SUM_W, L_SUM_W
+    REAL(KIND=8)                                             :: P, SUM_W, L_SUM_W
     
-    REAL, INTENT(OUT), DIMENSION(0:NREP2-1,0:NREP1-1)  :: M
-    REAL, INTENT(OUT), DIMENSION(0:NREP2-1,0:NREP1-1)  :: EJ
+    REAL(KIND=8), INTENT(OUT), DIMENSION(0:NREP2-1,0:NREP1-1)  :: M
+    REAL(KIND=8), INTENT(OUT), DIMENSION(0:NREP2-1,0:NREP1-1)  :: EJ
     
     P = 1.0 / FLOAT(NFRAMES)
     SUM_W = SUM(W)
@@ -1828,7 +2007,7 @@ MODULE MI
             DO K = 0,NBINS1-1
                 DO L = 0,NBINS2-1
                     IF (P_TEMP(L,K) > 0) THEN
-                        EJ(J,I) = EJ(J,I) - P_TEMP(L,K) * LOG(P_TEMP(L,K))
+                        EJ(J,I) = EJ(J,I) - LOG(P_TEMP(L,K)) * P_TEMP(L,K)
                     END IF
                 END DO
             END DO
@@ -1844,24 +2023,24 @@ MODULE MI
 
     INTEGER, INTENT(IN)                                   :: NBINS1,NBINS2
     INTEGER, INTENT(IN)                                   :: NREP1, NREP2
-    REAL, INTENT(IN), DIMENSION(0:NBINS1)                 :: BINS1
-    REAL, INTENT(IN), DIMENSION(0:NBINS2)                 :: BINS2
-    REAL, INTENT(IN), DIMENSION(0:NREP1-1)                :: E1
-    REAL, INTENT(IN), DIMENSION(0:NREP2-1)                :: E2
+    REAL(KIND=8), INTENT(IN), DIMENSION(0:NBINS1)                 :: BINS1
+    REAL(KIND=8), INTENT(IN), DIMENSION(0:NBINS2)                 :: BINS2
+    REAL(KIND=8), INTENT(IN), DIMENSION(0:NREP1-1)                :: E1
+    REAL(KIND=8), INTENT(IN), DIMENSION(0:NREP2-1)                :: E2
     INTEGER, INTENT(IN)                                   :: NFRAMES
     INTEGER, INTENT(IN), DIMENSION(0:NFRAMES-1,0:NREP1-1)    :: D1
-    REAL, INTENT(IN), DIMENSION(0:NFRAMES-1,0:NREP2-1)    :: D2
-    REAL, INTENT(IN), DIMENSION(0:NFRAMES-1)              :: W
+    REAL(KIND=8), INTENT(IN), DIMENSION(0:NFRAMES-1,0:NREP2-1)    :: D2
+    REAL(KIND=8), INTENT(IN), DIMENSION(0:NFRAMES-1)              :: W
         
     INTEGER, DIMENSION(0:NFRAMES-1)                     :: D_TEMP1
-    REAL, DIMENSION(0:NFRAMES-1)                     :: D_TEMP2
-    REAL, DIMENSION(0:NBINS2-1,0:NBINS1-1)           :: P_TEMP
+    REAL(KIND=8), DIMENSION(0:NFRAMES-1)                     :: D_TEMP2
+    REAL(KIND=8), DIMENSION(0:NBINS2-1,0:NBINS1-1)           :: P_TEMP
     INTEGER                                          :: I, J, K, L 
     INTEGER                                          :: X, Y
-    REAL                                             :: P, SUM_W, L_SUM_W
+    REAL(KIND=8)                                             :: P, SUM_W, L_SUM_W
     
-    REAL, INTENT(OUT), DIMENSION(0:NREP2-1,0:NREP1-1)  :: M
-    REAL, INTENT(OUT), DIMENSION(0:NREP2-1,0:NREP1-1)  :: EJ
+    REAL(KIND=8), INTENT(OUT), DIMENSION(0:NREP2-1,0:NREP1-1)  :: M
+    REAL(KIND=8), INTENT(OUT), DIMENSION(0:NREP2-1,0:NREP1-1)  :: EJ
     
     P = 1.0 / FLOAT(NFRAMES)
     SUM_W = SUM(W)
@@ -1901,7 +2080,7 @@ MODULE MI
             DO K = 0,NBINS1-1
                 DO L = 0,NBINS2-1
                     IF (P_TEMP(L,K) > 0) THEN
-                        EJ(J,I) = EJ(J,I) - P_TEMP(L,K) * LOG(P_TEMP(L,K))
+                        EJ(J,I) = EJ(J,I) - LOG(P_TEMP(L,K)) * P_TEMP(L,K)
                     END IF
                 END DO
             END DO
@@ -1917,24 +2096,24 @@ MODULE MI
 
     INTEGER, INTENT(IN)                                   :: NBINS1,NBINS2
     INTEGER, INTENT(IN)                                   :: NREP1, NREP2
-    REAL, INTENT(IN), DIMENSION(0:NBINS1)                 :: BINS1
-    REAL, INTENT(IN), DIMENSION(0:NBINS2)                 :: BINS2
-    REAL, INTENT(IN), DIMENSION(0:NREP1-1)                :: E1
-    REAL, INTENT(IN), DIMENSION(0:NREP2-1)                :: E2
+    REAL(KIND=8), INTENT(IN), DIMENSION(0:NBINS1)                 :: BINS1
+    REAL(KIND=8), INTENT(IN), DIMENSION(0:NBINS2)                 :: BINS2
+    REAL(KIND=8), INTENT(IN), DIMENSION(0:NREP1-1)                :: E1
+    REAL(KIND=8), INTENT(IN), DIMENSION(0:NREP2-1)                :: E2
     INTEGER, INTENT(IN)                                   :: NFRAMES
-    REAL, INTENT(IN), DIMENSION(0:NFRAMES-1,0:NREP1-1)    :: D1
+    REAL(KIND=8), INTENT(IN), DIMENSION(0:NFRAMES-1,0:NREP1-1)    :: D1
     INTEGER, INTENT(IN), DIMENSION(0:NFRAMES-1,0:NREP2-1)    :: D2
-    REAL, INTENT(IN), DIMENSION(0:NFRAMES-1)              :: W
+    REAL(KIND=8), INTENT(IN), DIMENSION(0:NFRAMES-1)              :: W
         
-    REAL, DIMENSION(0:NFRAMES-1)                     :: D_TEMP1
+    REAL(KIND=8), DIMENSION(0:NFRAMES-1)                     :: D_TEMP1
     INTEGER, DIMENSION(0:NFRAMES-1)                     :: D_TEMP2
-    REAL, DIMENSION(0:NBINS2-1,0:NBINS1-1)           :: P_TEMP
+    REAL(KIND=8), DIMENSION(0:NBINS2-1,0:NBINS1-1)           :: P_TEMP
     INTEGER                                          :: I, J, K, L 
     INTEGER                                          :: X, Y
-    REAL                                             :: P, SUM_W, L_SUM_W
+    REAL(KIND=8)                                             :: P, SUM_W, L_SUM_W
     
-    REAL, INTENT(OUT), DIMENSION(0:NREP2-1,0:NREP1-1)  :: M
-    REAL, INTENT(OUT), DIMENSION(0:NREP2-1,0:NREP1-1)  :: EJ
+    REAL(KIND=8), INTENT(OUT), DIMENSION(0:NREP2-1,0:NREP1-1)  :: M
+    REAL(KIND=8), INTENT(OUT), DIMENSION(0:NREP2-1,0:NREP1-1)  :: EJ
     
     P = 1.0 / FLOAT(NFRAMES)
     SUM_W = SUM(W)
@@ -1974,7 +2153,7 @@ MODULE MI
             DO K = 0,NBINS1-1
                 DO L = 0,NBINS2-1
                     IF (P_TEMP(L,K) > 0) THEN
-                        EJ(J,I) = EJ(J,I) - P_TEMP(L,K) * LOG(P_TEMP(L,K))
+                        EJ(J,I) = EJ(J,I) - LOG(P_TEMP(L,K)) * P_TEMP(L,K)
                     END IF
                 END DO
             END DO
@@ -1985,13 +2164,13 @@ MODULE MI
     !$OMP END PARALLEL DO  
      
     END SUBROUTINE RI_MUTUALINFO_OTHER_WEIGTH
-    
+
     FUNCTION OPT_BIN_TRAJ(D,NFRAMES)
     
     INTEGER, INTENT(IN)                                  :: NFRAMES
     INTEGER, INTENT(IN), DIMENSION(0:NFRAMES-1)          :: D
     
-    REAL, ALLOCATABLE                                    :: OPT_BIN_TRAJ(:)
+    REAL(KIND=8), ALLOCATABLE                                    :: OPT_BIN_TRAJ(:)
     INTEGER, DIMENSION(0:NFRAMES-1)                      :: I_BINS
 
     INTEGER                                              :: NBINS
@@ -2018,7 +2197,7 @@ MODULE MI
     INTEGER, INTENT(IN)  :: NBINS
     
     INTEGER, INTENT(IN)  :: D(0:NFRAMES-1,0:NDIM-1,0:NREP-1)
-    REAL, INTENT(IN)     :: BINS(0:NBINS,0:NDIM-1)
+    REAL(KIND=8), INTENT(IN)     :: BINS(0:NBINS,0:NDIM-1)
     
     INTEGER, INTENT(OUT) :: O(0:NFRAMES-1,0:NDIM-1,0:NREP-1)
     
@@ -2061,8 +2240,8 @@ MODULE MI
     INTEGER, INTENT(IN)  :: NFRAMES
     INTEGER, INTENT(IN)  :: NBINS
     
-    REAL, INTENT(IN)     :: D(0:NFRAMES-1,0:NDIM-1,0:NREP-1)
-    REAL, INTENT(IN)     :: BINS(0:NBINS,0:NDIM-1)
+    REAL(KIND=8), INTENT(IN)     :: D(0:NFRAMES-1,0:NDIM-1,0:NREP-1)
+    REAL(KIND=8), INTENT(IN)     :: BINS(0:NBINS,0:NDIM-1)
     
     INTEGER, INTENT(OUT) :: O(0:NFRAMES-1,0:NDIM-1,0:NREP-1)
     
@@ -2103,7 +2282,7 @@ MODULE MI
     !INTEGER, INTENT(IN)  :: NBINS(0:NDIM-1) ! TO IMPLEMENT A DIFFERENT NUMBER OF BINS PER DIM
     INTEGER, INTENT(IN)  :: NBINS
     INTEGER, INTENT(IN)  :: D(0:NFRAMES-1,0:NDIM-1,0:NREP-1)
-    REAL, INTENT(IN)     :: BINS(0:NBINS,0:NDIM-1)
+    REAL(KIND=8), INTENT(IN)     :: BINS(0:NBINS,0:NDIM-1)
     
     INTEGER, INTENT(OUT) :: O(0:NFRAMES-1,0:NREP-1)
     
@@ -2148,8 +2327,8 @@ MODULE MI
     INTEGER, INTENT(IN)  :: NFRAMES
     !INTEGER, INTENT(IN)  :: NBINS(0:NDIM-1) ! TO IMPLEMENT A DIFFERENT NUMBER OF BINS PER DIM
     INTEGER, INTENT(IN)  :: NBINS
-    REAL, INTENT(IN)     :: D(0:NFRAMES-1,0:NDIM-1,0:NREP-1)
-    REAL, INTENT(IN)     :: BINS(0:NBINS,0:NDIM-1)
+    REAL(KIND=8), INTENT(IN)     :: D(0:NFRAMES-1,0:NDIM-1,0:NREP-1)
+    REAL(KIND=8), INTENT(IN)     :: BINS(0:NBINS,0:NDIM-1)
     
     INTEGER, INTENT(OUT) :: O(0:NFRAMES-1,0:NREP-1)
     
@@ -2269,7 +2448,7 @@ MODULE MI
     CALL OMP_SET_NUM_THREADS(NUM_THREADS)
 #endif      
     !$OMP PARALLEL DO &
-    !$OMP PRIVATE(HASH,HASH_1,K,I,L,N) &
+    !$OMP PRIVATE(HASH,K,I,L,N) &
     !$OMP SHARED(D,O,PROD,PROD_T,TIME,NREP,NFRAMES,NDIM)    
     DO K = 0,NREP-1
         DO I = 0,NFRAMES-TIME-1
@@ -2294,11 +2473,11 @@ MODULE MI
     INTEGER, DIMENSION(N),INTENT(IN)                :: D
     INTEGER, INTENT(IN)                             :: N
     INTEGER, INTENT(IN)                             :: NBINS
-    REAL, DIMENSION(0:NBINS-1),INTENT(INOUT)        :: PROB
-    REAL, DIMENSION(0:NBINS),INTENT(INOUT)          :: BINS
+    REAL(KIND=8), DIMENSION(0:NBINS-1),INTENT(INOUT)        :: PROB
+    REAL(KIND=8), DIMENSION(0:NBINS),INTENT(INOUT)          :: BINS
     
     INTEGER               :: I, K, X
-    REAL                  :: P 
+    REAL(KIND=8)                  :: P 
     
     P = 1.0 / N
     
@@ -2323,12 +2502,12 @@ MODULE MI
     INTEGER, DIMENSION(N),INTENT(IN)                       :: D_X, D_Y
     INTEGER, INTENT(IN)                                    :: N
     INTEGER, INTENT(IN)                                    :: NBINS_X, NBINS_Y
-    REAL, DIMENSION(0:NBINS_X-1,0:NBINS_Y-1) ,INTENT(OUT)  :: PROB
-    REAL, DIMENSION(0:NBINS_X), INTENT(IN)                 :: BINS_X
-    REAL, DIMENSION(0:NBINS_Y), INTENT(IN)                 :: BINS_Y
+    REAL(KIND=8), DIMENSION(0:NBINS_X-1,0:NBINS_Y-1) ,INTENT(OUT)  :: PROB
+    REAL(KIND=8), DIMENSION(0:NBINS_X), INTENT(IN)                 :: BINS_X
+    REAL(KIND=8), DIMENSION(0:NBINS_Y), INTENT(IN)                 :: BINS_Y
     
     INTEGER               :: I, J, K, X, Y
-    REAL                  :: P 
+    REAL(KIND=8)                  :: P 
     
     P = 1.0 / N
     
@@ -2360,43 +2539,55 @@ MODULE MI
     INTEGER, INTENT(IN)             :: NFRAMES
     INTEGER, INTENT(IN)             :: NREP
     INTEGER, INTENT(IN)             :: D(0:NFRAMES-1,0:NREP-1)
-    REAL, INTENT(OUT)               :: E(0:NREP-1)
+    REAL(KIND=8), INTENT(OUT)       :: E(0:NREP-1)
     
-    INTEGER, DIMENSION(NFRAMES)          :: D_TEMP
-    INTEGER, DIMENSION(NFRAMES)              :: I_BINS
-    INTEGER                                  :: NBINS
-    INTEGER                                  :: I, S1, S2
-    INTEGER                                  :: K
-    REAL                                     :: P
+    INTEGER, DIMENSION(NFRAMES)     :: D_TEMP
+    INTEGER, DIMENSION(NFRAMES)     :: I_BINS
+    INTEGER                         :: NBINS
+    INTEGER                         :: I, J
+    INTEGER                         :: K, X
+    REAL(KIND=8)                    :: L_NFRAMES
     
-    REAL, DIMENSION(:), ALLOCATABLE          :: BINS
-    REAL, DIMENSION(:), ALLOCATABLE          :: P_TEMP
+    REAL(KIND=8), DIMENSION(:), ALLOCATABLE  :: BINS
+    REAL(KIND=8), DIMENSION(:), ALLOCATABLE  :: P_TEMP
     
-    P = 1.0/NFRAMES
+    L_NFRAMES = LOG(FLOAT(NFRAMES))
     
     WRITE (*,'(A)') "ENTROPY_TRAJ"
 #ifdef OMP
     CALL OMP_SET_NUM_THREADS(NUM_THREADS)
 #endif      
     !$OMP PARALLEL DO &
-    !$OMP PRIVATE(D_TEMP,BINS,P_TEMP,I_BINS,NBINS,K,S1,S2) &
-    !$OMP SHARED(D,E,NFRAMES,P)
+    !$OMP PRIVATE(D_TEMP,BINS,P_TEMP,I_BINS,NBINS,K) &
+    !$OMP SHARED(D,E,NFRAMES,L_NFRAMES)
     DO I = 0,NREP-1
         D_TEMP(1:NFRAMES) = (/ (D(K,I), K=0,NFRAMES-1) /)
         CALL UNIRNK(D_TEMP,I_BINS,NBINS)
-        ALLOCATE(BINS(0:NBINS), STAT=S1)
-        ALLOCATE(P_TEMP(0:NBINS-1), STAT=S2)
+        ALLOCATE(BINS(0:NBINS))
+        ALLOCATE(P_TEMP(0:NBINS-1))
         BINS(0)         = D_TEMP(I_BINS(1))
         BINS(1:NBINS-1) = (/ ( FLOAT( D_TEMP(I_BINS(K)) + D_TEMP(I_BINS(K-1)) ) / 2.0 , K = 2,NBINS) /)
         BINS(NBINS)     = D_TEMP(I_BINS(NBINS))
         CALL PROBDEF_TRAJ(D_TEMP,BINS,NFRAMES,NBINS,P_TEMP)
+        FORALL(K=0:NBINS-1) P_TEMP(K)=0.0
+        DO J=1,NFRAMES
+            X = NBINS-1
+            DO K=0,NBINS-1
+                IF ( BINS(K) > D_TEMP(J) ) THEN
+                    X = K - 1
+                    EXIT
+                END IF
+            END DO
+            P_TEMP(X) = P_TEMP(X) + 1.0
+        END DO
         DO K = 0,NBINS-1
-            IF (P_TEMP(K) > 0) THEN
-                E(I) = E(I) - P_TEMP(K) * LOG(P_TEMP(K))
+            IF (P_TEMP(K) > 1) THEN
+                E(I) = E(I) - LOG(P_TEMP(K)) * P_TEMP(K)
             END IF
         END DO
-        DEALLOCATE(P_TEMP, STAT=S2)
-        DEALLOCATE(BINS, STAT=S1)
+        E(I) = E(I)/NFRAMES + L_NFRAMES
+        DEALLOCATE(P_TEMP)
+        DEALLOCATE(BINS)
     END DO
     !$OMP END PARALLEL DO
     
@@ -2407,18 +2598,18 @@ MODULE MI
     INTEGER, INTENT(IN)             :: NFRAMES
     INTEGER, INTENT(IN)             :: NREP
     INTEGER, INTENT(IN)             :: D(0:NFRAMES-1,0:NREP-1)
-    REAL, INTENT(IN)                :: W(0:NFRAMES-1)
-    REAL, INTENT(OUT)               :: E(0:NREP-1)
+    REAL(KIND=8), INTENT(IN)                :: W(0:NFRAMES-1)
+    REAL(KIND=8), INTENT(OUT)               :: E(0:NREP-1)
     
     INTEGER, DIMENSION(NFRAMES)          :: D_TEMP
     INTEGER, DIMENSION(NFRAMES)              :: I_BINS
     INTEGER                                  :: NBINS
-    INTEGER                                  :: I, J, S1, S2
+    INTEGER                                  :: I, J
     INTEGER                                  :: K, X
-    REAL                                     :: P, SUM_W, L_SUM_W
+    REAL(KIND=8)                                     :: P, SUM_W, L_SUM_W
     
-    REAL, DIMENSION(:), ALLOCATABLE          :: BINS
-    REAL, DIMENSION(:), ALLOCATABLE          :: P_TEMP
+    REAL(KIND=8), DIMENSION(:), ALLOCATABLE          :: BINS
+    REAL(KIND=8), DIMENSION(:), ALLOCATABLE          :: P_TEMP
     
     P = 1.0 / FLOAT(NFRAMES)
     SUM_W = SUM(W)
@@ -2429,13 +2620,13 @@ MODULE MI
     CALL OMP_SET_NUM_THREADS(NUM_THREADS)
 #endif      
     !$OMP PARALLEL DO &
-    !$OMP PRIVATE(D_TEMP,BINS,P_TEMP,I_BINS,NBINS,K,S1,S2) &
+    !$OMP PRIVATE(D_TEMP,BINS,P_TEMP,I_BINS,NBINS,K) &
     !$OMP SHARED(D,E,NFRAMES,P,W,SUM_W)
     DO I = 0,NREP-1
         D_TEMP(1:NFRAMES) = (/ (D(J,I), J=0,NFRAMES-1) /)
         CALL UNIRNK(D_TEMP,I_BINS,NBINS)
-        ALLOCATE(BINS(0:NBINS), STAT=S1)
-        ALLOCATE(P_TEMP(0:NBINS-1), STAT=S2)
+        ALLOCATE(BINS(0:NBINS))
+        ALLOCATE(P_TEMP(0:NBINS-1))
         BINS(0)         = D_TEMP(I_BINS(1))
         BINS(1:NBINS-1) = (/ ( FLOAT( D_TEMP(I_BINS(K)) + D_TEMP(I_BINS(K-1)) ) / 2.0 , K = 2,NBINS) /)
         BINS(NBINS)     = D_TEMP(I_BINS(NBINS))
@@ -2452,12 +2643,12 @@ MODULE MI
         END DO
         DO K = 0,NBINS-1
             IF (P_TEMP(K) > 0) THEN
-                E(I) = E(I) - P_TEMP(K) * LOG(P_TEMP(K))
+                E(I) = E(I) - LOG(P_TEMP(K)) * P_TEMP(K)
             END IF
         END DO
         E(I) = E(I)/SUM_W + L_SUM_W
-        DEALLOCATE(P_TEMP, STAT=S2)
-        DEALLOCATE(BINS, STAT=S1)
+        DEALLOCATE(P_TEMP)
+        DEALLOCATE(BINS)
     END DO
     !$OMP END PARALLEL DO
     
@@ -2468,11 +2659,11 @@ MODULE MI
     INTEGER, INTENT(IN)                                  :: NFRAMES
     INTEGER, INTENT(IN)                                  :: NREP
     INTEGER, INTENT(IN), DIMENSION(0:NFRAMES-1,0:NREP-1) :: D
-    REAL, INTENT(IN), DIMENSION(0:NREP-1)                :: E1
+    REAL(KIND=8), INTENT(IN), DIMENSION(0:NREP-1)                :: E1
     
-    REAL, DIMENSION(:), ALLOCATABLE          :: BINS_X
-    REAL, DIMENSION(:), ALLOCATABLE          :: BINS_Y
-    REAL, DIMENSION(:,:), ALLOCATABLE        :: P_TEMP
+    REAL(KIND=8), DIMENSION(:), ALLOCATABLE          :: BINS_X
+    REAL(KIND=8), DIMENSION(:), ALLOCATABLE          :: BINS_Y
+    REAL(KIND=8), DIMENSION(:,:), ALLOCATABLE        :: P_TEMP
     INTEGER, DIMENSION(NFRAMES)          :: D_TEMP1
     INTEGER, DIMENSION(NFRAMES)          :: D_TEMP2
     INTEGER, DIMENSION(NFRAMES)              :: I_BINS_X
@@ -2480,10 +2671,14 @@ MODULE MI
 
     INTEGER                                  :: NBINS_X, NBINS_Y
     INTEGER                                  :: I, J, K, L
+    INTEGER                                  :: X, Y
+    REAL(KIND=8)                                     :: L_NFRAMES
     
-    REAL, INTENT(OUT), DIMENSION(0:NREP-1,0:NREP-1)      :: M
-    REAL, INTENT(OUT), DIMENSION(0:NREP-1,0:NREP-1)      :: EJ
-
+    REAL(KIND=8), INTENT(OUT), DIMENSION(0:NREP-1,0:NREP-1)      :: M
+    REAL(KIND=8), INTENT(OUT), DIMENSION(0:NREP-1,0:NREP-1)      :: EJ
+    
+    L_NFRAMES = LOG(FLOAT(NFRAMES))
+    
     WRITE (*,'(A)') "SUBROUTINE MUTUALINFO_TRAJ"
 #ifdef OMP
     WRITE (*,'(A,I5)') "LAUNCHING THREADS : ", NUM_THREADS
@@ -2520,14 +2715,32 @@ MODULE MI
             END DO
             BINS_Y(NBINS_Y) = D_TEMP2(I_BINS_Y(NBINS_Y))
             ALLOCATE(P_TEMP(0:NBINS_X-1,0:NBINS_Y-1))
-            CALL PROBDEF2D_TRAJ(D_TEMP1,D_TEMP2,BINS_X,BINS_Y,NFRAMES,NBINS_X,NBINS_Y,P_TEMP)
+            FORALL(J=0:NBINS_Y-1, I=0:NBINS_X-1) P_TEMP(I,J)=0.0
+            DO K=1,NFRAMES
+                X = NBINS_X-1
+                Y = NBINS_Y-1
+                DO L=1,NBINS_X-1
+                    IF ( BINS_X(L) > D_TEMP1(K) )  THEN
+                        X = L - 1
+                        EXIT
+                    END IF
+                END DO
+                DO L=1,NBINS_Y-1
+                    IF ( BINS_Y(L) > D_TEMP2(K) ) THEN
+                        Y = L - 1
+                        EXIT
+                    END IF
+                END DO
+                P_TEMP(X,Y) = P_TEMP(X,Y) + 1.0
+            END DO
             DO K = 0,NBINS_Y-1
                 DO L = 0,NBINS_X-1
-                    IF (P_TEMP(L,K) > 0) THEN
-                        EJ(J,I) = EJ(J,I) - P_TEMP(L,K) * LOG(P_TEMP(L,K))
+                    IF (P_TEMP(L,K) > 1) THEN
+                        EJ(J,I) = EJ(J,I) - LOG(P_TEMP(L,K)) * P_TEMP(L,K)
                     END IF
                 END DO
             END DO
+            EJ(J,I) = EJ(J,I)/NFRAMES + L_NFRAMES 
             EJ(I,J) = EJ(J,I) 
             M(J,I)  = E1(I) + E1(J) - EJ(J,I)
             M(I,J)  = M(J,I)
@@ -2547,12 +2760,12 @@ MODULE MI
     INTEGER, INTENT(IN)                                  :: NFRAMES
     INTEGER, INTENT(IN)                                  :: NREP
     INTEGER, INTENT(IN), DIMENSION(0:NFRAMES-1,0:NREP-1) :: D
-    REAL, INTENT(IN), DIMENSION(0:NREP-1)                :: E1
-    REAL, INTENT(IN), DIMENSION(0:NFRAMES-1)             :: W
+    REAL(KIND=8), INTENT(IN), DIMENSION(0:NREP-1)                :: E1
+    REAL(KIND=8), INTENT(IN), DIMENSION(0:NFRAMES-1)             :: W
     
-    REAL, DIMENSION(:), ALLOCATABLE          :: BINS_X
-    REAL, DIMENSION(:), ALLOCATABLE          :: BINS_Y
-    REAL, DIMENSION(:,:), ALLOCATABLE        :: P_TEMP
+    REAL(KIND=8), DIMENSION(:), ALLOCATABLE          :: BINS_X
+    REAL(KIND=8), DIMENSION(:), ALLOCATABLE          :: BINS_Y
+    REAL(KIND=8), DIMENSION(:,:), ALLOCATABLE        :: P_TEMP
     INTEGER, DIMENSION(NFRAMES)              :: D_TEMP1
     INTEGER, DIMENSION(NFRAMES)              :: D_TEMP2
     INTEGER, DIMENSION(NFRAMES)              :: I_BINS_X
@@ -2561,10 +2774,10 @@ MODULE MI
     INTEGER                                  :: NBINS_X, NBINS_Y
     INTEGER                                  :: I, J, K, L
     INTEGER                                  :: X, Y
-    REAL                                     :: P, SUM_W, L_SUM_W
+    REAL(KIND=8)                                     :: P, SUM_W, L_SUM_W
     
-    REAL, INTENT(OUT), DIMENSION(0:NREP-1,0:NREP-1)      :: M
-    REAL, INTENT(OUT), DIMENSION(0:NREP-1,0:NREP-1)      :: EJ
+    REAL(KIND=8), INTENT(OUT), DIMENSION(0:NREP-1,0:NREP-1)      :: M
+    REAL(KIND=8), INTENT(OUT), DIMENSION(0:NREP-1,0:NREP-1)      :: EJ
     
     P = 1.0 / FLOAT(NFRAMES)
     SUM_W = SUM(W)
@@ -2627,7 +2840,7 @@ MODULE MI
             DO K = 0,NBINS_Y-1
                 DO L = 0,NBINS_X-1
                     IF (P_TEMP(L,K) > 0) THEN
-                        EJ(J,I) = EJ(J,I) - P_TEMP(L,K) * LOG(P_TEMP(L,K))
+                        EJ(J,I) = EJ(J,I) - LOG(P_TEMP(L,K)) * P_TEMP(L,K)
                     END IF
                 END DO
             END DO
@@ -2653,8 +2866,8 @@ MODULE MI
     INTEGER, INTENT(IN)                                  :: NREP1,NREP2
     INTEGER, INTENT(IN), DIMENSION(0:NFRAMES-1,0:NREP1-1):: D1
     INTEGER, INTENT(IN), DIMENSION(0:NFRAMES-1,0:NREP2-1):: D2
-    REAL, INTENT(IN), DIMENSION(0:NREP1-1)               :: E1
-    REAL, INTENT(IN), DIMENSION(0:NREP2-1)               :: E2
+    REAL(KIND=8), INTENT(IN), DIMENSION(0:NREP1-1)               :: E1
+    REAL(KIND=8), INTENT(IN), DIMENSION(0:NREP2-1)               :: E2
     
     INTEGER, DIMENSION(NFRAMES)                          :: D_TEMP1
     INTEGER, DIMENSION(NFRAMES)                          :: D_TEMP2
@@ -2662,13 +2875,17 @@ MODULE MI
     INTEGER, DIMENSION(NFRAMES)                          :: I_BINS2
     INTEGER                                              :: NBINS1,NBINS2
     
-    REAL, ALLOCATABLE                 :: BINS1(:)
-    REAL, ALLOCATABLE                 :: BINS2(:)
-    REAL, ALLOCATABLE                 :: P_TEMP(:,:)
+    REAL(KIND=8), ALLOCATABLE                 :: BINS1(:)
+    REAL(KIND=8), ALLOCATABLE                 :: BINS2(:)
+    REAL(KIND=8), ALLOCATABLE                 :: P_TEMP(:,:)
     INTEGER                           :: I, J, K, L
+    INTEGER                           :: X, Y
+    REAL(KIND=8)                              :: L_NFRAMES
     
-    REAL, INTENT(OUT), DIMENSION(0:NREP2-1,0:NREP1-1)    :: M
-    REAL, INTENT(OUT), DIMENSION(0:NREP2-1,0:NREP1-1)    :: EJ
+    REAL(KIND=8), INTENT(OUT), DIMENSION(0:NREP2-1,0:NREP1-1)    :: M
+    REAL(KIND=8), INTENT(OUT), DIMENSION(0:NREP2-1,0:NREP1-1)    :: EJ
+    
+    L_NFRAMES = LOG(FLOAT(NFRAMES))
     
     WRITE (*,'(A)') "SUBROUTINE MUTUALINFO_OTHER_TRAJ"
 #ifdef OMP
@@ -2676,8 +2893,8 @@ MODULE MI
     CALL OMP_SET_NUM_THREADS(NUM_THREADS)
 #endif
     !$OMP PARALLEL DO & 
-    !$OMP PRIVATE(D_TEMP1,D_TEMP2,P_TEMP,I,J,L,K,NBINS1,NBINS2,BINS1,BINS2,I_BINS1,I_BINS2) &
-    !$OMP SHARED(D,E1,EJ,M,NFRAMES)
+    !$OMP PRIVATE(D_TEMP1,D_TEMP2,P_TEMP,I,J,L,K,X,Y,NBINS1,NBINS2,BINS1,BINS2,I_BINS1,I_BINS2) &
+    !$OMP SHARED(D1,D2,E1,EJ,M,NFRAMES,L_NFRAMES)
     DO I = 0,NREP1-1
         D_TEMP1(1:NFRAMES) = (/ (D1(K,I), K=0,NFRAMES-1) /)
         CALL UNIRNK(D_TEMP1,I_BINS1,NBINS1)
@@ -2698,14 +2915,32 @@ MODULE MI
             END DO
             BINS2(NBINS2) = D_TEMP2(I_BINS2(NBINS2))
             ALLOCATE(P_TEMP(0:NBINS1-1,0:NBINS2-1))
-            CALL PROBDEF2D_TRAJ(D_TEMP1,D_TEMP2,BINS1,BINS2,NFRAMES,NBINS1,NBINS2,P_TEMP)
+            FORALL(J=0:NBINS2-1, I=0:NBINS1-1) P_TEMP(I,J)=0.0
+            DO K=1,NFRAMES
+                X = NBINS1-1
+                Y = NBINS2-1
+                DO L=1,NBINS1-1
+                    IF ( BINS1(L) > D_TEMP1(K) )  THEN
+                        X = L - 1
+                        EXIT
+                    END IF
+                END DO
+                DO L=1,NBINS2-1
+                    IF ( BINS2(L) > D_TEMP2(K) ) THEN
+                        Y = L - 1
+                        EXIT
+                    END IF
+                END DO
+                P_TEMP(X,Y) = P_TEMP(X,Y) + 1.0
+            END DO
             DO K = 0,NBINS2-1
                 DO L = 0,NBINS1-1
-                    IF (P_TEMP(L,K) > 0) THEN
-                        EJ(J,I) = EJ(J,I) - P_TEMP(L,K) * LOG(P_TEMP(L,K))
+                    IF (P_TEMP(L,K) > 1) THEN
+                        EJ(J,I) = EJ(J,I) - LOG(P_TEMP(L,K)) * P_TEMP(L,K)
                     END IF
                 END DO
             END DO
+            EJ(J,I) = L_NFRAMES + EJ(J,I)/NFRAMES 
             M(J,I) = E1(I) + E2(J) - EJ(J,I)
             DEALLOCATE(BINS2)
             DEALLOCATE(P_TEMP)
@@ -2723,9 +2958,9 @@ MODULE MI
     INTEGER, INTENT(IN)                                  :: NREP1,NREP2
     INTEGER, INTENT(IN), DIMENSION(0:NFRAMES-1,0:NREP1-1):: D1
     INTEGER, INTENT(IN), DIMENSION(0:NFRAMES-1,0:NREP2-1):: D2
-    REAL, INTENT(IN), DIMENSION(0:NREP1-1)               :: E1
-    REAL, INTENT(IN), DIMENSION(0:NREP2-1)               :: E2
-    REAL, INTENT(IN), DIMENSION(0:NFRAMES-1)             :: W
+    REAL(KIND=8), INTENT(IN), DIMENSION(0:NREP1-1)               :: E1
+    REAL(KIND=8), INTENT(IN), DIMENSION(0:NREP2-1)               :: E2
+    REAL(KIND=8), INTENT(IN), DIMENSION(0:NFRAMES-1)             :: W
     
     INTEGER, DIMENSION(NFRAMES)                          :: D_TEMP1
     INTEGER, DIMENSION(NFRAMES)                          :: D_TEMP2
@@ -2733,15 +2968,15 @@ MODULE MI
     INTEGER, DIMENSION(NFRAMES)                          :: I_BINS2
     INTEGER                                              :: NBINS1,NBINS2
     
-    REAL, ALLOCATABLE                 :: BINS1(:)
-    REAL, ALLOCATABLE                 :: BINS2(:)
-    REAL, ALLOCATABLE                 :: P_TEMP(:,:)
+    REAL(KIND=8), ALLOCATABLE                 :: BINS1(:)
+    REAL(KIND=8), ALLOCATABLE                 :: BINS2(:)
+    REAL(KIND=8), ALLOCATABLE                 :: P_TEMP(:,:)
     INTEGER                           :: I, J, K, L
     INTEGER                           :: X, Y
-    REAL                              :: P, SUM_W, L_SUM_W
+    REAL(KIND=8)                              :: P, SUM_W, L_SUM_W
     
-    REAL, INTENT(OUT), DIMENSION(0:NREP2-1,0:NREP1-1)    :: M
-    REAL, INTENT(OUT), DIMENSION(0:NREP2-1,0:NREP1-1)    :: EJ
+    REAL(KIND=8), INTENT(OUT), DIMENSION(0:NREP2-1,0:NREP1-1)    :: M
+    REAL(KIND=8), INTENT(OUT), DIMENSION(0:NREP2-1,0:NREP1-1)    :: EJ
     
     P = 1.0 / FLOAT(NFRAMES)
     SUM_W = SUM(W)
@@ -2753,8 +2988,8 @@ MODULE MI
     CALL OMP_SET_NUM_THREADS(NUM_THREADS)
 #endif
     !$OMP PARALLEL DO & 
-    !$OMP PRIVATE(D_TEMP1,D_TEMP2,P_TEMP,I,J,L,K,NBINS1,NBINS2,BINS1,BINS2,I_BINS1,I_BINS2) &
-    !$OMP SHARED(D,E1,EJ,M,NFRAMES)
+    !$OMP PRIVATE(D_TEMP1,D_TEMP2,P_TEMP,I,J,L,K,X,Y,NBINS1,NBINS2,BINS1,BINS2,I_BINS1,I_BINS2) &
+    !$OMP SHARED(D1,D2,E1,EJ,M,NFRAMES,SUM_W,L_SUM_W,W)
     DO I = 0,NREP1-1
         D_TEMP1(1:NFRAMES) = (/ (D1(K,I), K=0,NFRAMES-1) /)
         CALL UNIRNK(D_TEMP1,I_BINS1,NBINS1)
@@ -2796,7 +3031,7 @@ MODULE MI
             DO K = 0,NBINS2-1
                 DO L = 0,NBINS1-1
                     IF (P_TEMP(L,K) > 0) THEN
-                        EJ(J,I) = EJ(J,I) - ( P_TEMP(L,K) * LOG(P_TEMP(L,K)) )
+                        EJ(J,I) = EJ(J,I) - LOG(P_TEMP(L,K)) * P_TEMP(L,K)
                     END IF
                 END DO
             END DO

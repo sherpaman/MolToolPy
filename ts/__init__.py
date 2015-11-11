@@ -126,19 +126,9 @@ class TimeSer:
         if self.frame_row:
             #print "reshaping into : (", self.rep, self.dim, self.n_data,")"
             self.data = np.transpose(self.data).reshape((self.rep,self.dim,self.n_data))
-            #for i in np.arange(self.rep):
-                #for j in np.arange(self.dim):
-                    #for k in np.arange(self.n_data):
-                        ## OUT_DATA [ N_rep, DIM, N_sample ]
-                        #proper_shape_data [i,j,k] = self.data[ k , i * self.dim + j ]
         else:
-            print "reshaping into : (", self.rep, self.dim, self.n_data,")"
+            #print "reshaping into : (", self.rep, self.dim, self.n_data,")"
             self.data = self.data.reshape((self.rep,self.dim,self.n_data))
-            #for i in np.arange(self.rep):
-                #for j in np.arange(self.dim):
-                    #for k in np.arange(self.n_data):
-                        ## OUT_DATA [ N_rep, DIM, N_sample ]
-                        #proper_shape_data [i,j,k] = self.data[ i * self.dim + j, k ]
         return
 
     def _check_shape(self):
@@ -594,7 +584,7 @@ class TimeSer:
         
         Calculates the mutual information of each pair of data 
         replicas.
-        It is optimized for memory use with sun-trajectories produced
+        It is optimized for memory use with sub-trajectories produced
         with the \"traj\" command.
         
         '''
@@ -625,7 +615,12 @@ class TimeSer:
         return M, E_joint
 
     def mutual_info_for(self):
-        # CALCULATE MUTUAL INFO OF EACH PAIR OF REPLICAS
+        '''
+        
+        Calculates the mutual information of each pair of data 
+        replicas.
+        
+        '''
         E_joint = np.zeros((self.rep,self.rep))
         M       = np.zeros((self.rep,self.rep))            
         if self.dim > 1:
@@ -642,32 +637,47 @@ class TimeSer:
         return np.transpose(M), np.transpose(E_joint)
             
     def mutual_info_traj_for(self):
-        # CALCULATE MUTUAL INFO OF EACH PAIR OF REPLICAS
-        # USING A ROUTINE OPTIMIZED FOR TRAJ-DATA
-        # IT ASSUME TO HAVE AN INTEGER, 1-DIM, DIGITIZED DATA
-        # AND MAKE USE OF OPTIMZED BINS
-        self.calc_entropy_traj_for(force=True)
+        '''
+        
+        Calculates the mutual information of each pair of data 
+        replicas.
+        It is optimized for memory use with sub-trajectories produced
+        with the \"traj\" command.
+        
+        '''
+        self.calc_entropy_traj_for()
         E_joint = np.zeros((self.rep,self.rep))
         M       = np.zeros((self.rep,self.rep))            
         M, E_joint = mi.mutualinfo_traj(np.transpose(self.data),self.entropy)
         return np.transpose(M), np.transpose(E_joint)
     
     def mutual_info_traj_omp(self):
-        # CALCULATE MUTUAL INFO OF EACH PAIR OF REPLICAS
-        # USING A ROUTINE OPTIMIZED FOR TRAJ-DATA
-        # IT ASSUME TO HAVE AN INTEGER, 1-DIM, DIGITIZED DATA
-        # AND MAKE USE OF OPTIMZED BINS
-        self.calc_entropy_traj_omp(force=True)
+        '''
+        
+        Calculates the mutual information of each pair of data 
+        replicas.
+        It is optimized for memory use with sub-trajectories produced
+        with the \"traj\" command.
+        
+        '''
+        self.calc_entropy_traj_omp()
         E_joint = np.zeros((self.rep,self.rep))
         M       = np.zeros((self.rep,self.rep))            
         M, E_joint = mi_omp.mutualinfo_traj(np.transpose(self.data),self.entropy)
         return np.transpose(M), np.transpose(E_joint)
         
     def mutual_info_traj_omp_weight(self,w):
-        # CALCULATE MUTUAL INFO OF EACH PAIR OF REPLICAS
-        # USING A ROUTINE OPTIMIZED FOR TRAJ-DATA
-        # IT ASSUME TO HAVE AN INTEGER, 1-DIM, DIGITIZED DATA
-        # AND MAKE USE OF OPTIMZED BINS
+        '''
+        
+        Calculates the mutual information of each pair of data 
+        replicas using a weight for each observation.
+        It is optimized for memory use with sub-trajectories produced
+        with the \"traj\" command.
+        
+        '''
+        if len(w) != self.n_data:
+            print "The number of weights should be equal to the number of frames in the time-series!"
+            raise ValueError
         self.calc_entropy_traj_omp_weight(w,force=True)
         E_joint = np.zeros((self.rep,self.rep))
         M       = np.zeros((self.rep,self.rep))            
@@ -675,7 +685,12 @@ class TimeSer:
         return np.transpose(M), np.transpose(E_joint)
 
     def mutual_info_omp(self):
-        # CALCULATE MUTUAL INFO OF EACH PAIR OF REPLICAS
+        '''
+        
+        Calculates the mutual information of each pair of data 
+        replicas.
+        
+        '''
         E_joint = np.zeros((self.rep,self.rep))
         M       = np.zeros((self.rep,self.rep))            
         if self.dim > 1:
@@ -691,7 +706,15 @@ class TimeSer:
         return np.transpose(M), np.transpose(E_joint)
 
     def mutual_info_omp_weight(self,w):
-        # CALCULATE MUTUAL INFO OF EACH PAIR OF REPLICAS
+        '''
+        
+        Calculates the mutual information of each pair of data 
+        replicas using a weight for each observation.
+        
+        '''
+        if len(w) != self.n_data:
+            print "The number of weights should be equal to the number of frames in the time-series!"
+            raise ValueError
         E_joint = np.zeros((self.rep,self.rep))
         M       = np.zeros((self.rep,self.rep))            
         if self.dim > 1:
@@ -707,6 +730,12 @@ class TimeSer:
         return np.transpose(M), np.transpose(E_joint)
 
     def mutual_info_other(self,other):
+        '''
+        
+        Calculates the mutual information between each replica in the original TimeSer Object
+        and the replicas in another TimeSer Object.
+        
+        '''
         if self.n_data != other.n_data:
             print "The Number of Observation in the two time series are different ({0:d} != {0:d})".format(self.n_data,other.n_data)
             return None, None
@@ -727,11 +756,19 @@ class TimeSer:
         return M, E_joint, P_joint
 
     def mutual_info_other_traj(self,other):
+        '''
+        
+        Calculates the mutual information between each replica in the original TimeSer Object
+        and the replicas in another TimeSer Object.
+        This variant is optimized for memory usage with a TimeSer created with the "traj" function
+        It assumes that the data are Digitised and 1-DIM and uses optimized bins.
+        
+        '''
         if self.n_data != other.n_data:
             print "The Number of Observation in the two time series are different ({0:d} != {0:d})".format(self.n_data,other.n_data)
             return None, None
-        self.calc_entropy_traj(force=True)
-        other.calc_entropy_traj(force=True)
+        self.calc_entropy_traj()
+        other.calc_entropy_traj()
         E_joint = np.zeros((self.rep,other.rep))
         M       = np.zeros((self.rep,other.rep))
         total_step=self.rep*other.rep
@@ -754,6 +791,12 @@ class TimeSer:
         return M, E_joint
 
     def mutual_info_other_for(self,other):
+        '''
+        
+        Calculates the mutual information between each replica in the original TimeSer Object
+        and the replicas in another TimeSer Object.
+        
+        '''
         s = self._to_1dim_for()
         o = other._to_1dim_for()
         if s.n_data != o.n_data:
@@ -786,6 +829,12 @@ class TimeSer:
         return np.transpose(M), np.transpose(E_joint)
     
     def mutual_info_other_omp(self,other):
+        '''
+        
+        Calculates the mutual information between each replica in the original TimeSer Object
+        and the replicas in another TimeSer Object.
+        
+        '''
         s = self._to_1dim_omp()
         o = other._to_1dim_omp()
         if s.n_data != o.n_data:
@@ -818,31 +867,74 @@ class TimeSer:
         return np.transpose(M), np.transpose(E_joint)
 
     def mutual_info_other_traj_for(self,other):
-        # CALCULATE MUTUAL INFO OF EACH PAIR OF REPLICAS
-        # USING A ROUTINE OPTIMIZED FOR TRAJ-DATA
-        # IT ASSUME TO HAVE AN INTEGER, 1-DIM, DIGITIZED DATA
-        # AND MAKE USE OF OPTIMZED BINS
+        '''
+        
+        Calculates the mutual information between each replica in the original TimeSer Object
+        and the replicas in another TimeSer Object.
+        
+        '''
         if self.n_data != other.n_data:
             print "The Number of Observation in the two time series are different ({0:d} != {0:d})".format(self.n_data,other.n_data)
             return None, None
-        self.calc_entropy_traj_for(force=True)
-        other.calc_entropy_traj_for(force=True)
-        E_joint = np.zeros((self.rep,other.rep))
-        M       = np.zeros((self.rep,other.rep))
+        self.calc_entropy_traj_for()
+        other.calc_entropy_traj_for()
         d1      = np.transpose(self.data)
         d2      = np.transpose(other.data)
-        M, E_joint =  mi.mutualinfo_other_traj(d1,d2, \
-            self.entropy, other.entropy)
-        return np.transpose(M), np.transpose(E_joint)
-    
-    def mutual_info_other_traj_omp_weight(self,other,w):
-        # CALCULATE MUTUAL INFO OF EACH PAIR OF REPLICAS
-        # USING A ROUTINE OPTIMIZED FOR TRAJ-DATA
-        # IT ASSUME TO HAVE AN INTEGER, 1-DIM, DIGITIZED DATA
-        # AND MAKE USE OF OPTIMZED BINS
+        if self.rep >= other.rep :
+            E_joint = np.zeros((self.rep,other.rep))
+            M       = np.zeros((self.rep,other.rep))
+            M, E_joint =  mi.mutualinfo_other_traj(d1,d2, \
+                self.entropy, other.entropy)
+            return np.transpose(M), np.transpose(E_joint)
+        else:
+            E_joint = np.zeros((other.rep,self.rep))
+            M       = np.zeros((other.rep,self.rep))
+            M, E_joint =  mi.mutualinfo_other_traj(d2,d1, \
+                other.entropy, self.entropy)
+            return M, E_joint
+        
+    def mutual_info_other_traj_omp(self,other):
+        '''
+        
+        Calculates the mutual information between each replica in the original TimeSer Object
+        and the replicas in another TimeSer Object.
+        
+        '''
         if self.n_data != other.n_data:
             print "The Number of Observation in the two time series are different ({0:d} != {0:d})".format(self.n_data,other.n_data)
             return None, None
+        self.calc_entropy_traj_omp()
+        other.calc_entropy_traj_omp()
+        d1      = np.transpose(self.data)
+        d2      = np.transpose(other.data)
+        if self.rep >= other.rep :
+            E_joint = np.zeros((self.rep,other.rep))
+            M       = np.zeros((self.rep,other.rep))
+            M, E_joint =  mi_omp.mutualinfo_other_traj(d1,d2, \
+                self.entropy, other.entropy)
+            return np.transpose(M), np.transpose(E_joint)
+        else:
+            E_joint = np.zeros((other.rep,self.rep))
+            M       = np.zeros((other.rep,self.rep))
+            M, E_joint =  mi_omp.mutualinfo_other_traj(d2,d1, \
+                other.entropy, self.entropy)
+            return M, E_joint
+    
+    def mutual_info_other_traj_omp_weight(self,other,w):
+        '''
+        
+        Calculates the mutual information between each replica in the original TimeSer Object
+        and the replicas in another TimeSer Object using a weight for each observation.
+        This variant is optimized for memory usage with a TimeSer created with the "traj" function
+        It assumes that the data are Digitised and 1-DIM and uses optimized bins.
+        
+        '''
+        if s.n_data != o.n_data:
+            print "The Number of Observation in the two time series are different ({0:d} != {0:d})".format(self.n_data,other.n_data)
+            return ValueError
+        if len(w) != self.n_data:
+            print "The number of weights should be equal to the number of frames in the time-series!"
+            raise ValueError
         self.calc_entropy_traj_omp_weight(w,force=True)
         other.calc_entropy_traj_omp_weight(w,force=True)
         E_joint = np.zeros((self.rep,other.rep))
@@ -854,11 +946,20 @@ class TimeSer:
         return np.transpose(M), np.transpose(E_joint)
     
     def mutual_info_other_omp_weight(self,other,w):
-        s = self._to_1dim_omp()
-        o = other._to_1dim_omp()
+        '''
+        
+        Calculates the mutual information between each replica in the original TimeSer Object
+        and the replicas in another TimeSer Object using a weight for each observation.
+        
+        '''
         if s.n_data != o.n_data:
             print "The Number of Observation in the two time series are different ({0:d} != {0:d})".format(self.n_data,other.n_data)
-            return None, None
+            return ValueError
+        if len(w) != self.n_data:
+            print "The number of weights should be equal to the number of frames in the time-series!"
+            raise ValueError
+        s = self._to_1dim_omp()
+        o = other._to_1dim_omp()
         if not s.entropy_av:
             s.calc_entropy_weight(w)
         if not o.entropy_av:
@@ -888,6 +989,38 @@ class TimeSer:
         return np.transpose(M), np.transpose(E_joint)
 
     def mutual_info_other_bootstrap(self,other,resample=100):
+        '''
+        
+        Bootstrap estimate of mutual info average and variance between 
+        each replica in the original TimeSer Object and the replicas 
+        in another TimeSer Object.
+        A user-defined number of estimates of mutual info is performed
+        using radom samples of original data. The sampling can be done 
+        extracting from the joint distribution or idependetly from
+        each single replica distribution. Yhe default is the latter:
+        the estimate can be used as an a-priori distribution of mutual
+        information values (given the single distributions)
+        
+        Parameters
+        ----------
+        
+        other     : TimeSer Object
+        
+        resample  : integer, number of reasampling performed to do the estimate
+        
+        joint     : boolean
+                if True the rasampling is done on the joint distribution 
+                of the replicas. If False the rapling is done idependently for each
+                single replica distribution
+                
+        Returns
+        ----------
+        
+        mi        : ((self.rep, self.rep), resample) array 
+                Mutual info matrices (one for each sample)
+        
+        
+        '''
         s = self._to_1dim_omp()
         o = other._to_1dim_omp()
         if s.n_data != o.n_data:
@@ -1183,7 +1316,8 @@ class TimeSer:
                 hash_num1 = hash_num + int(np.dot(self.digital[r,:,l+time],prod[:-1])) * prod_t[time]
                 k.data[r,0,l]  = hash_num
                 k1.data[r,0,l] = hash_num1
-        
+        k.calc_entropy_traj(force=True)
+        k1.calc_entropy_traj(force=True)
         return k, k1
 
     def traj_for(self,time=2,replicas=None):
@@ -1236,6 +1370,8 @@ class TimeSer:
         k, k1 = mi.traj(np.transpose(self.digital),time,self.nbins)
         k = TimeSer(k,len(k),1,dtype=int)
         k1= TimeSer(k1,len(k1),1,dtype=int)
+        k.calc_entropy_traj_for(force=True)
+        k1.calc_entropy_traj_for(force=True)
         return k, k1
 
     def traj_omp(self,time=2,replicas=None):
@@ -1288,6 +1424,8 @@ class TimeSer:
         k, k1 = mi_omp.traj(np.transpose(self.digital),time,self.nbins)
         k = TimeSer(k,len(k),1,dtype=int)
         k1= TimeSer(k1,len(k1),1,dtype=int)
+        k.calc_entropy_traj_omp(force=True)
+        k1.calc_entropy_traj_omp(force=True)
         return k, k1
 
     def traj_shuffle(self,time=2,replicas=None):
