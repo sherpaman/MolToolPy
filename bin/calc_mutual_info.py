@@ -34,7 +34,7 @@ def interleave(data,ndim):
 		        out[:,ndim*i+j]   = data[:,j*(nrep/ndim)+i]
 	return out
 
-f_dat = options.dat
+f_dat = options.inp
 f_out = options.out
 stride = options.stride
 
@@ -51,7 +51,7 @@ M, E = DATA.mutual_info_omp()
 
 fig = plt.figure()
 ax  = fig.add_subplot(111)
-mat = ax.matshow(M)
+mat = ax.matshow(M,cmap=plt.get_cmap('RdBu'))
 fig.colorbar(mat)
 plt.show()
 #tx = ax.get_xticks().astype(int)
