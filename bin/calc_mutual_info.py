@@ -53,14 +53,11 @@ fig = plt.figure()
 ax  = fig.add_subplot(111)
 mat = ax.matshow(M,cmap=plt.get_cmap('Reds'))
 fig.colorbar(mat)
-plt.show()
-#tx = ax.get_xticks().astype(int)
-#ty = ax.get_yticks().astype(int)
-#ax.set_xticklabels(ticks[tx])
-#ax.set_yticklabels(ticks[ty])
 if options.plot:
-        fig.savefig(f_out.split('.')[0]+".svg",format='svg')
+	plt.show()
+        
+fig.savefig(f_out.split('.')[0]+".svg",format='svg')
 
-np.savetxt(f_out,M)
+np.savetxt(f_out.split('.')[0]+".dat",M)
 
 quit()

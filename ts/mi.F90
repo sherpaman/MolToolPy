@@ -858,7 +858,7 @@ MODULE MI
                 DO L = 0,NBINS-1
                     PJ(L,K,J,I) = P_TEMP(L,K)
                     PJ(K,L,I,J) = P_TEMP(K,L)
-                    IF (P_TEMP(L,K) > 1) THEN
+                    IF (P_TEMP(L,K) > 0) THEN
                         EJ(J,I) = EJ(J,I) - LOG(P_TEMP(L,K)) * P_TEMP(L,K)
                     END IF
                 END DO
@@ -938,7 +938,7 @@ MODULE MI
                 DO L = 0,NBINS-1
                     PJ(L,K,J,I) = P_TEMP(L,K)
                     PJ(K,L,I,J) = P_TEMP(K,L)
-                    IF (P_TEMP(L,K) > 1) THEN
+                    IF (P_TEMP(L,K) > 0) THEN
                         EJ(J,I) = EJ(J,I) - LOG(P_TEMP(L,K)) * P_TEMP(L,K)
                     END IF
                 END DO
@@ -1018,7 +1018,7 @@ MODULE MI
                 DO L = 0,NBINS2-1
                     PJ(L,K,J,I) = P_TEMP(L,K)
                     PJ(K,J,I,J) = P_TEMP(K,J)
-                    IF (P_TEMP(L,K) > 1) THEN
+                    IF (P_TEMP(L,K) > 0) THEN
                         EJ(J,I) = EJ(J,I) - LOG(P_TEMP(L,K)) * P_TEMP(L,K)
                     END IF
                 END DO
@@ -1097,7 +1097,7 @@ MODULE MI
                 DO L = 0,NBINS2-1
                     PJ(L,K,J,I) = P_TEMP(L,K)
                     PJ(K,J,I,J) = P_TEMP(K,J)
-                    IF (P_TEMP(L,K) > 1) THEN
+                    IF (P_TEMP(L,K) > 0) THEN
                         EJ(J,I) = EJ(J,I) - LOG(P_TEMP(L,K)) * P_TEMP(L,K)
                     END IF
                 END DO
@@ -1176,7 +1176,7 @@ MODULE MI
                 DO L = 0,NBINS2-1
                     PJ(L,K,J,I) = P_TEMP(L,K)
                     PJ(K,J,I,J) = P_TEMP(K,J)
-                    IF (P_TEMP(L,K) > 1) THEN
+                    IF (P_TEMP(L,K) > 0) THEN
                         EJ(J,I) = EJ(J,I) - LOG(P_TEMP(L,K)) * P_TEMP(L,K)
                     END IF
                 END DO
@@ -1255,7 +1255,7 @@ MODULE MI
                 DO L = 0,NBINS2-1
                     PJ(L,K,J,I) = P_TEMP(L,K)
                     PJ(K,J,I,J) = P_TEMP(K,J)
-                    IF (P_TEMP(L,K) > 1) THEN
+                    IF (P_TEMP(L,K) > 0) THEN
                         EJ(J,I) = EJ(J,I) - LOG(P_TEMP(L,K)) * P_TEMP(L,K)
                     END IF
                 END DO
@@ -1328,7 +1328,7 @@ MODULE MI
             END DO 
             DO K = 0,NBINS-1
                 DO L = 0,NBINS-1
-                    IF (P_TEMP(L,K) > 1) THEN
+                    IF (P_TEMP(L,K) > 0) THEN
                         EJ(I) = EJ(I) - LOG(P_TEMP(L,K)) * P_TEMP(L,K)
                     END IF
                 END DO
@@ -1399,7 +1399,7 @@ MODULE MI
             END DO 
             DO K = 0,NBINS-1
                 DO L = 0,NBINS-1
-                    IF (P_TEMP(L,K) > 1) THEN
+                    IF (P_TEMP(L,K) > 0) THEN
                         EJ(I) = EJ(I) - LOG(P_TEMP(L,K)) * P_TEMP(L,K)
                     END IF
                 END DO
@@ -1471,7 +1471,7 @@ MODULE MI
             DO K = 0,NBINS-1
                 DO L = 0,NBINS-1
                     PJ(L,K,I) = P_TEMP(L,K)
-                    IF (P_TEMP(L,K) > 1) THEN
+                    IF (P_TEMP(L,K) > 0) THEN
                         EJ(I) = EJ(I) - LOG(P_TEMP(L,K)) * P_TEMP(L,K)
                     END IF
                 END DO
@@ -1544,7 +1544,7 @@ MODULE MI
             DO K = 0,NBINS-1
                 DO L = 0,NBINS-1
                     PJ(L,K,I) = P_TEMP(L,K)
-                    IF (P_TEMP(L,K) > 1) THEN
+                    IF (P_TEMP(L,K) > 0) THEN
                         EJ(I) = EJ(I) - LOG(P_TEMP(L,K)) * P_TEMP(L,K)
                     END IF
                 END DO
@@ -1916,7 +1916,7 @@ MODULE MI
             END DO
             DO K = 0,NBINS1-1
                 DO L = 0,NBINS2-1
-                    IF (P_TEMP(L,K) > 1) THEN
+                    IF (P_TEMP(L,K) > 0) THEN
                         EJ(J,I) = EJ(J,I) - LOG(P_TEMP(L,K)) * P_TEMP(L,K)
                     END IF
                 END DO
@@ -1987,7 +1987,7 @@ MODULE MI
             END DO
             DO K = 0,NBINS1-1
                 DO L = 0,NBINS2-1
-                    IF (P_TEMP(L,K) > 1) THEN
+                    IF (P_TEMP(L,K) > 0) THEN
                         EJ(J,I) = EJ(J,I) - LOG(P_TEMP(L,K)) * P_TEMP(L,K)
                     END IF
                 END DO
@@ -2056,7 +2056,7 @@ MODULE MI
             END DO
             DO K = 0,NBINS1-1
                 DO L = 0,NBINS2-1
-                    IF (P_TEMP(L,K) > 1) THEN
+                    IF (P_TEMP(L,K) > 0) THEN
                         EJ(J,I) = EJ(J,I) - LOG(P_TEMP(L,K)) * P_TEMP(L,K)
                     END IF
                 END DO
@@ -2125,7 +2125,7 @@ MODULE MI
             END DO
             DO K = 0,NBINS1-1
                 DO L = 0,NBINS2-1
-                    IF (P_TEMP(L,K) > 1) THEN
+                    IF (P_TEMP(L,K) > 0) THEN
                         EJ(J,I) = EJ(J,I) - LOG(P_TEMP(L,K)) * P_TEMP(L,K)
                     END IF
                 END DO
@@ -2845,7 +2845,7 @@ MODULE MI
             P_TEMP(X) = P_TEMP(X) + P
         END DO
         DO K = 0,NBINS-1
-            IF (P_TEMP(K) > 1) THEN
+            IF (P_TEMP(K) > 0) THEN
                 E(I) = E(I) - LOG(P_TEMP(K)) * P_TEMP(K)
             END IF
         END DO
@@ -2998,7 +2998,7 @@ MODULE MI
             END DO
             DO K = 0,NBINS_Y-1
                 DO L = 0,NBINS_X-1
-                    IF (P_TEMP(L,K) > 1) THEN
+                    IF (P_TEMP(L,K) > 0) THEN
                         EJ(J,I) = EJ(J,I) - LOG(P_TEMP(L,K)) * P_TEMP(L,K)
                     END IF
                 END DO
@@ -3197,7 +3197,7 @@ MODULE MI
             END DO
             DO K = 0,NBINS2-1
                 DO L = 0,NBINS1-1
-                    IF (P_TEMP(L,K) > 1) THEN
+                    IF (P_TEMP(L,K) > 0) THEN
                         EJ(J,I) = EJ(J,I) - LOG(P_TEMP(L,K)) * P_TEMP(L,K)
                     END IF
                 END DO

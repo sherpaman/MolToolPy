@@ -35,7 +35,7 @@ def interleave(data,ndim):
 		        out[:,ndim*i+j]   = data[:,j*(nrep/ndim)+i]
 	return out
 
-f_dat = options.dat
+f_dat = options.inp
 f_out = options.out
 stride = options.stride
 
@@ -48,21 +48,18 @@ if (options.interleave) & (options.ndim != 1):
 DATA= ts.TimeSer(dat,len(dat),dim=options.ndim,nbins=options.nbins)
 DATA.calc_bins(opt=options.opt)
 
-T, D = DATA.tranfer_entropy_omp(options.time)
+T, D = DATA.transfer_entropy_omp(options.time)
 
 fig = plt.figure()
 ax  = fig.add_subplot(111)
 mat = ax.matshow(D)
 fig.colorbar(mat)
-plt.show()
-#tx = ax.get_xticks().astype(int)
-#ty = ax.get_yticks().astype(int)
-#ax.set_xticklabels(ticks[tx])
-#ax.set_yticklabels(ticks[ty])
 if options.plot:
-        fig.savefig(f_out.split('.')[0]+".svg",format='svg')
+	plt.show()
+       
+fig.savefig(f_out.split('.')[0]+".svg",format='svg')
 
-np.savetxt(f_out,D)
+np.savetxt(f_out.split('.')[0]+".dat",D)
 
 quit()
 
