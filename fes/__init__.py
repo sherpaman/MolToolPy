@@ -5,628 +5,627 @@ import math as m
 import sys
 
 def read_energy_field(file_in,nx=None,ny=None,g_grad=False):
-	data = np.loadtxt(file_in)
-	if (nx==None)&(ny==None):
-		nx=int(m.sqrt(len(data[:,0])))
-		ny=nx
-	elif (nx==None):
-		nx=int(len(data)/ny)
-	elif (ny==None):
-		ny=int(len(data)/nx)
-	X  = data[:,0].reshape([nx ,ny ])
-	Y  = data[:,1].reshape([nx ,ny ])
-	E  = data[:,2].reshape([nx ,ny ])
-	dx = data[ny,0]-data[0,0]
-	dy = data[1,1]-data[0,1]
-	if not g_grad:
-		dE = np.array(np.gradient(E,dx,dy))
-	else:
-		dE = np.array(np.gradient(E))
-	return energy_field(energy=E,gradient=dE,field=[X,Y],g_grad=g_grad,notes=str(file_in))
+    data = np.loadtxt(file_in)
+    if (nx==None)&(ny==None):
+        nx=int(m.sqrt(len(data[:,0])))
+        ny=nx
+    elif (nx==None):
+        nx=int(len(data)/ny)
+    elif (ny==None):
+        ny=int(len(data)/nx)
+    X  = data[:,0].reshape([nx ,ny ])
+    Y  = data[:,1].reshape([nx ,ny ])
+    E  = data[:,2].reshape([nx ,ny ])
+    dx = data[ny,0]-data[0,0]
+    dy = data[1,1]-data[0,1]
+    if not g_grad:
+        dE = np.array(np.gradient(E,dx,dy))
+    else:
+        dE = np.array(np.gradient(E))
+    return energy_field(energy=E,gradient=dE,field=[X,Y],g_grad=g_grad,notes=str(file_in))
 
 class hills:
-	def __init__(self, time, coord, sigmas, heights, cv_names, biasf=None, ranges=None):
-		self.time = time
-		self.coord = coord
-		self.sigmas = sigmas
-		self.heights = heights
-		self.biasf = biasf
-		self.ranges = ranges
-		self.cv_names=cv_names
-	
-	
+    def __init__(self, time, coord, sigmas, heights, cv_names, biasf=None, ranges=None):
+        self.time = time
+        self.coord = coord
+        self.sigmas = sigmas
+        self.heights = heights
+        self.biasf = biasf
+        self.ranges = ranges
+        self.cv_names=cv_names
+    
+    
 class energy_field:
+    def __init__ (self, energy=np.zeros([2,2]), gradient=np.zeros([2,2,2]), field=[np.zeros([2,2]),np.zeros([2,2])],g_grad=False,isdefined=False,notes=None):
+        if (energy!=np.zeros([1,1])).all:
+            self.isdefined=True
+        else:
+            self.isdefined=isdefined
+        self.energy   = energy
+        self.emin     = np.amin(self.energy)
+        self.emax     = np.amax(self.energy)
+        self.nx, self.ny = self.energy.shape
+        self.gradient = gradient
+        self.field    = field
+        self.xmin     = np.amin( self.field[0] )
+        self.ymin     = np.amin( self.field[1] )
+        self.xmax     = np.amax( self.field[0] )
+        self.ymax     = np.amax( self.field[1] )
+        self.dx       = (self.xmax-self.xmin)/(self.field[0].shape[0]-1.0)
+        self.dy       = (self.ymax-self.ymin)/(self.field[1].shape[1]-1.0)
+        self.g_grad   = g_grad
+        amin   = np.argmin(self.energy)
+        xmin = int(np.argmin(self.energy))/int(self.ny)
+        ymin = int(np.argmin(self.energy))%self.ny
+        self.min_list =[ [ self.field[0][xmin,ymin], self.field[1][xmin,ymin], np.amin(self.energy) ] ]
+        self.M        = np.zeros(self.energy.shape,dtype=float)
+        self.levels   = []
+        self.L        = -1 * np.ones(self.energy.shape,dtype=int)
+        if self.isdefined:
+            self.iX = interp1d(np.arange(self.field[0].shape[0]),self.field[0][:,0])
+            self.iY = interp1d(np.arange(self.field[1].shape[1]),self.field[1][0,:])
+        self.notes=notes
 
-	def __init__ (self, energy=np.zeros([2,2]), gradient=np.zeros([2,2,2]), field=[np.zeros([2,2]),np.zeros([2,2])],g_grad=False,isdefined=False,notes=None):
-		if (energy!=np.zeros([1,1])).all:
-                        self.isdefined=True
-                else:
-                        self.isdefined=isdefined
-		self.energy   = energy
-		self.emin     = np.amin(self.energy)
-		self.emax     = np.amax(self.energy)
-		self.nx, self.ny = self.energy.shape
-		self.gradient = gradient
-		self.field    = field
-		self.xmin     = np.amin( self.field[0] )
-		self.ymin     = np.amin( self.field[1] )
-		self.xmax     = np.amax( self.field[0] )
-		self.ymax     = np.amax( self.field[1] )
-		self.dx       = (self.xmax-self.xmin)/(self.field[0].shape[0]-1.0)
-		self.dy       = (self.ymax-self.ymin)/(self.field[1].shape[1]-1.0)
-		self.g_grad   = g_grad
-		amin   = np.argmin(self.energy)
-		xmin = int(np.argmin(self.energy))/int(self.ny)
-		ymin = int(np.argmin(self.energy))%self.ny
-		self.min_list =[ [ self.field[0][xmin,ymin], self.field[1][xmin,ymin], np.amin(self.energy) ] ]
-		self.M        = np.zeros(self.energy.shape,dtype=float)
-		self.levels   = []
-		self.L        = -1 * np.ones(self.energy.shape,dtype=int)
-		if self.isdefined:
-			self.iX = interp1d(np.arange(self.field[0].shape[0]),self.field[0][:,0])
-			self.iY = interp1d(np.arange(self.field[1].shape[1]),self.field[1][0,:])
-		self.notes=notes
+    def __setattr__(self,name,value):
+        if name=='energy':
+            self.__dict__[name]=np.array(value,dtype=float)
+        elif name=='gradient':
+            self.__dict__[name]=np.array(value,dtype=float)
+        elif name=='field':
+            if len(value)!=len(self.energy.shape):
+                print "field has a number of elements [%d] not consistent with energy shape [%d]" %(len(value),len(self.energy.shape))
+                raise AttributeError
+            else:
+                temp_list=[]
+                for  n,f in enumerate(value):
+                    if f.shape!=self.energy.shape:
+                        print "One field [%d] has a dimension [%s] not consistent with energy [%s]" %(n,f.shape,self.energy.shape)
+                        raise AttributeError
+                    else:
+                        temp_list.append(f)
+                self.__dict__[name]=temp_list
+        else:
+            self.__dict__[name]=value
 
-	def __setattr__(self,name,value):
-		if name=='energy':
-			self.__dict__[name]=np.array(value,dtype=float)
-		elif name=='gradient':
-			self.__dict__[name]=np.array(value,dtype=float)
-		elif name=='field':
-			if len(value)!=len(self.energy.shape):
-				print "field has a number of elements [%d] not consistent with energy shape [%d]" %(len(value),len(self.energy.shape))
-				raise AttributeError
-			else:
-				temp_list=[]
-				for  n,f in enumerate(value):
-					if f.shape!=self.energy.shape:
-						print "One field [%d] has a dimension [%s] not consistent with energy [%s]" %(n,f.shape,self.energy.shape)
-						raise AttributeError
-					else:
-						temp_list.append(f)
-				self.__dict__[name]=temp_list
-		else:
-			self.__dict__[name]=value
+    def __str__(self):
+        if self.isdefined:
+            nx, ny = self.energy.shape
+            dx, dy = self.dx, self.dy
+            out = "Energy Field [%4d,%4d] \n %12.6f < X < %12.6f (DX: %12.6f)\n %12.6f < Y < %12.6f (DY: %12.6f)\n" %(nx,ny,self.xmin,self.xmax,dx,self.ymin,self.ymax,dy)
+        return out
 
-	def __str__(self):
-		if self.isdefined:
-			nx, ny = self.energy.shape
-			dx, dy = self.dx, self.dy
-			out = "Energy Field [%4d,%4d] \n %12.6f < X < %12.6f (DX: %12.6f)\n %12.6f < Y < %12.6f (DY: %12.6f)\n" %(nx,ny,self.xmin,self.xmax,dx,self.ymin,self.ymax,dy)
-		return out
+    def discretize(self,p):
+        #x = int( ( p[0] - self.xmin - self.dx/2. ) / self.dx )%self.nx
+        x = int( ( p[0] - self.xmin + self.dx/2. ) / self.dx )%self.nx
+        #y = int( ( p[1] - self.ymin - self.dy/2. ) / self.dy )%self.ny
+        y = int( ( p[1] - self.ymin + self.dy/2. ) / self.dy )%self.ny
+        return np.array([x, y])
 
-	def discretize(self,p):
-		#x = int( ( p[0] - self.xmin - self.dx/2. ) / self.dx )%self.nx
-		x = int( ( p[0] - self.xmin + self.dx/2. ) / self.dx )%self.nx
-		#y = int( ( p[1] - self.ymin - self.dy/2. ) / self.dy )%self.ny
-		y = int( ( p[1] - self.ymin + self.dy/2. ) / self.dy )%self.ny
-		return np.array([x, y])
+    def square(self,p0,fw=5):
+        nx0, ny0 = self.discretize(p0)
+        return energy_field(energy=self.energy[nx0-fw:nx0+fw+1,ny0-fw:ny0+fw+1],gradient=self.gradient[:,nx0-fw:nx0+fw+1,ny0-fw:ny0+fw+1],field=[self.field[0][nx0-fw:nx0+fw+1,ny0-fw:ny0+fw+1],self.field[1][nx0-fw:nx0+fw+1,ny0-fw:ny0+fw+1]])
 
-	def square(self,p0,fw=5):
-		nx0, ny0 = self.discretize(p0)
-		return energy_field(energy=self.energy[nx0-fw:nx0+fw+1,ny0-fw:ny0+fw+1],gradient=self.gradient[:,nx0-fw:nx0+fw+1,ny0-fw:ny0+fw+1],field=[self.field[0][nx0-fw:nx0+fw+1,ny0-fw:ny0+fw+1],self.field[1][nx0-fw:nx0+fw+1,ny0-fw:ny0+fw+1]])
+    def frame(self,p0,fw=[5,5]):
+        nx0, ny0 = self.discretize(p0)
+        return energy_field(energy=self.energy[nx0-fw[0]:nx0+fw[0]+1,ny0-fw[1]:ny0+fw[1]+1],gradient=self.gradient[:,nx0-fw[0]:nx0+fw[0]+1,ny0[1]-fw:ny0+fw[1]+1],field=[self.field[1][nx0-fw[0]:nx0+fw[0]+1,ny0-fw[1]:ny0+fw[1]+1],self.field[1][nx0-fw[0]:nx0+fw[0]+1,ny0-fw[1]:ny0+fw[1]+1]])
+    
+    def fun_e(self,p,fw=5):
+        nx,ny = self.discretize(p)
+        frame = self.square(p,fw)
+        try:
+            f     = RectBivariateSpline(np.arange(-fw,fw+1),np.arange(-fw,fw+1),frame.energy)
+        except:
+            print frame.energy
+            print "Z dimensions ", frame.energy.shape
+            print np.arange(-fw,fw+1)
+            print "X dimensions ", np.arange(-fw,fw+1).shape
+            raise
+        return f(nx,ny)
 
-	def frame(self,p0,fw=[5,5]):
-		nx0, ny0 = self.discretize(p0)
-		return energy_field(energy=self.energy[nx0-fw[0]:nx0+fw[0]+1,ny0-fw[1]:ny0+fw[1]+1],gradient=self.gradient[:,nx0-fw[0]:nx0+fw[0]+1,ny0[1]-fw:ny0+fw[1]+1],field=[self.field[1][nx0-fw[0]:nx0+fw[0]+1,ny0-fw[1]:ny0+fw[1]+1],self.field[1][nx0-fw[0]:nx0+fw[0]+1,ny0-fw[1]:ny0+fw[1]+1]])
-	
-	def fun_e(self,p,fw=5):
-		nx,ny = self.discretize(p)
-		frame = self.square(p,fw)
-		try:
-			f     = RectBivariateSpline(np.arange(-fw,fw+1),np.arange(-fw,fw+1),frame.energy)
-		except:
-			print frame.energy
-			print "Z dimensions ", frame.energy.shape
-			print np.arange(-fw,fw+1)
-			print "X dimensions ", np.arange(-fw,fw+1).shape
-			raise
-		return f(nx,ny)
+    def fun_g(self,p,fw=5):
+        nx,ny = self.discretize(p)
+        frame = self.square(p,fw)
+        f     = [RectBivariateSpline(np.arange(-fw,fw+1),np.arange(-fw,fw+1),frame.gradient[0]),RectBivariateSpline(np.arange(-fw,fw+1),np.arange(-fw,fw+1),frame.gradient[1])]
+        return np.array([f[0](nx,ny) , f[1](nx,ny)])
+        
+    def f_e(self,p,fw=5):
+        frame = self.square(p,fw)
+        f     = RectBivariateSpline(np.arange(-fw,fw+1),np.arange(-fw,fw+1),frame.energy)
+        return f
 
-	def fun_g(self,p,fw=5):
-		nx,ny = self.discretize(p)
-		frame = self.square(p,fw)
-		f     = [RectBivariateSpline(np.arange(-fw,fw+1),np.arange(-fw,fw+1),frame.gradient[0]),RectBivariateSpline(np.arange(-fw,fw+1),np.arange(-fw,fw+1),frame.gradient[1])]
-		return np.array([f[0](nx,ny) , f[1](nx,ny)])
-		
-	def f_e(self,p,fw=5):
-		frame = self.square(p,fw)
-		f     = RectBivariateSpline(np.arange(-fw,fw+1),np.arange(-fw,fw+1),frame.energy)
-		return f
+    def f_g(self,p,fw=5):
+        frame = self.square(p,fw)
+        f     = [ RectBivariateSpline(np.arange(-fw,fw+1),np.arange(-fw,fw+1),frame.gradient[0]), RectBivariateSpline(np.arange(-fw,fw+1),np.arange(-fw,fw+1),frame.gradient[1]) ]
+        return f
+        
+    def smooth_energy(self):
+        M=np.zeros([self.nx,self.ny])
+        sm=np.array([[1.,2.,1.],[2.,12.,2.],[1.,2.,1.]])/24.
+        for  i in np.arange(1,self.nx-1):
+            for j in np.arange(1,self.ny-1):
+                    if (i==0)|(i==self.nx-1)|(j==0)|(j==self.ny-1) :
+                        M[i,j]=self.energy[i,j]
+                    else:
+                        M[i,j]=np.dot(self.energy[i-1:i+2,j-1:j+2].reshape(-1),sm.reshape(-1))
+        self.energy=M
+        
+    def gridsearch_min(self,E_tr=0.0):
+        wheel=[ '\\' , '|', '/' , '-']
+        threshold = 0.01
+        for i in np.arange(self.nx):
+            for j in np.arange(self.ny):
+                perc=float((i-1)*self.ny+j)/float(self.nx*self.ny)*100
+                sys.stdout.write(wheel[int(perc/threshold)%len(wheel)]+' %5.2f'%(perc)+'\r')
+                if self.energy[i,j] < E_tr:
+                    test = False
+                    E_min=self.energy[i,j]
+                    ni=i
+                    nj=j
+                    while (test != True):
+                        temp_test = True 
+                        t_ni = ni
+                        t_nj = nj
+                        for r in np.arange(-1,2):
+                            for c in np.arange(-1,2):
+                                if self.energy[t_ni+r,t_nj+c]<E_min:
+                                    E_min=self.energy[t_ni+r,t_nj+c]
+                                    temp_test=False 
+                                    ni=t_ni+r
+                                    nj=t_nj+c
+                        test=temp_test
+                    self.M[i,j]=E_min
+                    if self.M[i,j] not in self.levels:
+                        self.levels.append(self.M[i,j])
+                    if [self.field[0][ni,nj],self.field[1][ni,nj],E_min] not in self.min_list:
+                        self.min_list.append([self.field[0][ni,nj],self.field[1][ni,nj],E_min])
+                    self.L[i,j]=self.levels.index(self.M[i,j])
+        sys.stdout.write('\n')
 
-	def f_g(self,p,fw=5):
-		frame = self.square(p,fw)
-		f     = [ RectBivariateSpline(np.arange(-fw,fw+1),np.arange(-fw,fw+1),frame.gradient[0]), RectBivariateSpline(np.arange(-fw,fw+1),np.arange(-fw,fw+1),frame.gradient[1]) ]
-		return f
-		
-	def smooth_energy(self):
-		M=np.zeros([self.nx,self.ny])
-		sm=np.array([[1.,2.,1.],[2.,12.,2.],[1.,2.,1.]])/24.
-		for  i in np.arange(1,self.nx-1):
-			for j in np.arange(1,self.ny-1):
-					if (i==0)|(i==self.nx-1)|(j==0)|(j==self.ny-1) :
-						M[i,j]=self.energy[i,j]
-					else:
-						M[i,j]=np.dot(self.energy[i-1:i+2,j-1:j+2].reshape(-1),sm.reshape(-1))
-		self.energy=M
-		
-	def gridsearch_min(self,E_tr=0.0):
-		wheel=[ '\\' , '|', '/' , '-']
-		threshold = 0.01
-		for i in np.arange(self.nx):
-			for j in np.arange(self.ny):
-				perc=float((i-1)*self.ny+j)/float(self.nx*self.ny)*100
-				sys.stdout.write(wheel[int(perc/threshold)%len(wheel)]+' %5.2f'%(perc)+'\r')
-				if self.energy[i,j] < E_tr:
-					test = False
-					E_min=self.energy[i,j]
-					ni=i
-					nj=j
-					while (test != True):
-						temp_test = True 
-						t_ni = ni
-						t_nj = nj
-						for r in np.arange(-1,2):
-							for c in np.arange(-1,2):
-								if self.energy[t_ni+r,t_nj+c]<E_min:
-									E_min=self.energy[t_ni+r,t_nj+c]
-									temp_test=False	
-									ni=t_ni+r
-									nj=t_nj+c
-						test=temp_test
-					self.M[i,j]=E_min
-					if self.M[i,j] not in self.levels:
-						self.levels.append(self.M[i,j])
-					if [self.field[0][ni,nj],self.field[1][ni,nj],E_min] not in self.min_list:
-						self.min_list.append([self.field[0][ni,nj],self.field[1][ni,nj],E_min])
-					self.L[i,j]=self.levels.index(self.M[i,j])
-		sys.stdout.write('\n')
-
-	def surfature(self):
-			# SURFATURE -  COMPUTE GAUSSIAN AND MEAN CURVATURES OF A SURFACE
-			#   [K,H] = SURFATURE(X,Y,Z), WHERE X,Y,Z ARE 2D ARRAYS OF POINTS ON THE
-			#   SURFACE.  K AND H ARE THE GAUSSIAN AND MEAN CURVATURES, RESPECTIVELY.
-			#   SURFATURE RETURNS 2 ADDITIONAL ARGUEMENTS,
-			#   [K,H,Pmax,Pmin] = SURFATURE(...), WHERE Pmax AND Pmin ARE THE MINIMUM
-			#   AND MAXIMUM CURVATURES AT EACH POINT, RESPECTIVELY.
-			
-			
-			# First Derivatives
-			[Xu,Xv] = np.gradient(self.field[0]);
-			[Yu,Yv] = np.gradient(self.field[1]);
-			[Zu,Zv] = np.gradient(self.energy);
-			
-			# Second Derivatives
-			[Xuu,Xuv] = np.gradient(Xu);
-			[Yuu,Yuv] = np.gradient(Yu);
-			[Zuu,Zuv] = np.gradient(Zu);
-			
-			[Xuv,Xvv] = np.gradient(Xv);
-			[Yuv,Yvv] = np.gradient(Yv);
-			[Zuv,Zvv] = np.gradient(Zv);
-			
-			# Reshape 2D Arrays into Vectors
-			Xu = Xu.reshape(Xu.size);   Yu = Yu.reshape(Yu.size);   Zu = Zu.reshape(Zu.size); 
-			Xv = Xv.reshape(Xv.size);   Yv = Yv.reshape(Yv.size);   Zv = Zv.reshape(Zv.size); 
-			Xuu = Xuu.reshape(Xuu.size); Yuu = Yuu.reshape(Yuu.size); Zuu = Zuu.reshape(Zuu.size); 
-			Xuv = Xuv.reshape(Xuv.size); Yuv = Yuv.reshape(Yuv.size); Zuv = Zuv.reshape(Zuv.size); 
-			Xvv = Xvv.reshape(Xvv.size); Yvv = Yvv.reshape(Yvv.size); Zvv = Zvv.reshape(Zvv.size); 
-			
-			Xu          =   np.concatenate(Xu, np.concatenate(Yu, Zu));
-			Xv          =   np.concatenate(Xv, np.concatenate(Yv, Zv));
-			Xuu         =   np.concatenate(Xuu, np.concatenate(Yuu, Zuu));
-			Xuv         =   np.concatenate(Xuv, np.concatenate(Yuv, Zuv));
-			Xvv         =   np.concatenate(Xvv, np.concatenate(Yvv, Zvv));
-		
-			# First fundamental Coeffecients of the surface (E,F,G)
-			E           =   np.dot(Xu,Xu);
-			F           =   np.dot(Xu,Xv);
-			G           =   np.dot(Xv,Xv);
-			
-			mu          =   np.cross(Xu,Xv);
-			p           =   m.sqrt(np.dot(mu,mu));
-			n           =   mu/np.concatenate(p, np.convatenate(p, p));
-			
-			# Second fundamental Coeffecients of the surface (L,M,N)
-			L           =   np.dot(Xuu,n);
-			M           =   np.dot(Xuv,n);
-			N           =   np.dot(Xvv,n);
-			
-			[s,t] = size(Z);
-			
-			# Gaussian Curvature
-			K = (L*N - M**2)/(E*G - F**2);
-			K = K.reshape([s,t]);
-			
-			# Mean Curvature
-			H = (E*N + G*L - 2*F*M)/(2*(E*G - F**2));
-			H = H.reshape(s,t);
-			
-			# Principal Curvatures
-			Pmax = H + m.sqrt(H**2 - K);
-			Pmin = H - m.sqrt(H**2 - K);
-			
-			return K,H,Pmax,Pmin
-			
+    def surfature(self):
+            # SURFATURE -  COMPUTE GAUSSIAN AND MEAN CURVATURES OF A SURFACE
+            #   [K,H] = SURFATURE(X,Y,Z), WHERE X,Y,Z ARE 2D ARRAYS OF POINTS ON THE
+            #   SURFACE.  K AND H ARE THE GAUSSIAN AND MEAN CURVATURES, RESPECTIVELY.
+            #   SURFATURE RETURNS 2 ADDITIONAL ARGUEMENTS,
+            #   [K,H,Pmax,Pmin] = SURFATURE(...), WHERE Pmax AND Pmin ARE THE MINIMUM
+            #   AND MAXIMUM CURVATURES AT EACH POINT, RESPECTIVELY.
+            
+            
+            # First Derivatives
+            [Xu,Xv] = np.gradient(self.field[0]);
+            [Yu,Yv] = np.gradient(self.field[1]);
+            [Zu,Zv] = np.gradient(self.energy);
+            
+            # Second Derivatives
+            [Xuu,Xuv] = np.gradient(Xu);
+            [Yuu,Yuv] = np.gradient(Yu);
+            [Zuu,Zuv] = np.gradient(Zu);
+            
+            [Xuv,Xvv] = np.gradient(Xv);
+            [Yuv,Yvv] = np.gradient(Yv);
+            [Zuv,Zvv] = np.gradient(Zv);
+            
+            # Reshape 2D Arrays into Vectors
+            Xu = Xu.reshape(Xu.size);   Yu = Yu.reshape(Yu.size);   Zu = Zu.reshape(Zu.size); 
+            Xv = Xv.reshape(Xv.size);   Yv = Yv.reshape(Yv.size);   Zv = Zv.reshape(Zv.size); 
+            Xuu = Xuu.reshape(Xuu.size); Yuu = Yuu.reshape(Yuu.size); Zuu = Zuu.reshape(Zuu.size); 
+            Xuv = Xuv.reshape(Xuv.size); Yuv = Yuv.reshape(Yuv.size); Zuv = Zuv.reshape(Zuv.size); 
+            Xvv = Xvv.reshape(Xvv.size); Yvv = Yvv.reshape(Yvv.size); Zvv = Zvv.reshape(Zvv.size); 
+            
+            Xu          =   np.concatenate(Xu, np.concatenate(Yu, Zu));
+            Xv          =   np.concatenate(Xv, np.concatenate(Yv, Zv));
+            Xuu         =   np.concatenate(Xuu, np.concatenate(Yuu, Zuu));
+            Xuv         =   np.concatenate(Xuv, np.concatenate(Yuv, Zuv));
+            Xvv         =   np.concatenate(Xvv, np.concatenate(Yvv, Zvv));
+        
+            # First fundamental Coeffecients of the surface (E,F,G)
+            E           =   np.dot(Xu,Xu);
+            F           =   np.dot(Xu,Xv);
+            G           =   np.dot(Xv,Xv);
+            
+            mu          =   np.cross(Xu,Xv);
+            p           =   m.sqrt(np.dot(mu,mu));
+            n           =   mu/np.concatenate(p, np.convatenate(p, p));
+            
+            # Second fundamental Coeffecients of the surface (L,M,N)
+            L           =   np.dot(Xuu,n);
+            M           =   np.dot(Xuv,n);
+            N           =   np.dot(Xvv,n);
+            
+            [s,t] = size(Z);
+            
+            # Gaussian Curvature
+            K = (L*N - M**2)/(E*G - F**2);
+            K = K.reshape([s,t]);
+            
+            # Mean Curvature
+            H = (E*N + G*L - 2*F*M)/(2*(E*G - F**2));
+            H = H.reshape(s,t);
+            
+            # Principal Curvatures
+            Pmax = H + m.sqrt(H**2 - K);
+            Pmin = H - m.sqrt(H**2 - K);
+            
+            return K,H,Pmax,Pmin
+            
 class neb:
-	def __init__( self, npoint=3, start=np.zeros(2), end=np.zeros(2), energy=energy_field()):
-		if np.array(start).shape[0]!=np.array(end).shape[0]:
-			print "start and end point have inconsistent dimensions [%d,%d]" %(start.shape[0],end.shape[0])
-			raise AttributeError
-		else:
-			self.start = start
-			self.end   = end
-		self.dim    = self.start.shape[0]
-		self.npoint = npoint
-		self.tau_p  = np.zeros([self.npoint,self.dim])
-		self.tng    = np.zeros([self.npoint,self.dim])
-		self.step   = (self.end-self.start)/(self.npoint-1)
-		self.energy = energy
-		self.neb    = np.zeros([self.npoint,self.dim])
-		self.do_neb()
-		self.neb_E  = np.zeros([self.npoint])
-		self.neb_G  = np.zeros([self.npoint,self.dim])
-		self.neb_F  = np.zeros([self.npoint,self.dim])
-		if self.energy.isdefined :
-			self.calc_grad()
-			self.do_elastic()
+    def __init__( self, npoint=3, start=np.zeros(2), end=np.zeros(2), energy=energy_field()):
+        if np.array(start).shape[0]!=np.array(end).shape[0]:
+            print "start and end point have inconsistent dimensions [%d,%d]" %(start.shape[0],end.shape[0])
+            raise AttributeError
+        else:
+            self.start = start
+            self.end   = end
+        self.dim    = self.start.shape[0]
+        self.npoint = npoint
+        self.tau_p  = np.zeros([self.npoint,self.dim])
+        self.tng    = np.zeros([self.npoint,self.dim])
+        self.step   = (self.end-self.start)/(self.npoint-1)
+        self.energy = energy
+        self.neb    = np.zeros([self.npoint,self.dim])
+        self.do_neb()
+        self.neb_E  = np.zeros([self.npoint])
+        self.neb_G  = np.zeros([self.npoint,self.dim])
+        self.neb_F  = np.zeros([self.npoint,self.dim])
+        if self.energy.isdefined :
+            self.calc_grad()
+            self.do_elastic()
 
-	def __str__(self):
-		return " Nudged-elastic band\n Emax   : %20.10f\n Eref   : %20.10f\n Points : %20d\n Kmax   : %20.10f\n dK     : %20.10f" %(self.Emax, self.E_ref, self.npoint, self.kmax, self.dk)
+    def __str__(self):
+        return " Nudged-elastic band\n Emax   : %20.10f\n Eref   : %20.10f\n Points : %20d\n Kmax   : %20.10f\n dK     : %20.10f" %(self.Emax, self.E_ref, self.npoint, self.kmax, self.dk)
 
-	def __iter__(self):
-		return self.neb
+    def __iter__(self):
+        return self.neb
 
-	def __len__(self):
-		return self.npoint
+    def __len__(self):
+        return self.npoint
 
-	def __setattr__(self,name,value):
-		if name=='energy':
-			if self!=None:
-				if not isinstance(value,energy_field):
-					print "Energy should be passed as an energy_field instance!"
-					raise AttributeError
-				elif len(value.energy.shape)!=self.dim:
-					print "The energy field has a dimensionality [%d] different from the nab [%d]" %(value.energy.shape[0,self.dim])
-					raise AttributeError
-				else:
-					self.__dict__[name]=value
-			else:
-				self.__dict__[name]=value
-		elif ((name=='start')|(name=='end')):
-			self.__dict__[name]=np.array(value,dtype=float)
-		else:
-			self.__dict__[name]=value
+    def __setattr__(self,name,value):
+        if name=='energy':
+            if self!=None:
+                if not isinstance(value,energy_field):
+                    print "Energy should be passed as an energy_field instance!"
+                    raise AttributeError
+                elif len(value.energy.shape)!=self.dim:
+                    print "The energy field has a dimensionality [%d] different from the nab [%d]" %(value.energy.shape[0,self.dim])
+                    raise AttributeError
+                else:
+                    self.__dict__[name]=value
+            else:
+                self.__dict__[name]=value
+        elif ((name=='start')|(name=='end')):
+            self.__dict__[name]=np.array(value,dtype=float)
+        else:
+            self.__dict__[name]=value
 
-	def do_neb(self):
-		self.neb[0]=self.start
-		n=self.start
-		for i in range(1,self.npoint):
-			n=n+self.step
-			self.neb[i]=n
+    def do_neb(self):
+        self.neb[0]=self.start
+        n=self.start
+        for i in range(1,self.npoint):
+            n=n+self.step
+            self.neb[i]=n
 
-	def do_elastic(self):
-		self.E_ref  = max(self.neb_E[0],self.neb_E[-1])
-		self.Emin   = min(self.neb_E[0],self.neb_E[-1])
-		self.spring = np.zeros(self.npoint)
-		self.ts     = np.argmax(self.neb_E)
-		self.Emax   = self.neb_E[self.ts]
-		self.kmax   = 50.0*(self.Emax - self.E_ref)
-		self.dk     = self.kmax / 2.0
+    def do_elastic(self):
+        self.E_ref  = max(self.neb_E[0],self.neb_E[-1])
+        self.Emin   = min(self.neb_E[0],self.neb_E[-1])
+        self.spring = np.zeros(self.npoint)
+        self.ts     = np.argmax(self.neb_E)
+        self.Emax   = self.neb_E[self.ts]
+        self.kmax   = 50.0*(self.Emax - self.E_ref)
+        self.dk     = self.kmax / 2.0
 
-	def check_energy(self):
-		if self.energy.isdefined :
-			print "Energy Defined"
-		else:
-			print "Energy not Defined"
-		return self.energy.isdefined
+    def check_energy(self):
+        if self.energy.isdefined :
+            print "Energy Defined"
+        else:
+            print "Energy not Defined"
+        return self.energy.isdefined
 
-	def Fun_E(self,P,prec='linear'):
-		X=self.energy.field[0]
-		Y=self.energy.field[1]
-		E=self.energy.energy
-		x=np.array(P[0])
-		y=np.array(P[1])
-		dx=X[1,0]-X[0,0]
-		dy=Y[0,1]-Y[0,0]
-		x0=self.energy.xmin
-		y0=self.energy.ymin
-		ix = int( ( x - x0  ) / dx )
-		iy = int( ( y - y0  ) / dy )
-		lx,ly=X.shape
-		if prec == 'linear' :
-			s=1
-		elif prec == 'cubic' :
-			s=2
-		elif prec == 'quintic':
-			s=3
-		xm  =  X[ ix-s:ix+s+1, iy-s:iy+s+1 ]
-		ym  =  Y[ ix-s:ix+s+1, iy-s:iy+s+1 ]
-		em  =  E[ ix-s:ix+s+1, iy-s:iy+s+1 ]
-		try:
-			f   =  interp2d( xm, ym, em, copy=True, kind=prec, fill_value=0.0)
-		except:
-			print "\n       [ %2d:%2d   ,  %2d:%2d   ] " %(ix-s,ix+s+1,iy-s,iy+s+1)
-			print " Fun_E [ %10.5f, %10.5f ] =" %(x,y)
-			print " ERROR IN CREATING FUNCTION "
-			print " x (%d) y (%d) z (%d) " %(len(xm),len(ym),len(em))
-			plt.figure()
-			plt.contour(X,Y,E)
-			plt.plot(self.neb[:,0],self.neb[:,1])
-			plt.plot(P[0],P[1],'x',color='red')
-			plt.show()
-			null=input("Press To Continue")
-			raise
-		out = f(x,y)
-		return out
-		
-	def f_e(self,p):
-		return self.energy.f_e(p)
+    def Fun_E(self,P,prec='linear'):
+        X=self.energy.field[0]
+        Y=self.energy.field[1]
+        E=self.energy.energy
+        x=np.array(P[0])
+        y=np.array(P[1])
+        dx=X[1,0]-X[0,0]
+        dy=Y[0,1]-Y[0,0]
+        x0=self.energy.xmin
+        y0=self.energy.ymin
+        ix = int( ( x - x0  ) / dx )
+        iy = int( ( y - y0  ) / dy )
+        lx,ly=X.shape
+        if prec == 'linear' :
+            s=1
+        elif prec == 'cubic' :
+            s=2
+        elif prec == 'quintic':
+            s=3
+        xm  =  X[ ix-s:ix+s+1, iy-s:iy+s+1 ]
+        ym  =  Y[ ix-s:ix+s+1, iy-s:iy+s+1 ]
+        em  =  E[ ix-s:ix+s+1, iy-s:iy+s+1 ]
+        try:
+            f   =  interp2d( xm, ym, em, copy=True, kind=prec, fill_value=0.0)
+        except:
+            print "\n       [ %2d:%2d   ,  %2d:%2d   ] " %(ix-s,ix+s+1,iy-s,iy+s+1)
+            print " Fun_E [ %10.5f, %10.5f ] =" %(x,y)
+            print " ERROR IN CREATING FUNCTION "
+            print " x (%d) y (%d) z (%d) " %(len(xm),len(ym),len(em))
+            plt.figure()
+            plt.contour(X,Y,E)
+            plt.plot(self.neb[:,0],self.neb[:,1])
+            plt.plot(P[0],P[1],'x',color='red')
+            plt.show()
+            null=input("Press To Continue")
+            raise
+        out = f(x,y)
+        return out
+        
+    def f_e(self,p):
+        return self.energy.f_e(p)
 
-	def f_g(self,p):
-		return self.energy.f_g(p)
-	
-	def fun_e(self,p):
-		return self.energy.fun_e(p)
+    def f_g(self,p):
+        return self.energy.f_g(p)
+    
+    def fun_e(self,p):
+        return self.energy.fun_e(p)
 
-	def fun_g(self,p):
-		return self.energy.fun_g(p)
-		
-	def F_E(self,P,prec='linear'):
-		X=self.energy.field[0]
-		Y=self.energy.field[1]
-		E=self.energy.energy
-		x=np.array(P[0])
-		y=np.array(P[1])
-		dx=X[1,0]-X[0,0]
-		dy=Y[0,1]-Y[0,0]
-		x0=self.energy.xmin
-		y0=self.energy.ymin
-		ix = int( ( x - x0  ) / dx )
-		iy = int( ( y - y0  ) / dy )
-		lx,ly=X.shape
-		if prec == 'linear' :
-			s=1
-		elif prec == 'cubic' :
-			s=2
-		elif prec == 'quintic':
-			s=3
-		xm  =  X[ ix-s:ix+s+1, iy-s:iy+s+1 ]
-		ym  =  Y[ ix-s:ix+s+1, iy-s:iy+s+1 ]
-		em  =  E[ ix-s:ix+s+1, iy-s:iy+s+1 ]
-		try:
-			f   =  interp2d( xm, ym, em, copy=True, kind=prec, fill_value=0.0)
-		except:
-			print "\n       [ %2d:%2d   ,  %2d:%2d   ] " %(ix-s,ix+s+1,iy-s,iy+s+1)
-			print " Fun_E [ %10.5f, %10.5f ] =" %(x,y)
-			print " ERROR IN CREATING FUNCTION "
-			print " x (%d) y (%d) z (%d) " %(len(xm),len(ym),len(em))
-			plt.figure()
-			plt.contour(X,Y,E)
-			plt.plot(self.neb[:,0],self.neb[:,1])
-			plt.plot(P[0],P[1],'x',color='red')
-			plt.show()
-			null=input("Press To Continue")
-			raise
-		return f
+    def fun_g(self,p):
+        return self.energy.fun_g(p)
+        
+    def F_E(self,P,prec='linear'):
+        X=self.energy.field[0]
+        Y=self.energy.field[1]
+        E=self.energy.energy
+        x=np.array(P[0])
+        y=np.array(P[1])
+        dx=X[1,0]-X[0,0]
+        dy=Y[0,1]-Y[0,0]
+        x0=self.energy.xmin
+        y0=self.energy.ymin
+        ix = int( ( x - x0  ) / dx )
+        iy = int( ( y - y0  ) / dy )
+        lx,ly=X.shape
+        if prec == 'linear' :
+            s=1
+        elif prec == 'cubic' :
+            s=2
+        elif prec == 'quintic':
+            s=3
+        xm  =  X[ ix-s:ix+s+1, iy-s:iy+s+1 ]
+        ym  =  Y[ ix-s:ix+s+1, iy-s:iy+s+1 ]
+        em  =  E[ ix-s:ix+s+1, iy-s:iy+s+1 ]
+        try:
+            f   =  interp2d( xm, ym, em, copy=True, kind=prec, fill_value=0.0)
+        except:
+            print "\n       [ %2d:%2d   ,  %2d:%2d   ] " %(ix-s,ix+s+1,iy-s,iy+s+1)
+            print " Fun_E [ %10.5f, %10.5f ] =" %(x,y)
+            print " ERROR IN CREATING FUNCTION "
+            print " x (%d) y (%d) z (%d) " %(len(xm),len(ym),len(em))
+            plt.figure()
+            plt.contour(X,Y,E)
+            plt.plot(self.neb[:,0],self.neb[:,1])
+            plt.plot(P[0],P[1],'x',color='red')
+            plt.show()
+            null=input("Press To Continue")
+            raise
+        return f
 
-	def F_G(self,P,prec='linear'):
-		X=self.energy.field[0]
-		Y=self.energy.field[1]
-		G=self.energy.gradient
-		x=np.array(P[0])
-		y=np.array(P[1])
-		dx=self.energy.dx
-		dy=self.energy.dy
-		x0=self.energy.xmin
-		y0=self.energy.ymin
-		ix = int( ( x - x0  ) / dx )
-		iy = int( ( y - y0  ) / dy )
-		lx,ly=X.shape
-		out=np.zeros(2)
-		if prec == 'linear' :
-			s=1
-		elif prec == 'cubic' :
-			s=2
-		elif prec == 'quintic':
-			s=3
-		xm  =  X[    ix-s:ix+s+1, iy-s:iy+s+1 ]
-		ym  =  Y[    ix-s:ix+s+1, iy-s:iy+s+1 ]
-		gm  =  G[ :, ix-s:ix+s+1, iy-s:iy+s+1 ]
-		try:
-			f   =   [ interp2d( xm, ym, gm[0,:,:], copy=True, kind=prec, fill_value=0.0)\
-			         ,interp2d( xm, ym, gm[1,:,:], copy=True, kind=prec, fill_value=0.0)]
-		except:
-			print "\n       [  %2d:%2d  ,  %2d:%2d   ] " %(ix-s,ix+s+1,iy-s,iy+s+1)
-			print " Fun_G [ %10.5f, %10.5f ] = " %(x,y)
-			print " ERROR IN CREATING FUNCTIONS"
-			print " x (%d) y (%d) z1 (%d) z2 (%d)" %(len(xm.reshape(-1)),len(ym.reshape(-1)),len(gm[0,:,:].reshape(-1)),len(gm[1,:,:].reshape(-1)))
-			plt.figure()
-			plt.contour(X,Y,self.energy.energy)
-			plt.plot(self.neb[:,0],self.neb[:,1])
-			plt.plot(P[0],P[1],'x',color='red')
-			plt.show()
-			null=input("Press To Continue")
-			raise 
-		return f
+    def F_G(self,P,prec='linear'):
+        X=self.energy.field[0]
+        Y=self.energy.field[1]
+        G=self.energy.gradient
+        x=np.array(P[0])
+        y=np.array(P[1])
+        dx=self.energy.dx
+        dy=self.energy.dy
+        x0=self.energy.xmin
+        y0=self.energy.ymin
+        ix = int( ( x - x0  ) / dx )
+        iy = int( ( y - y0  ) / dy )
+        lx,ly=X.shape
+        out=np.zeros(2)
+        if prec == 'linear' :
+            s=1
+        elif prec == 'cubic' :
+            s=2
+        elif prec == 'quintic':
+            s=3
+        xm  =  X[    ix-s:ix+s+1, iy-s:iy+s+1 ]
+        ym  =  Y[    ix-s:ix+s+1, iy-s:iy+s+1 ]
+        gm  =  G[ :, ix-s:ix+s+1, iy-s:iy+s+1 ]
+        try:
+            f   =   [ interp2d( xm, ym, gm[0,:,:], copy=True, kind=prec, fill_value=0.0)\
+                     ,interp2d( xm, ym, gm[1,:,:], copy=True, kind=prec, fill_value=0.0)]
+        except:
+            print "\n       [  %2d:%2d  ,  %2d:%2d   ] " %(ix-s,ix+s+1,iy-s,iy+s+1)
+            print " Fun_G [ %10.5f, %10.5f ] = " %(x,y)
+            print " ERROR IN CREATING FUNCTIONS"
+            print " x (%d) y (%d) z1 (%d) z2 (%d)" %(len(xm.reshape(-1)),len(ym.reshape(-1)),len(gm[0,:,:].reshape(-1)),len(gm[1,:,:].reshape(-1)))
+            plt.figure()
+            plt.contour(X,Y,self.energy.energy)
+            plt.plot(self.neb[:,0],self.neb[:,1])
+            plt.plot(P[0],P[1],'x',color='red')
+            plt.show()
+            null=input("Press To Continue")
+            raise 
+        return f
 
-	def check_range(self):
-		reply =  ( self.energy.xmin < self.neb[:,0] ) & \
+    def check_range(self):
+        reply =  ( self.energy.xmin < self.neb[:,0] ) & \
                          ( self.energy.xmax > self.neb[:,0] ) & \
                          ( self.energy.ymin < self.neb[:,1] ) & \
                          ( self.energy.ymax > self.neb[:,1] )
-		return np.all(reply)
+        return np.all(reply)
 
-	def Fun_G(self,P,prec='linear'):
-		X=self.energy.field[0]
-		Y=self.energy.field[1]
-		G=self.energy.gradient
-		x=np.array(P[0])
-		y=np.array(P[1])
-		dx=self.energy.dx
-		dy=self.energy.dy
-		x0=self.energy.xmin
-		y0=self.energy.ymin
-		ix = int( ( x - x0  ) / dx )
-		iy = int( ( y - y0  ) / dy )
-		lx,ly=X.shape
-		out=np.zeros([1,2])
-		if prec == 'linear' :
-			s=1
-		elif prec == 'cubic' :
-			s=2
-		elif prec == 'quintic':
-			s=3
-		xm  =  X[    ix-s:ix+s+1, iy-s:iy+s+1 ]
-		ym  =  Y[    ix-s:ix+s+1, iy-s:iy+s+1 ]
-		gm  =  G[ :, ix-s:ix+s+1, iy-s:iy+s+1 ]
-		try:
-			f   =   [ interp2d( xm, ym, gm[0,:,:], copy=True, kind=prec, fill_value=0.0)\
-			         ,interp2d( xm, ym, gm[1,:,:], copy=True, kind=prec, fill_value=0.0)]
-		except:
-			print "\n       [  %2d:%2d  ,  %2d:%2d   ] " %(ix-s,ix+s+1,iy-s,iy+s+1)
-			print " Fun_G [ %10.5f, %10.5f ] = " %(x,y)
-			print " ERROR IN CREATING FUNCTIONS"
-			print " x (%d) y (%d) z1 (%d) z2 (%d)" %(len(xm.reshape(-1)),len(ym.reshape(-1)),len(gm[0,:,:].reshape(-1)),len(gm[1,:,:].reshape(-1)))
-			plt.figure()
-			plt.contour(X,Y,self.energy.energy)
-			plt.plot(self.neb[:,0],self.neb[:,1])
-			plt.plot(P[0],P[1],'x',color='red')
-			plt.show()
-			null=input("Press To Continue")
-			raise
-		out[0,0]=  f[0](x,y)
-		out[0,1]=  f[1](x,y)
-		return out
-
-
-	def calc_grad(self):
-		if self.energy.isdefined:
-			if len(self.energy.energy.shape) != 2:
-				print "Interpolation avaliable only in 2 dimension!"
-				raise ValueError
-			else:
-				self.do_elastic()
-				#print "Building neb energy profile"
-				for n,p in enumerate( self.neb ) :
-					try:
-						self.neb_E[n]   = self.fun_e(p)
-						self.neb_G[n,:] = self.fun_g(p).reshape([1,self.dim])
-					except:
-						print "\n Error at point %d " %(n)
-						print "[ %12.6f , %12.6f ] "  %(p[0],p[1])
-						self.neb[n]=(self.neb[n-1]+self.neb[n+1])/2.
-						#raise
-					#print " %4d ) [%+12.6f,%+12.6f] - [%+12.6f] - [%+12.6f,%+12.6f] " %(n,i[0],i[1],self.neb_E[n],self.neb_G[n,0],self.neb_G[n,1])
-		else:
-			print "Energy not defined!"
-			raise ValueError
-
-	def max_curv(self,eps=0.5):
-		if self.energy.isdefined:
-			if len(self.energy.energy.shape) != 2:
-				print "Interpolation avaliable only in 2 dimension!"
-				raise ValueError
-			else:
-				c=np.zeros(self.npoint)
-				for n in range(1,self.npoint-1):
-					fE = self.f_g(self.neb[n])
-					fG = self.f_g(self.neb[n])
-					d  = self.neb_F[n]/np.linalg.norm(self.neb_F[n])
-					ep = self.neb[n]+eps*d
-					em = self.neb[n]-eps*d
-					e1  = np.array([                       self.neb_G[n,0] , self.neb_G[n,1]                       ] )
-					f2  = np.array([ fG[0](ep[0],ep[1])[0]-fG[0](em[0],em[1])[0] , fG[1](ep[0],ep[1])[0]-fG[1](em[0],em[1])[0] ] ) / (2*eps)
-					try:
-						e2  = f2 - np.dot(f2, e1) * e1
-					except:
-						print f2
-						print e1
-						raise
-					c[n] = np.linalg.norm(self.neb_G[n]) / np.dot(self.neb_G[n],f2)
-				return np.amax(c)
+    def Fun_G(self,P,prec='linear'):
+        X=self.energy.field[0]
+        Y=self.energy.field[1]
+        G=self.energy.gradient
+        x=np.array(P[0])
+        y=np.array(P[1])
+        dx=self.energy.dx
+        dy=self.energy.dy
+        x0=self.energy.xmin
+        y0=self.energy.ymin
+        ix = int( ( x - x0  ) / dx )
+        iy = int( ( y - y0  ) / dy )
+        lx,ly=X.shape
+        out=np.zeros([1,2])
+        if prec == 'linear' :
+            s=1
+        elif prec == 'cubic' :
+            s=2
+        elif prec == 'quintic':
+            s=3
+        xm  =  X[    ix-s:ix+s+1, iy-s:iy+s+1 ]
+        ym  =  Y[    ix-s:ix+s+1, iy-s:iy+s+1 ]
+        gm  =  G[ :, ix-s:ix+s+1, iy-s:iy+s+1 ]
+        try:
+            f   =   [ interp2d( xm, ym, gm[0,:,:], copy=True, kind=prec, fill_value=0.0)\
+                     ,interp2d( xm, ym, gm[1,:,:], copy=True, kind=prec, fill_value=0.0)]
+        except:
+            print "\n       [  %2d:%2d  ,  %2d:%2d   ] " %(ix-s,ix+s+1,iy-s,iy+s+1)
+            print " Fun_G [ %10.5f, %10.5f ] = " %(x,y)
+            print " ERROR IN CREATING FUNCTIONS"
+            print " x (%d) y (%d) z1 (%d) z2 (%d)" %(len(xm.reshape(-1)),len(ym.reshape(-1)),len(gm[0,:,:].reshape(-1)),len(gm[1,:,:].reshape(-1)))
+            plt.figure()
+            plt.contour(X,Y,self.energy.energy)
+            plt.plot(self.neb[:,0],self.neb[:,1])
+            plt.plot(P[0],P[1],'x',color='red')
+            plt.show()
+            null=input("Press To Continue")
+            raise
+        out[0,0]=  f[0](x,y)
+        out[0,1]=  f[1](x,y)
+        return out
 
 
-	def calc_force(self):
-		if self.energy.isdefined:
-			if len(self.energy.energy.shape) != 2:
-				print "Interpolation avaliable only in 2 dimension!"
-				raise ValueError
-			else:
-				if (len(self.neb_E)==len(self.neb)):
-					self.neb_F  = np.zeros([self.npoint,self.dim])
-					l=+1
-					if self.energy.g_grad:
-						self.tau_p[0]  = self.energy.discretize(self.neb[1]) - self.energy.discretize(self.neb[0])
-						self.tau_p[-1] = self.energy.discretize(self.neb[-1]) - self.energy.discretize(self.neb[-2])
-					else:
-						self.tau_p[0]  = self.neb[1] - self.neb[0]
-						self.tau_p[-1] = self.neb[-1] - self.neb[-2]
-					for i in range(1,self.npoint-1):
-						self.spring[i] = self.kmax - self.dk
-						if self.energy.g_grad:
-							tau = self.energy.discretize(self.neb[i+1]) - self.energy.discretize(self.neb[i-1])
-							self.tau_p[i] = self.energy.discretize(self.neb[i+1]) - self.energy.discretize(self.neb[i])
-						else:
-							tau = self.neb[i+1] - self.neb[i-1]
-							self.tau_p[i] = self.neb[i+1] - self.neb[i]
-						try:
-							self.tng[i]   = tau / np.linalg.norm(tau)
-						except:
-							print tau
-							raise Error
-						G             = self.neb_G[i]
-						F_p           = -G + np.dot(G,self.tng[i]) * self.tng[i]
-						F_t           =      self.spring[i] * self.tau_p[i]
-						self.neb_F[i] = F_t + F_p
-						if i == self.ts:
-							self.neb_F[i] = self.neb_F[i] - 2 * np.dot(self.neb_F[i],self.tng[i]) * self.tng[i]
-				else:
-					print "Run calc_energy first!" 
-		else:
-			print "Energy not defined!"
-			raise ValueError
+    def calc_grad(self):
+        if self.energy.isdefined:
+            if len(self.energy.energy.shape) != 2:
+                print "Interpolation avaliable only in 2 dimension!"
+                raise ValueError
+            else:
+                self.do_elastic()
+                #print "Building neb energy profile"
+                for n,p in enumerate( self.neb ) :
+                    try:
+                        self.neb_E[n]   = self.fun_e(p)
+                        self.neb_G[n,:] = self.fun_g(p).reshape([1,self.dim])
+                    except:
+                        print "\n Error at point %d " %(n)
+                        print "[ %12.6f , %12.6f ] "  %(p[0],p[1])
+                        self.neb[n]=(self.neb[n-1]+self.neb[n+1])/2.
+                        #raise
+                    #print " %4d ) [%+12.6f,%+12.6f] - [%+12.6f] - [%+12.6f,%+12.6f] " %(n,i[0],i[1],self.neb_E[n],self.neb_G[n,0],self.neb_G[n,1])
+        else:
+            print "Energy not defined!"
+            raise ValueError
 
-	def calc_force_var(self):
-		if self.energy.isdefined:
-			if len(self.energy.energy.shape) != 2:
-				print "Interpolation avaliable only in 2 dimension!"
-				raise ValueError
-			else:
-				if (len(self.neb_E)==len(self.neb)):
-					self.neb_F  = np.zeros([self.npoint,self.dim])
-					l=+1
-					if self.energy.g_grad:
-						self.tau_p[0]  = self.energy.discretize(self.neb[1]) - self.energy.discretize(self.neb[0])
-						self.tau_p[-1] = self.energy.discretize(self.neb[-1]) - self.energy.discretize(self.neb[-2])
-					else:
-						self.tau_p[0]  = self.neb[1] - self.neb[0]
-						self.tau_p[-1] = self.neb[-1] - self.neb[-2]
-					for i in range(1,self.npoint-1):
-						Ei = max(self.neb_E[i],self.neb_E[i-1])
-						if Ei > self.E_ref:
-							self.spring[i] = self.kmax - self.dk * (self.Emax - Ei) / (self.Emax - self.E_ref )
-						else:
-							self.spring[i] = self.kmax - self.dk
-						if self.energy.g_grad:
-							tau = self.energy.discretize(self.neb[i+1]) - self.energy.discretize(self.neb[i-1])
-							self.tau_p[i] = self.energy.discretize(self.neb[i+1]) - self.energy.discretize(self.neb[i])
-						else:
-							tau = self.neb[i+1] - self.neb[i-1]
-							self.tau_p[i] = self.neb[i+1] - self.neb[i]
-						try:
-							self.tng[i]   = tau / np.linalg.norm(tau)
-						except:
-							print tau
-							raise Error
-						G             = self.neb_G[i]
-						F_p           = -G + np.dot(G,self.tng[i]) * self.tng[i]
-						F_t           =      self.spring[i] * self.tau_p[i]
-						self.neb_F[i] = F_t + F_p
-						if i == self.ts:
-							self.neb_F[i] = self.neb_F[i] - 2 * np.dot(self.neb_F[i],self.tng[i]) * self.tng[i]
-				else:
-					print "Run calc_energy first!" 
-		else:
-			print "Energy not defined!"
-			raise ValueError
+    def max_curv(self,eps=0.5):
+        if self.energy.isdefined:
+            if len(self.energy.energy.shape) != 2:
+                print "Interpolation avaliable only in 2 dimension!"
+                raise ValueError
+            else:
+                c=np.zeros(self.npoint)
+                for n in range(1,self.npoint-1):
+                    fE = self.f_g(self.neb[n])
+                    fG = self.f_g(self.neb[n])
+                    d  = self.neb_F[n]/np.linalg.norm(self.neb_F[n])
+                    ep = self.neb[n]+eps*d
+                    em = self.neb[n]-eps*d
+                    e1  = np.array([                       self.neb_G[n,0] , self.neb_G[n,1]                       ] )
+                    f2  = np.array([ fG[0](ep[0],ep[1])[0]-fG[0](em[0],em[1])[0] , fG[1](ep[0],ep[1])[0]-fG[1](em[0],em[1])[0] ] ) / (2*eps)
+                    try:
+                        e2  = f2 - np.dot(f2, e1) * e1
+                    except:
+                        print f2
+                        print e1
+                        raise
+                    c[n] = np.linalg.norm(self.neb_G[n]) / np.dot(self.neb_G[n],f2)
+                return np.amax(c)
+
+
+    def calc_force(self):
+        if self.energy.isdefined:
+            if len(self.energy.energy.shape) != 2:
+                print "Interpolation avaliable only in 2 dimension!"
+                raise ValueError
+            else:
+                if (len(self.neb_E)==len(self.neb)):
+                    self.neb_F  = np.zeros([self.npoint,self.dim])
+                    l=+1
+                    if self.energy.g_grad:
+                        self.tau_p[0]  = self.energy.discretize(self.neb[1]) - self.energy.discretize(self.neb[0])
+                        self.tau_p[-1] = self.energy.discretize(self.neb[-1]) - self.energy.discretize(self.neb[-2])
+                    else:
+                        self.tau_p[0]  = self.neb[1] - self.neb[0]
+                        self.tau_p[-1] = self.neb[-1] - self.neb[-2]
+                    for i in range(1,self.npoint-1):
+                        self.spring[i] = self.kmax - self.dk
+                        if self.energy.g_grad:
+                            tau = self.energy.discretize(self.neb[i+1]) - self.energy.discretize(self.neb[i-1])
+                            self.tau_p[i] = self.energy.discretize(self.neb[i+1]) - self.energy.discretize(self.neb[i])
+                        else:
+                            tau = self.neb[i+1] - self.neb[i-1]
+                            self.tau_p[i] = self.neb[i+1] - self.neb[i]
+                        try:
+                            self.tng[i]   = tau / np.linalg.norm(tau)
+                        except:
+                            print tau
+                            raise Error
+                        G             = self.neb_G[i]
+                        F_p           = -G + np.dot(G,self.tng[i]) * self.tng[i]
+                        F_t           =      self.spring[i] * self.tau_p[i]
+                        self.neb_F[i] = F_t + F_p
+                        if i == self.ts:
+                            self.neb_F[i] = self.neb_F[i] - 2 * np.dot(self.neb_F[i],self.tng[i]) * self.tng[i]
+                else:
+                    print "Run calc_energy first!" 
+        else:
+            print "Energy not defined!"
+            raise ValueError
+
+    def calc_force_var(self):
+        if self.energy.isdefined:
+            if len(self.energy.energy.shape) != 2:
+                print "Interpolation avaliable only in 2 dimension!"
+                raise ValueError
+            else:
+                if (len(self.neb_E)==len(self.neb)):
+                    self.neb_F  = np.zeros([self.npoint,self.dim])
+                    l=+1
+                    if self.energy.g_grad:
+                        self.tau_p[0]  = self.energy.discretize(self.neb[1]) - self.energy.discretize(self.neb[0])
+                        self.tau_p[-1] = self.energy.discretize(self.neb[-1]) - self.energy.discretize(self.neb[-2])
+                    else:
+                        self.tau_p[0]  = self.neb[1] - self.neb[0]
+                        self.tau_p[-1] = self.neb[-1] - self.neb[-2]
+                    for i in range(1,self.npoint-1):
+                        Ei = max(self.neb_E[i],self.neb_E[i-1])
+                        if Ei > self.E_ref:
+                            self.spring[i] = self.kmax - self.dk * (self.Emax - Ei) / (self.Emax - self.E_ref )
+                        else:
+                            self.spring[i] = self.kmax - self.dk
+                        if self.energy.g_grad:
+                            tau = self.energy.discretize(self.neb[i+1]) - self.energy.discretize(self.neb[i-1])
+                            self.tau_p[i] = self.energy.discretize(self.neb[i+1]) - self.energy.discretize(self.neb[i])
+                        else:
+                            tau = self.neb[i+1] - self.neb[i-1]
+                            self.tau_p[i] = self.neb[i+1] - self.neb[i]
+                        try:
+                            self.tng[i]   = tau / np.linalg.norm(tau)
+                        except:
+                            print tau
+                            raise Error
+                        G             = self.neb_G[i]
+                        F_p           = -G + np.dot(G,self.tng[i]) * self.tng[i]
+                        F_t           =      self.spring[i] * self.tau_p[i]
+                        self.neb_F[i] = F_t + F_p
+                        if i == self.ts:
+                            self.neb_F[i] = self.neb_F[i] - 2 * np.dot(self.neb_F[i],self.tng[i]) * self.tng[i]
+                else:
+                    print "Run calc_energy first!" 
+        else:
+            print "Energy not defined!"
+            raise ValueError
