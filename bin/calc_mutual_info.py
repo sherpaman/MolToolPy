@@ -51,7 +51,7 @@ M, E = DATA.mutual_info_omp()
 
 fig = plt.figure()
 ax  = fig.add_subplot(111)
-mat = ax.matshow(M,cmap=plt.get_cmap('RdBu'))
+mat = ax.matshow(M,cmap=plt.get_cmap('Reds'))
 fig.colorbar(mat)
 plt.show()
 #tx = ax.get_xticks().astype(int)

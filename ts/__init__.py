@@ -570,7 +570,7 @@ class TimeSer:
                 P_joint[s,s,i,i] = self.prob[s,i]
             for o in np.arange(s+1,self.rep):
                 DATA = np.transpose(np.vstack((self.data[s],self.data[o])))
-                P_joint[s,o] = np.histogramdd(DATA,bins=(self.nbins,self.nbins))[0]/float(self.n_data) # concatenate bins list with "+"
+                P_joint[s,o] = np.histogramdd(DATA,bins=(self.nbins[0],self.nbins[0]))[0]/float(self.n_data) # concatenate bins list with "+"
                 E_joint[s,o] = -np.sum(sp.xlogy(P_joint[s,o],P_joint[s,o]))
                 E_joint[o,s] = E_joint[s,o]
                 M[s,o] = self.entropy[s] + self.entropy[o] - E_joint[s,o]
