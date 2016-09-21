@@ -54,7 +54,7 @@ class HBond:
         self.nfr      = nfr
     
     def __str__(self):
-        return "%11s %11s %6.2f %6.2f %6.2f %d\n" %(self.don[0]+str(self.don[1])+str(self.don_atom),self.acc[0]+str(self.acc[1])+str(self.acc_atom),self.perc,0.0,0.0,self.nfr)
+        return "%11s %11s %6.2f %6.2f %6.2f %d" %(self.don[0]+str(self.don[1])+str(self.don_atom),self.acc[0]+str(self.acc[1])+str(self.acc_atom),self.perc,0.0,0.0,self.nfr)
     
     def __repr__(self):
         print(str(self))
@@ -362,6 +362,7 @@ class HBonds:
                 self.red_hb[self.ref_hb[n][r]].perc = 100.0 * ref1.sum() / len(ref1)
                 ref0 = numpy.logical_or(ref0,ref1)
             self.hblist[n].perc  = 100.0 * ref0.sum() / len(ref0)
+            self.hblist[n].nfr = self.nfr
     
     def calc_lifetime(self,b=0,e=-1):
         LT = []
@@ -397,6 +398,7 @@ class HBonds:
         for n,i in enumerate(self.hblist):
             ref  = self.xpm.array[:,n]
             self.hblist[n].perc = 100.0 * ref.sum() /len(ref0)
+            self.hblist[n].nfr = self.nfr
 
     def perc_bootstrap(self,conf=0.95,nsample=1000):
         import time
@@ -418,6 +420,7 @@ class HBonds:
                 self.hblist[n].perc_ci = bootstrap(ref0,nsample,numpy.sum,1.0-conf) * 100.0 / len(ref0)
                 self.hblist[n].perc_c  = conf
                 self.hblist[n].perc = numpy.mean(self.hblist[n].perc_ci)
+                self.hblist[n].nfr = self.nfr
                 t = time.time()
                 ETA =  ( t - t0 ) * ( float(self.nbonds) / ( n +1 ) - 1. )
                 sys.stdout.write(" %4d/%4d calculations ETA: %6.1f sec.\r" %(n,self.nbonds,ETA)) 
@@ -427,6 +430,7 @@ class HBonds:
                 self.hblist[n].perc_ci = bootstrap(ref0,nsample,numpy.sum,1.0-conf) * 100.0 / len(ref0)
                 self.hblist[n].perc_c  = conf
                 self.hblist[n].perc = numpy.mean(self.hblist[n].perc_ci)
+                self.hblist[n].nfr = self.nfr
                 t = time.time()
                 ETA =  ( t - t0 ) * ( float(self.nbonds) / ( n +1 ) - 1. )
                 sys.stdout.write(" %4d/%4d calculations ETA: %6.1f sec.\r" %(n,self.nbonds,ETA))  
