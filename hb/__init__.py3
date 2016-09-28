@@ -10,6 +10,30 @@ import scipy.stats
 re_nucleotide=re.compile('D[ATCG][0-9]+')
 re_protein=re.compile('[A-Z]{3}[0-9]+')
 
+re_N=re.compile("(D[ACTG])([1-9]{1}[0-9]*)([HNOP][A-Z,0-9]*)") # MATCHES NUCLEOTIDES
+re_P=re.compile("([ACGHILMPSTV][A-Z]{2})([1-9]{1}[0-9]*)([HNOP][A-Z,0-9]*)") # MATCHES PROTEIN RESIDUES
+re_R=re.compile("(D[ACTG]|[ACGHILMPSTV][A-Z]{2})([1-9]{1}[0-9]*)([HNOP][A-Z,0-9]*)") # MATCHES BOTH
+re_R_sim=re.compile("(D[ACTG]|[ACGHILMPSTV][A-Z]{2})([1-9]{1}[0-9]*)")
+
+def uniq_ref(l):
+    """
+    Auxiliary Function that accept as a signle argument a list and returns: 
+        
+        - A list containing the unique elements of the input list,
+        - A list of index pointing to the unique elements in the input list,
+        - A list of references from the unique elements to all their occurences in the input list.
+        
+    """
+    out=[]; out_id = []; ref=[];
+    for n,i in enumerate(l):
+        if i not in out:
+            out.append(i)
+            out_id.append(n)
+            ref.append([n])
+        else:
+            ref[out.index(i)].append(n)
+    return out, out_id, ref
+
 def is_water(name):
     return (name[:3]=="WAT")|(name[:3]=="SOL")|(name[:3]=="HOH")
 
@@ -41,7 +65,7 @@ def bootstrap(data, num_samples, statistic, alpha):
     return numpy.array([stat[int((alpha/2.0)*num_samples)], stat[int((1-alpha/2.0)*num_samples)]])
 
 class HBond:
-    def __init__(self,don=['res1',0],don_atom='',acc=['res2',0],acc_atom='',h='',perc=0.0,perc_ci=numpy.zeros(2),perc_c=0.0,mediated=0.0,both=0.0,nfr=0):
+    def __init__(self,don='res1',don_atom='',acc='res2',acc_atom='',h='',perc=0.0,perc_ci=numpy.zeros(2),perc_c=0.0,mediated=0.0,both=0.0,nfr=0):
         self.acc      = acc
         self.acc_atom = acc_atom
         self.don      = don
@@ -54,7 +78,7 @@ class HBond:
         self.nfr      = nfr
     
     def __str__(self):
-        return "%11s %11s %6.2f %6.2f %6.2f %d" %(self.don[0]+str(self.don[1])+str(self.don_atom),self.acc[0]+str(self.acc[1])+str(self.acc_atom),self.perc,0.0,0.0,self.nfr)
+        return "%11s %11s %6.2f %6.2f %6.2f %d" %(self.don+self.don_atom,self.acc+self.acc_atom,self.perc,0.0,0.0,self.nfr)
     
     def __repr__(self):
         print(str(self))
@@ -72,30 +96,8 @@ class HBond:
         odds, pvalue = scipy.stats.fisher_exact([ [ n1 , perc*self.nfr - n1 ],[ n2 , perc*other.nfr - n2 ] ])
         return pvalue
 
-class HBonds:
-    def __setattr__(self,name,value):
-        if (name=='mol') :
-            if isinstance(value,gro.Molecule):
-                self.__dict__[name] = value
-            elif type(value) == str :
-                self.__dict__[name] = gro.read_gro(value)
-            else:
-                if value != None :
-                    print("Wrong Type mol: {0:s}".format(type(value)))
-                self.__dict__[name]=None
-        elif (name=='xpm') :
-            if isinstance(value,xpm.Xpm):
-                self.__dict__[name] = value
-            elif type(value) == str :
-                self.__dict__[name] = xpm.parse(value)
-            else:
-                if value != None :
-                    print("Wrong Type xpm: {0:s}".format(type(value)))
-                self.__dict__[name]=None
-        else:
-            self.__dict__[name]=value
-    
-    def __init__(self,name='New List',mol=None,red=False,log=None,xpm=None,conf=None):
+class HBonds: 
+    def __init__(self,name='New List',mol=None,red=False,log=None,xpm=None,perc=None,conf=None):
         self.name   = name
         self.log    = log
         #self.xpm    = xpm
@@ -113,7 +115,7 @@ class HBonds:
             self.read_log(self.log, self.mol)
         if xpm != None:
             self.xpm = xpm
-            self.nfr, check_nhb = numpy.shape(self.xpm.array)
+            check_nhb, self.nfr = numpy.shape(self.xpm.array)
             if ( check_nhb != self.nrhb ):
                 print("XPM and Log file do not correspond (%d /= %d)" %(check_nhb,self.nrhb))
                 raise ValueError
@@ -128,6 +130,35 @@ class HBonds:
         else:
             if log == None:
                 print("XPM file will be ignored : Log file needed!!!!")
+            elif perc!=None:
+                self.read_file_perc(perc,self.mol)
+
+    def __setattr__(self,name,value):
+        if (name=='mol') :
+            print("Start reading mol")
+            if isinstance(value,gro.Molecule):
+                self.__dict__[name] = value
+            elif type(value) == str :
+                self.__dict__[name] = gro.read_gro(value)
+            else:
+                if value != None :
+                    print("Wrong Type mol: {0:s}".format(type(value)))
+                self.__dict__[name]=None
+            print("Done reading mol!")
+        elif (name=='xpm') :
+            print("Start reading xpm")
+            if isinstance(value,xpm.Xpm):
+                self.__dict__[name] = value
+            elif type(value) == str :
+                self.__dict__[name] = xpm.read_xpm(value)
+            else:
+                if value != None :
+                    print("Wrong Type xpm: {0:s}".format(type(value)))
+                self.__dict__[name]=None
+            print("Done reading xpm!")
+        else:
+            self.__dict__[name]=value
+          
     def __iter__(self):
         return iter(self.hblist)
     
@@ -149,12 +180,13 @@ class HBonds:
     def merge_xpm(self):
         nr_xpm       = copy.deepcopy(self.xpm)
         nr_xpm.rows  = self.nbonds
+        nr_xpm.cols  = self.nfr
         nr_xpm.yaxis = numpy.arange(nr_xpm.rows)
         nr_xpm.ylabel= 'Non-Redundant Hydrogen Bond Index'
         nr_xpm.title = 'Non-Redundant Hydrogen Bond Existence Map'
-        nr_xpm.array = numpy.zeros((nr_xpm.cols,nr_xpm.rows)) # COLS AND ROWS IN XPM HAVE DIFFERENT MEANING THAN IN THE ACTUAL ARRAY!!!
+        nr_xpm.array = numpy.zeros((nr_xpm.rows,nr_xpm.cols)) # COLS AND ROWS IN XPM HAVE DIFFERENT MEANING THAN IN THE ACTUAL ARRAY!!!
         for i in numpy.arange(self.nbonds):
-            nr_xpm.array[:,i] = numpy.max(self.xpm.array[:,self.ref_hb[i]],axis=1)
+            nr_xpm.array[i,:] = numpy.max(self.xpm.array[self.ref_hb[i],:],axis=0)
         return nr_xpm
 
     def residue_split(self,name):
@@ -175,58 +207,51 @@ class HBonds:
             out.write(str(i)+'\n')
         out.close()
     
-    def read_log_red(self,file_in,file_gro):
+    def read_log(self,file_in,red=False):
         """
         Populate the HBonds object with the HBond found in a
-        file .log generated by g_HBond [-g] 
+        file .log generated by g_HBond [-g] merging the bonds
+        for the same residue couple 
+            
+                        self.red_hb        = list of redundant h-bond   
+                        self.hblist        = list of non redundant h-bonds
+                        self.ref_hb        = list of redundand h-bonds, stored as elements of self.red_hb, 
+                                             that has been merged as element of self.ref_hb
         
         """
         fi=open(file_in,'r')
-        if type(file_gro) == type("string"): 
-            self.mol = gro.read_gro(file_gro)
-        elif type(file_gro) == type(gro.molecule()):
-            self.mol = file_gro
-        else:
-            raise Error
-        print(self.mol)
-        self.name   = file_in
-        self.nbonds = 0
-        raw_fi      = fi.readline()
-        while raw_fi:
-            #
-            # Exlude the comment lines and with less than 3 field
-            #
-            if (raw_fi.split()[0] != '#')&(len(raw_fi.split())>2):
-                donor   = raw_fi.split()[0]
-                hydrogen= raw_fi.split()[1]
-                acceptor= raw_fi.split()[2]
-                #
-                # Extract the residue name, including the number
-                #
-                don_res=self.mol.find_atom_res(donor)
-                acc_res=self.mol.find_atom_res(acceptor)
-                                #
-                #if is_nucleotide(donor):
-                #   don_res=re_nucleotide.findall(donor)[0]
-                #else:
-                #   don_res=re_protein.findall(donor)[0]
-                #if is_nucleotide(acceptor):
-                #   acc_res=re_nucleotide.findall(acceptor)[0]
-                #else:
-                #   acc_res=re_protein.findall(acceptor)[0]
-                #
-                # Based on the number of charachters in the residue name
-                # extract the atom name [For future uses]
-                #
-                don_atom = self.mol.find_atom_name(donor)
-                acc_atom = self.mol.find_atom_name(acceptor)
-                self.hblist.append(HBond(don=don_res,don_atom=don_atom, acc=acc_res,acc_atom=acc_atom, perc=0.0, mediated=0.0, both=0.0,nfr=self.nfr))
-            raw_fi=fi.readline()
-        self.nbonds = len(self.hblist)
-        self.red = True
+        raw=fi.readlines()
         fi.close()
-    
-    def read_log(self,file_in,file_gro,red=False):
+        self.hblist=[]
+        self.red_hb=[]
+        self.ref_hb=[]
+        self.nrhb = len(raw)-1
+        if not red:
+            l_sim=[]
+            hblist = []
+            for l in raw[1:]:
+                l_sim.append([ list(i)[0]+list(i)[1] for n,i in enumerate(re_R.findall(l)) if (n != 1) ])
+                hblist.append([ list(i) for i in re_R.findall(l)])
+                d_r , a_r = l_sim[-1][0] , l_sim[-1][1]
+                d_a , a_a = hblist[-1][0][2], hblist[-1][2][2]
+                self.red_hb.append(HBond(don=d_r, don_atom=d_a, acc=a_r, acc_atom=a_a, perc=0.0, mediated=0.0, both=0.0, nfr=self.nfr))
+            l_hb,l_hb_id,l_ref = uniq_ref(l_sim)
+            for i in l_hb_id:
+                don_res , acc_res = l_sim[i][0],l_sim[i][1]
+                self.hblist.append(HBond(don=don_res, acc=acc_res, perc=0.0, mediated=0.0, both=0.0, nfr=self.nfr))
+            self.ref_hb = l_ref
+            self.nbonds = len(l_hb)
+        else:
+            for l in raw[1:]:
+                hb = re_R.findall(l)
+                d_r , a_r = hb[0][0]+hb[0][1] , hb[2][0]+hb[2][1]
+                d_a , a_a = hb[0][2], hb[2][2]
+                self.hblist.append(HBond(don=d_r, don_atom=d_a, acc=a_r, acc_atom=a_a, perc=0.0, mediated=0.0, both=0.0, nfr=self.nfr))
+            self.nbonds = self.nrhb
+        self.red = red
+                
+        
+    def read_log_old(self,file_in,file_gro,red=False):
         """
         Populate the HBonds object with the HBond found in a
         file .log generated by g_HBond [-g] merging the bonds
@@ -248,7 +273,7 @@ class HBonds:
         raw_fi      = fi.readline()
         while raw_fi:
             #
-            # Exlude the comment lines and those with less than 3 field
+            # Exclude the comment lines and those with less than 3 field
             #
             if (raw_fi.split()[0] != '#')&(len(raw_fi.split())>2):
                 donor   = raw_fi.split()[0]
@@ -289,76 +314,12 @@ class HBonds:
         self.red = red
         fi.close()
 
-    def read_log_new(self,file_in,file_gro,red=False):
-        import pandas as pd
-        """
-        Populate the HBonds object with the HBond found in a
-        file .log generated by g_HBond [-g] merging the bonds
-        for the same residue couple 
-            
-                        self.red_hb        = list of redundant h-bond   
-                        self.hblist        = list of non redundant h-bonds
-                        self.ref_hb        = list of redundand h-bonds, stored as elements of self.red_hb, 
-                                             that has been merged as element of self.ref_hb
-        
-        """
-        fi=open(file_in,'r')
-        self.mol = file_gro
-        print(self.mol)
-        self.name   = file_in
-        list_hb     = []
-        self.nbonds = 0
-        self.nrhb   = 0
-        raw_fi      = fi.readline()
-        while raw_fi:
-            #
-            # Exlude the comment lines and those with less than 3 field
-            #
-            if (raw_fi.split()[0] != '#')&(len(raw_fi.split())>2):
-                donor   = raw_fi.split()[0]
-                hydrogen= raw_fi.split()[1]
-                acceptor= raw_fi.split()[2]
-                #
-                # Extract the residue name, including the number
-                #
-                don_res=self.mol.find_atom_res(donor)
-                acc_res=self.mol.find_atom_res(acceptor)
-                                #
-                #if is_nucleotide(donor):
-                #   don_res=re_nucleotide.findall(donor)[0]
-                #else:
-                #   don_res=re_protein.findall(donor)[0]
-                #if is_nucleotide(acceptor):
-                #   acc_res=re_nucleotide.findall(acceptor)[0]
-                #else:
-                #   acc_res=re_protein.findall(acceptor)[0]
-                                #
-                don_atom = self.mol.find_atom_name(donor)
-                acc_atom = self.mol.find_atom_name(acceptor)
-                
-                if not red:
-                    self.red_hb.append(HBond(don=don_res, acc=acc_res, perc=0.0, mediated=0.0, both=0.0,nfr=self.nfr))
-                    new_hb   = [don_res[0]+"_"+str(don_res[1]),acc_res[0]+"_"+str(acc_res[1])]
-                    if new_hb not in list_hb:
-                        list_hb.append(new_hb)
-                        self.ref_hb.append([self.nrhb])
-                        self.hblist.append(HBond(don=don_res, acc=acc_res, perc=0.0, mediated=0.0, both=0.0,nfr=self.nfr))
-                        self.nbonds += 1
-                    else:
-                        self.ref_hb[list_hb.index(new_hb)].append(self.nrhb)
-                    self.nrhb += 1
-                else:
-                    self.hblist.append(HBond(don=don_res,don_atom=don_atom, acc=acc_res,acc_atom=acc_atom, perc=0.0, mediated=0.0, both=0.0,nfr=self.nfr))   
-            raw_fi=fi.readline()
-        self.red = red
-        fi.close()
-    
     def calc_perc(self):
         for n,i in enumerate(self.hblist):
-            ref0 = self.xpm.array[:,self.ref_hb[n][0]]
+            ref0 = self.xpm.array[self.ref_hb[n][0],:]
             self.red_hb[self.ref_hb[n][0]].perc = 100.0 * ref0.sum() / len(ref0)
             for r in range(1,len(self.ref_hb[n])):
-                ref1 = self.xpm.array[:,self.ref_hb[n][r]]
+                ref1 = self.xpm.array[self.ref_hb[n][r],:]
                 self.red_hb[self.ref_hb[n][r]].perc = 100.0 * ref1.sum() / len(ref1)
                 ref0 = numpy.logical_or(ref0,ref1)
             self.hblist[n].perc  = 100.0 * ref0.sum() / len(ref0)
@@ -380,9 +341,9 @@ class HBonds:
         if e < 0:
             e = len(self.hblist) + e
         for n in numpy.arange(b,e,dtype=int):
-            d0   = self.xpm.array[:,self.ref_hb[n][0]]
+            d0   = self.xpm.array[self.ref_hb[n][0],:]
             for r in range(1,len(self.ref_hb[n])):
-                d1 = self.xpm.array[:,self.ref_hb[n][r]]
+                d1 = self.xpm.array[self.ref_hb[n][r],:]
                 d0 = numpy.logical_or(d0,d1)
             d    = numpy.concatenate([[0],d0,[0]])
             up   = numpy.array([ i+1 for i in numpy.arange(len(d)-1) if (d[i+1] - d[i] == 1) ])
@@ -396,7 +357,7 @@ class HBonds:
     
     def calc_perc_red(self):
         for n,i in enumerate(self.hblist):
-            ref  = self.xpm.array[:,n]
+            ref  = self.xpm.array[n,:]
             self.hblist[n].perc = 100.0 * ref.sum() /len(ref0)
             self.hblist[n].nfr = self.nfr
 
@@ -407,12 +368,12 @@ class HBonds:
         t0 = time.time()
         if not self.red:
             for n,i in enumerate(self.hblist):
-                ref0 = self.xpm.array[:,self.ref_hb[n][0]]
+                ref0 = self.xpm.array[self.ref_hb[n][0],:]
                 self.red_hb[self.ref_hb[n][0]].perc_ci = bootstrap(ref0,nsample,numpy.sum,1.0-conf) * 100.0 / len(ref0)
                 self.red_hb[self.ref_hb[n][0]].perc_c  = conf
                 self.red_hb[self.ref_hb[n][0]].perc    = numpy.mean(self.red_hb[self.ref_hb[n][0]].perc_ci)
                 for r in range(1,len(self.ref_hb[n])):
-                    ref1 = self.xpm.array[:,self.ref_hb[n][r]]
+                    ref1 = self.xpm.array[self.ref_hb[n][r],:]
                     self.red_hb[self.ref_hb[n][r]].perc_ci = bootstrap(ref1,nsample,numpy.sum,1.0-conf) * 100.0 / len(ref1)
                     self.red_hb[self.ref_hb[n][r]].perc_c  = conf
                     self.red_hb[self.ref_hb[n][r]].perc    = numpy.mean(self.red_hb[self.ref_hb[n][r]].perc_ci)
@@ -426,7 +387,7 @@ class HBonds:
                 sys.stdout.write(" %4d/%4d calculations ETA: %6.1f sec.\r" %(n,self.nbonds,ETA)) 
         else:
             for n,i in enumerate(self.hblist):
-                ref0 = self.xpm.array[:,n]
+                ref0 = self.xpm.array[n,:]
                 self.hblist[n].perc_ci = bootstrap(ref0,nsample,numpy.sum,1.0-conf) * 100.0 / len(ref0)
                 self.hblist[n].perc_c  = conf
                 self.hblist[n].perc = numpy.mean(self.hblist[n].perc_ci)
@@ -436,6 +397,34 @@ class HBonds:
                 sys.stdout.write(" %4d/%4d calculations ETA: %6.1f sec.\r" %(n,self.nbonds,ETA))  
         sys.stdout.write (" Completed in %6.1f sec.                \n" %(t-t0))
 
+    def read_perc(self,filein,red=False):
+        
+        fi          = open(filein,'r')
+        raw         = fi.readlines()
+        self.name   = raw[0]
+        self.hblist = []
+        if not red:
+            l_sim=[]
+            hblist = []
+            for l in raw[1:]:
+                line = l.split()
+                l_sim.append([ list(i)[0]+list(i)[1] for i in re_R_sim.findall(l) ])
+                d_r , a_r = l_sim[-1][0] , l_sim[-1][1]
+                p = float(line[2])
+                nfr = int(line[5]) 
+                self.hblist.append(HBond(don=d_r, don_atom=d_a, acc=a_r, acc_atom=a_a, perc=p, mediated=0.0, both=0.0, nfr=nfr))
+        else:
+            for l in raw[1:]:
+                line = l.split()
+                hb = re_R.findall(l)
+                d_r , a_r = hb[0][0]+hb[0][1] , hb[1][0]+hb[1][1]
+                d_a , a_a = hb[0][2], hb[1][2]
+                p = float(line[2])
+                nfr = int(line[5])
+                self.hblist.append(HBond(don=d_r, don_atom=d_a, acc=a_r, acc_atom=a_a, perc=p, mediated=0.0, both=0.0, nfr=nfr))
+        self.nfr = nfr
+        self.red = red
+    
     def read_file_perc(self,filein,filegro):
         """
             Populates the HBonds object using a percentage file already
@@ -457,14 +446,18 @@ class HBonds:
         n = 0
         while raw_fi:
             line = raw_fi.split()
+            if ( line[0] == '#' ):
+                raw_fi=fi.readline()
+                continue
             if ( len(line) == 6 ):
-                if ( line[0] != '#' ):
-                    n = n + 1
-                    t_don  = self.mol.split_res(line[0])
-                    t_acc  = self.mol.split_res(line[1])
-                    t_perc = float(line[2])
-                    t_nfr  = int(line[5])
-                    self.hblist.append(HBond(acc=t_acc,don=t_don,perc=t_perc,nfr=t_nfr))
+                n = n + 1
+                t_don  = self.mol.split_res(line[0])
+                t_acc  = self.mol.split_res(line[1])
+                t_perc = float(line[2])
+                t_nfr  = int(line[5])
+                self.hblist.append(HBond(acc=t_acc,don=t_don,perc=t_perc,nfr=t_nfr))
+                raw_fi=fi.readline()
+                continue
             raw_fi=fi.readline()
         print("read %d lines from file %s %d frames" %(n,filein,t_nfr))
         self.nbonds = len(self.hblist)

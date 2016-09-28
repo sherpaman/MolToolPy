@@ -20,7 +20,7 @@ parser.add_option("-r","--red", dest="red", action="store_true",                
 out_base=os.path.basename(options.out)
 out_dir=os.path.dirname(options.out)
 if out_dir=="":
-	out_dir="."
+    out_dir="."
 
 united_hbonds = HBonds(log=options.log,mol=options.gro,xpm=options.xpm,red=options.red)
 
