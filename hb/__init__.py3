@@ -131,7 +131,6 @@ class HBonds:
 
     def __setattr__(self,name,value):
         if (name=='mol') :
-            
             if isinstance(value,gro.Molecule):
                 print("mol Object found!")
                 self.__dict__[name] = value

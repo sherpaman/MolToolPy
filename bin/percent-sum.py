@@ -22,7 +22,12 @@ out_dir=os.path.dirname(options.out)
 if out_dir=="":
     out_dir="."
 
-united_hbonds = HBonds(log=options.log,xpm=options.xpm,red=options.red)
+if options.red:
+	print("Calculating Percentage of REDUNDANT HB")
+	united_hbonds = HBonds(log=options.log,xpm=options.xpm,red=True)
+else:
+	print("Calculating Percentage of NON-REDUNDANT HB")
+	united_hbonds = HBonds(log=options.log,xpm=options.xpm,red=False)
 
 united_hbonds.write_file(out_dir+'/'+out_base+'.dat')
 
