@@ -101,7 +101,7 @@ class HBonds:
         self.name   = name
         self.log    = log
         self.xpm    = xpm
-        self.mol    = mol
+        #self.mol    = mol
         self.hblist = []
         self.red_hb = []
         self.ref_hb = []
@@ -111,14 +111,14 @@ class HBonds:
         self.red    = red
         self.conf   = conf # confidence interval for bootstrap analysis
         if self.log != None:
-            self.read_log(self.log, self.mol)
+            self.read_log(self.log,self.red)
             if self.xpm != None:
                 check_nhb, self.nfr = numpy.shape(self.xpm.array)
                 if ( check_nhb != self.nrhb ):
                     print("XPM and Log file do not correspond (%d /= %d)" %(check_nhb,self.nrhb))
                     raise ValueError
-                print("FOUND %4d REDUNDANT HB" % self.nrhb)
-                if not self.red :
+                print("FOUND %4d     REDUNDANT HB" % self.nrhb)
+                if self.red == False :
                     print("      %4d NON-REDUNDAT HB" % self.nbonds)
                     self.nr_xpm = self.merge_xpm()
                 if self.conf != None:
@@ -222,7 +222,8 @@ class HBonds:
         self.red_hb=[]
         self.ref_hb=[]
         self.nrhb = len(raw)-1
-        if not red:
+        self.red = red
+        if self.red==False:
             l_sim=[]
             hblist = []
             for l in raw[1:]:
@@ -311,16 +312,20 @@ class HBonds:
         fi.close()
 
     def calc_perc(self):
-        for n,i in enumerate(self.hblist):
-            ref0 = self.xpm.array[self.ref_hb[n][0],:]
-            self.red_hb[self.ref_hb[n][0]].perc = 100.0 * ref0.sum() / len(ref0)
-            for r in range(1,len(self.ref_hb[n])):
-                ref1 = self.xpm.array[self.ref_hb[n][r],:]
-                self.red_hb[self.ref_hb[n][r]].perc = 100.0 * ref1.sum() / len(ref1)
-                ref0 = numpy.logical_or(ref0,ref1)
-            self.hblist[n].perc  = 100.0 * ref0.sum() / len(ref0)
-            self.hblist[n].nfr = self.nfr
-    
+        if self.red == False:
+            for n,i in enumerate(self.hblist):
+                ref0 = self.xpm.array[self.ref_hb[n][0],:]
+                self.red_hb[self.ref_hb[n][0]].perc = 100.0 * ref0.sum() / len(ref0)
+                for r in range(1,len(self.ref_hb[n])):
+                    ref1 = self.xpm.array[self.ref_hb[n][r],:]
+                    self.red_hb[self.ref_hb[n][r]].perc = 100.0 * ref1.sum() / len(ref1)
+                    ref0 = numpy.logical_or(ref0,ref1)
+                self.hblist[n].perc  = 100.0 * ref0.sum() / len(ref0)
+                self.hblist[n].nfr = self.nfr
+        else:
+            for n,i in enumerate(self.hblist):
+                self.hblist[n].perc  = 100.0 * self.xpm.array[n,:] / self.nfr
+        
     def calc_lifetime(self,b=0,e=-1):
         LT = []
         if b != 0:
