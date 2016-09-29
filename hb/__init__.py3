@@ -11,9 +11,9 @@ re_nucleotide=re.compile('D[ATCG][0-9]+')
 re_protein=re.compile('[A-Z]{3}[0-9]+')
 
 re_N=re.compile("(D[ACTG])([1-9]{1}[0-9]*)([HNOP][A-Z,0-9]*)") # MATCHES NUCLEOTIDES
-re_P=re.compile("([ACGHILMPSTV][A-Z]{2})([1-9]{1}[0-9]*)([HNOP][A-Z,0-9]*)") # MATCHES PROTEIN RESIDUES
-re_R=re.compile("(D[ACTG]|[ACGHILMPSTV][A-Z]{2})([1-9]{1}[0-9]*)([HNOP][A-Z,0-9]*)") # MATCHES BOTH
-re_R_sim=re.compile("(D[ACTG]|[ACGHILMPSTV][A-Z]{2})([1-9]{1}[0-9]*)")
+re_P=re.compile("([ACGHILMNPSTV][A-Z]{2})([1-9]{1}[0-9]*)([HNOP][A-Z,0-9]*)") # MATCHES PROTEIN RESIDUES
+re_R=re.compile("(D[ACTG]|[ACGHILMNPSTV][A-Z]{2})([1-9]{1}[0-9]*)([HNOP][A-Z,0-9]*)") # MATCHES BOTH
+re_R_sim=re.compile("(D[ACTG]|[ACGHILMNPSTV][A-Z]{2})([1-9]{1}[0-9]*)")
 
 def uniq_ref(l):
     """
