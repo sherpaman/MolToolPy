@@ -81,7 +81,7 @@ class HBond:
         return "%11s %11s %6.2f %6.2f %6.2f %d" %(self.don+self.don_atom,self.acc+self.acc_atom,self.perc,0.0,0.0,self.nfr)
     
     def __repr__(self):
-        print(str(self))
+        return str(self)+"\n"
     
     def renum(self,func):
         self.don[1] = func(self.don[1])
@@ -170,11 +170,11 @@ class HBonds:
     def __str__(self):
         out=self.name+'\n'
         for i in self.hblist:
-            out = out + str(i)
+            out = out + str(i)+'\n'
         return out
     
     def __repr__(self):
-        print(str(self))
+        return str(self)
     
     def merge_xpm(self):
         nr_xpm       = copy.deepcopy(self.xpm)
@@ -312,6 +312,7 @@ class HBonds:
         fi.close()
 
     def calc_perc(self):
+        self.nrhb, self.nfr = self.xpm.array.shape
         if self.red == False:
             for n,i in enumerate(self.hblist):
                 ref0 = self.xpm.array[self.ref_hb[n][0],:]
@@ -324,7 +325,8 @@ class HBonds:
                 self.hblist[n].nfr = self.nfr
         else:
             for n,i in enumerate(self.hblist):
-                self.hblist[n].perc  = 100.0 * self.xpm.array[n,:] / self.nfr
+                self.hblist[n].perc  = 100.0 * self.xpm.array[n,:].sum() / self.nfr
+                self.hblist[n].nfr = self.nfr
         
     def calc_lifetime(self,b=0,e=-1):
         LT = []
