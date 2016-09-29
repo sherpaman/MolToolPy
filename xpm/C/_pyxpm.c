@@ -23,11 +23,11 @@ static PyObject *pyxpm_read(PyObject *self, PyObject *args){
     if (!PyArg_ParseTuple(args,"s", &fn)) 
         return NULL;
     
-    printf("Start Reading file : %s\n", fn);
+    //printf("Start Reading file : %s\n", fn);
     
     XpmReadFileToXpmImage(fn, &XPM, &XPM_info);
     
-    printf("Done!\n");
+    //printf("Done!\n");
     
     // Create a Python List to return back
     

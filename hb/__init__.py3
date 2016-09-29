@@ -100,7 +100,7 @@ class HBonds:
     def __init__(self,name='New List',mol=None,red=False,log=None,xpm=None,perc=None,conf=None):
         self.name   = name
         self.log    = log
-        #self.xpm    = xpm
+        self.xpm    = xpm
         self.mol    = mol
         self.hblist = []
         self.red_hb = []
@@ -108,54 +108,53 @@ class HBonds:
         self.nbonds = 0 # number of HBonds (non-redundant hb if merge is performed)
         self.nrhb   = 0 # number of redundand HBonds
         self.nfr    = 0
-        self.names  = dict()
         self.red    = red
-        self.conf   = conf
+        self.conf   = conf # confidence interval for bootstrap analysis
         if self.log != None:
             self.read_log(self.log, self.mol)
-        if xpm != None:
-            self.xpm = xpm
-            check_nhb, self.nfr = numpy.shape(self.xpm.array)
-            if ( check_nhb != self.nrhb ):
-                print("XPM and Log file do not correspond (%d /= %d)" %(check_nhb,self.nrhb))
-                raise ValueError
-            print("FOUND %4d REDUNDANT HB" % self.nrhb)
-            if not self.red :
-                print("      %4d NON-REDUNDAT HB" % self.nbonds)
-            self.nr_xpm = self.merge_xpm()
-            if self.conf != None:
-                self.perc_bootstrap(conf=self.conf)
-            else:
-                self.calc_perc()
+            if self.xpm != None:
+                check_nhb, self.nfr = numpy.shape(self.xpm.array)
+                if ( check_nhb != self.nrhb ):
+                    print("XPM and Log file do not correspond (%d /= %d)" %(check_nhb,self.nrhb))
+                    raise ValueError
+                print("FOUND %4d REDUNDANT HB" % self.nrhb)
+                if not self.red :
+                    print("      %4d NON-REDUNDAT HB" % self.nbonds)
+                    self.nr_xpm = self.merge_xpm()
+                if self.conf != None:
+                    self.perc_bootstrap(conf=self.conf)
+                else:
+                    self.calc_perc()
         else:
-            if log == None:
-                print("XPM file will be ignored : Log file needed!!!!")
-            elif perc!=None:
-                self.read_file_perc(perc,self.mol)
+            if perc!=None:
+                self.read_perc(perc,self.red)
 
     def __setattr__(self,name,value):
         if (name=='mol') :
-            print("Start reading mol")
+            
             if isinstance(value,gro.Molecule):
+                print("mol Object found!")
                 self.__dict__[name] = value
             elif type(value) == str :
+                print("Start reading mol file")
                 self.__dict__[name] = gro.read_gro(value)
+                print("Done!")
             else:
                 if value != None :
                     print("Wrong Type mol: {0:s}".format(type(value)))
                 self.__dict__[name]=None
-            print("Done reading mol!")
         elif (name=='xpm') :
-            print("Start reading xpm")
             if isinstance(value,xpm.Xpm):
+                print("xpm Object found!")
                 self.__dict__[name] = value
             elif type(value) == str :
+                print("Start reading xpm file")
                 self.__dict__[name] = xpm.read_xpm(value)
+                print("Done!")
             else:
                 if value != None :
                     print("Wrong Type xpm: {0:s}".format(type(value)))
                 self.__dict__[name]=None
-            print("Done reading xpm!")
         else:
             self.__dict__[name]=value
           
@@ -188,9 +187,6 @@ class HBonds:
         for i in numpy.arange(self.nbonds):
             nr_xpm.array[i,:] = numpy.max(self.xpm.array[self.ref_hb[i],:],axis=0)
         return nr_xpm
-
-    def residue_split(self,name):
-        return self.mol.find_atom_res(name)
     
     def renum(self,func):
         for hb in self.hblist:
@@ -398,7 +394,6 @@ class HBonds:
         sys.stdout.write (" Completed in %6.1f sec.                \n" %(t-t0))
 
     def read_perc(self,filein,red=False):
-        
         fi          = open(filein,'r')
         raw         = fi.readlines()
         self.name   = raw[0]
@@ -412,7 +407,7 @@ class HBonds:
                 d_r , a_r = l_sim[-1][0] , l_sim[-1][1]
                 p = float(line[2])
                 nfr = int(line[5]) 
-                self.hblist.append(HBond(don=d_r, don_atom=d_a, acc=a_r, acc_atom=a_a, perc=p, mediated=0.0, both=0.0, nfr=nfr))
+                self.hblist.append(HBond(don=d_r, acc=a_r, perc=p, mediated=0.0, both=0.0, nfr=nfr))
         else:
             for l in raw[1:]:
                 line = l.split()
@@ -501,24 +496,17 @@ class HBonds:
         fi.close()
         self.refresh()
     
-    def create_names(self):
-        self.names=dict()
-        for i in self.hblist:
-            #print i.acc, i.don
-            self.names[i.acc[1]]=i.acc[0]
-            self.names[i.don[1]]=i.don[0]
-    
     def list_acc(self):
         return uniq( [ hb.acc for hb in self ] )
     
     def list_acc_n(self):
-        return uniq( [ hb.acc[1] for hb in self ] )
+        return uniq( [ int(re_R_sim.findall(hb.acc)[0][1]) for hb in self ] )
     
     def list_don(self):
         return uniq( [ hb.don for hb in self ] )
     
     def list_don_n(self):
-        return uniq( [ hb.don[1] for hb in self ] )
+        return uniq( [ int(re_R_sim.findall(hb.don)[0][1]) for hb in self ] )
     
     def list_res(self):
         return uniq(self.list_acc()+self.list_don())
