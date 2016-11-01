@@ -80,10 +80,10 @@ class TimeSer:
         self.nbins  = nbins * np.ones(dim,dtype=int)
         self.min    = np.min(data)
         self.max    = np.max(data)
-        self.bins   = bins # [ np.linspace(np.min(self.data),np.max(self.data),nbins+1) ] # IT MUST BE A *LIST* OF *1-DIM ARRAYS*
         self.reshape= reshape
         self.frame_row=frame_row
         self._shape(force=self.reshape)
+        self.bins   = bins # [ np.linspace(np.min(self.data[:,i,:]),np.max(self.data[:,i,:]),self.nbins+1) for i in range(self.dim) ] # IT MUST BE A *LIST* OF *1-DIM ARRAYS*
         self.prob=prob
         if self.prob == None:
             self.prob_av=False
@@ -183,15 +183,12 @@ class TimeSer:
         else:
             replicas = np.array([int(replicas)])
         rep    = len(replicas)
-        prod   = np.ones(self.dim+1,dtype=int)
-        for i in np.arange(1,self.dim+1):
-            prod[i] = prod[i-1] * self.nbins[i-1]
         self.digitalize_omp()
         o = np.zeros((rep,self.n_data))
         for r in replicas:
             for t in np.arange(self.n_data):
                 o[r,t]=int(np.vdot(self.digital[r,:,t],prod[:-1]))
-        other = TimeSer(o,n_data=self.n_data,dim=1,nbins=prod[-1],dtype=int)
+        other = TimeSer(o,n_data=self.n_data,dim=1,nbins=np.prod(self.nbins),dtype=int)
         return other
 
     def _to_1dim_for(self,replicas=None):
@@ -224,19 +221,16 @@ class TimeSer:
         if hasattr(replicas, '__iter__'):
             replicas = np.array(list(replicas))
         elif replicas == None:
-            replicas = np.arange(0,self.rep)
+            replicas = np.arange(self.rep)
         else:
             replicas = np.array([int(replicas)])
         rep    = len(replicas)
-        prod   = np.ones(self.dim+1,dtype=int)
-        for i in np.arange(1,self.dim+1):
-            prod[i] = prod[i-1] * self.nbins[i-1]
         o = np.zeros((rep,self.n_data))
         if (self.dtype == int):
             o = mi.i_to1dim(np.transpose(self.data),np.transpose(np.array(self.bins)))
         else:
             o = mi.r_to1dim(np.transpose(self.data),np.transpose(np.array(self.bins)))
-        other = TimeSer(o,n_data=self.n_data,dim=1,nbins=[],dtype=int)
+        other = TimeSer(o,n_data=self.n_data,dim=1,nbins=np.prod(self.nbins),dtype=int)
         other.calc_bins(opt=True)
         return other
 
@@ -274,16 +268,13 @@ class TimeSer:
         else:
             replicas = np.array([int(replicas)])
         rep    = len(replicas)
-        prod   = np.ones(self.dim+1,dtype=int)
-        for i in np.arange(1,self.dim+1):
-            prod[i] = prod[i-1] * self.nbins[i-1]
-        o = np.zeros((rep,self.n_data))
-        self.calc_bins(opt=True)
-        if (self.dtype == int):
+        o = np.zeros((rep,self.n_data)).astype(np.int8)
+        self.calc_bins()
+        if (self.dtype != np.float):
             o = mi_omp.i_to1dim(np.transpose(self.data),np.transpose(np.array(self.bins)))
         else:
             o = mi_omp.r_to1dim(np.transpose(self.data),np.transpose(np.array(self.bins)))
-        other = TimeSer(o,n_data=self.n_data,dim=1,dtype=int)
+        other = TimeSer(o,n_data=self.n_data,dim=1,nbins=np.prod(self.nbins),dtype=o.dtype)
         other.calc_bins(opt=True)
         return other
 
@@ -298,9 +289,9 @@ class TimeSer:
         
         '''
         self.bins = []
-        for d in np.arange(self.dim):
-            if opt:
-                if (self.dtype == int):
+        if opt:
+            if (self.dtype != np.float):
+                for d in np.arange(self.dim):
                     bin0 = np.unique(self.data[:,d,:]).astype(float)
                     bin_out = np.zeros(len(bin0)+1)
                     bin_out[0] = bin0[0]
@@ -308,10 +299,10 @@ class TimeSer:
                     bin_out[1:-1] = (bin0[1:]+bin0[:-1])/2.
                     self.bins.append(bin_out)
                     self.nbins[d] = len(self.bins[d]) - 1 
-                else:
-                    self.bins.append(bins_opt(self.data[:,d,:].ravel(),self.nbins[d]))
             else:
-                self.bins.append(np.linspace(np.min(self.data[:,d,:]),np.max(self.data[:,d,:]),self.nbins[d]+1))
+                self.bins = [ bins_opt(self.data[:,d,:].ravel(),self.nbins[d]) for d in range(self.dim) ]
+        else:
+                self.bins = [ np.linspace(np.min(self.data[:,i,:]),np.max(self.data[:,i,:]),self.nbins[i]+1) for i in range(self.dim) ]
         return
 
     def calc_prob(self):
