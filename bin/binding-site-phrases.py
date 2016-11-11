@@ -26,8 +26,8 @@ parser.add_argument("-b","--begin",dest="begin",action="store",type=int,default=
 parser.add_argument("-e","--end",dest="end",action="store",type=int,default=-1,help="Last frame to read")
 parser.add_argument("-s","--skip",dest="skip",action="store",type=int,default=1,help="number of frame to skip", metavar="INTEGER")
 #parser.add_argument("-p","--plot",dest="plot",action="store_true",default=False,help="toggle auto-saving matrix plot")
-parser.add_argument("-r","--receptor",dest="receptor",action="store",type=str,default="Protein",help="Selection string for the Receptor")
-parser.add_argument("-l","--ligand",dest="ligand",action="store",type=str,default="not Protein",help="Selection strin for the Ligand")
+parser.add_argument("-r","--receptor",dest="receptor",action="store",type=str,default="protein",help="Selection string for the Receptor")
+parser.add_argument("-l","--ligand",dest="ligand",action="store",type=str,default="not protein",help="Selection strin for the Ligand")
 #
 options = parser.parse_args()
 
@@ -42,13 +42,13 @@ rec_str = options.receptor
 lig_str = options.ligand
 
 min_phrase_len = 3
-threshold = 0.2  5
+threshold = 0.25
 lig_dist_cutoff = 6.0
 
 u = MD.Universe(top,trj)
 
-receptor = u.select_atoms("protein")
-ligand = u.select_atoms("resname SDS")
+receptor = u.select_atoms(rec_str)
+ligand = u.select_atoms(lig_str)
 
 P = phrases.phrases(u,receptor,ligand,lig_dist_cutoff,min_phrase_len)
 
