@@ -99,7 +99,7 @@ class phrases:
                         C[f[i]-1,f[j]-1] += 1
                         C[f[j]-1,f[i]-1] += 1
         
-        self.D = - np.log2(C/self.nobs)
+        self.D = -np.log(C/self.nobs)
 
     def find_cluster(self,cutoff):
         e, c = _gromos(self.D,cutoff,self.min_len)
