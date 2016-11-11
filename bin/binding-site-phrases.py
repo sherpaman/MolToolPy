@@ -21,7 +21,7 @@ parser.add_argument("-o","--out",dest="out",action="store",type=str,default=None
 #
 # VAR ARGUMENTS
 #
-parser.add_argument("-c","--cutoff",dest="cutoff",action="store",type=float,default=0.0,help="toggle auto-saving matrix plot")
+parser.add_argument("-c","--cutoff",dest="cutoff",action="store",type=float,default=0.0,help="Cut-off for clustering")
 parser.add_argument("-b","--begin",dest="begin",action="store",type=int,default=0,help="First frame to read")
 parser.add_argument("-e","--end",dest="end",action="store",type=int,default=-1,help="Last frame to read")
 parser.add_argument("-s","--skip",dest="skip",action="store",type=int,default=1,help="number of frame to skip", metavar="INTEGER")
