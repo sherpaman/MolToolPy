@@ -90,7 +90,7 @@ class phrases:
                 for a in f:
                     p_a.append(a)
         
-        C = np.zeros((max(p_a),max(p_a)))
+        C = np.ones((max(p_a),max(p_a)))
         for t in self.phrases:
             for f in t:
                 for i in range(len(f)):
