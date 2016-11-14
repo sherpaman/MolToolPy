@@ -64,28 +64,28 @@ np.savez(options.out+"-distance.npz",P.D)
 perc = np.percentile(P.D,np.linspace(0,100,1002))
 
 if cutoff==None:
-	n_val = 551
-	c_val = np.linspace(perc[5],perc[60],n_val)
-	v_val = np.zeros(n_val)
-	
-	avg_dist = np.average(P.D)
-	
-	for i in range(n_val)
-		cutoff = c_val[i]
-		P.find_cluster(cutoff)
-		n_cl = int( np.max(P.labels) + 1 )
-		sub_D = P.D[P.centroid[1:]][:,P.centroid[1:]]
-		v_val[i] = np.average(sub_D)/avg_dist
-	
-	buf=20
-	
-	
-	for i in range(buf,n_val-buf):
-		slope1[i]  intercept1, r_value1, p_value1, std_err1 = stats.linregress(c_val[buf/2:i],      v_val[buf/2:i]      )
-		slope2[i], intercept2, r_value2, p_value2, std_err2 = stats.linregress(c_val[i:n_val-buf/2],v_val[i:n_val-buf/2])	
-	
-	elbow = np.max(slope1-slope2)
-	cutoff = c_val[elbow]
+    n_val = 551
+    c_val = np.linspace(perc[5],perc[60],n_val)
+    v_val = np.zeros(n_val)
+    
+    avg_dist = np.average(P.D)
+    
+    for i in range(n_val):
+        cutoff = c_val[i]
+        P.find_cluster(cutoff)
+        n_cl = int( np.max(P.labels) + 1 )
+        sub_D = P.D[P.centroid[1:]][:,P.centroid[1:]]
+        v_val[i] = np.average(sub_D)/avg_dist
+    
+    buf=20
+    
+    
+    for i in range(buf,n_val-buf):
+        slope1[i]  intercept1, r_value1, p_value1, std_err1 = stats.linregress(c_val[buf/2:i],      v_val[buf/2:i]      )
+        slope2[i], intercept2, r_value2, p_value2, std_err2 = stats.linregress(c_val[i:n_val-buf/2],v_val[i:n_val-buf/2])   
+    
+    elbow = np.max(slope1-slope2)
+    cutoff = c_val[elbow]
 
 cutoff_percentile = (perc[np.min(np.where(perc>cutoff))]+perc[np.max(np.where(perc<cutoff))]) * 50
 
