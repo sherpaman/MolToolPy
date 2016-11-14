@@ -81,7 +81,7 @@ if cutoff==None:
     
     
     for i in range(buf,n_val-buf):
-        slope1[i]  intercept1, r_value1, p_value1, std_err1 = stats.linregress(c_val[buf/2:i],      v_val[buf/2:i]      )
+        slope1[i], intercept1, r_value1, p_value1, std_err1 = stats.linregress(c_val[buf/2:i],      v_val[buf/2:i]      )
         slope2[i], intercept2, r_value2, p_value2, std_err2 = stats.linregress(c_val[i:n_val-buf/2],v_val[i:n_val-buf/2])   
     
     elbow = np.max(slope1-slope2)
