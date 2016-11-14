@@ -56,7 +56,7 @@ P.find_phrases(b,e,skip)
 
 
 with open(options.out+'-phrases.dat', 'wb') as output:
-    pickle.dump(P, output, pickle.HIGHEST_PROTOCOL)
+    pickle.dump(P.phrases, output, pickle.HIGHEST_PROTOCOL)
 
 P.calc_dist()
 np.savez(options.out+"-distance.npz",P.D)
@@ -86,6 +86,12 @@ if cutoff==None:
     
     elbow = np.max(slope1-slope2)
     cutoff = c_val[elbow]
+    plt.figure()
+    plt.plot(c_val,v_val,'.')
+    plt.plot(c_val[buf:elbow],i1[elbow]+c_val[buf:elbow]*s1[elbow])
+    plt.plot(c_val[elbow:n_val-buf],i2[elbow]+c_val[elbow:n_val-buf]*s2[elbow])
+    plt.savefig('{0:s}-elbow-point.png'.format(options.out),fmt="png")
+
 
 cutoff_percentile = (perc[np.min(np.where(perc>cutoff))]+perc[np.max(np.where(perc<cutoff))]) * 50
 
