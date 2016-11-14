@@ -101,7 +101,7 @@ P.find_cluster(cutoff)
 P.cluster_phrases(threshold)
 P.life_time()
 
-perc=100.*np.sum(P.p_cl>0,axis=0)/float(len(P.p_cl))
+perc_ex=100.*np.sum(P.p_cl>0,axis=0)/float(len(P.p_cl))
 life_time=np.zeros(int(max(P.labels)+1))
 
 #print P.LT
@@ -115,7 +115,7 @@ with open(options.out+"-binding-site.dat","w") as f:
             clusters=''
             for e in P.clusters[i].astype(int):
                 clusters=clusters+' {0:3s}'.format(str(e+1))
-            f.write("{0:3d}|{1:4d} : ({2:s}) | perc: {3:6.4f} | life-time: {4:8.3f} ns\n".format(i,P.centroid[i]+1,clusters,perc[i],life_time[i]/1000.0))
+            f.write("{0:3d}|{1:4d} : ({2:60s}) | perc: {3:6.4f} | life-time: {4:8.3f} ns\n".format(i,P.centroid[i]+1,clusters,perc_ex[i],life_time[i]/1000.0))
 
 
 quit()
