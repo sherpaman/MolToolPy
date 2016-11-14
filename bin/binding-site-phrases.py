@@ -106,14 +106,14 @@ life_time=np.zeros(int(max(P.labels)+1))
 
 #print P.LT
 with open(options.out+"-binding-site.dat","w") as f:
-    f.write("Using Cut-Off                 : {0:10.6f}".format(cutoff))
+    f.write("Using Cut-Off                 : {0:10.6f}\n".format(cutoff))
     cutoff_percentile = (p[np.min(np.where(perc>cutoff))]+p[np.max(np.where(perc<cutoff))]) / 2
-    f.write("This value corresponds to the   {0:8.4f} percentile".format(cutoff_percentile))
+    f.write("This value corresponds to the   {0:8.4f} percentile\n".format(cutoff_percentile))
     for i in range(1,int(max(P.labels)+1)):
         life_time[i] = np.average(P.LT[i])*P.dt
         clusters=''
         for e in P.clusters[i].astype(int):
-            clusters=clusters+' {0:3s}'.format(str(e))
+            clusters=clusters+' {0:3s}'.format(str(e+1))
         f.write("{0:3d}|{1:4d} : ({2:s}) | perc: {3:6.4f} | life-time: {4:8.3f} ns\n".format(i,P.centroid[i]+1,clusters,perc[i],life_time[i]/1000.0))
 
 
