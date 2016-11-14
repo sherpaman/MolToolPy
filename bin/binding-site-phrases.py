@@ -21,7 +21,7 @@ parser.add_argument("-o","--out",dest="out",action="store",type=str,default=None
 #
 # VAR ARGUMENTS
 #
-parser.add_argument("-c","--cutoff",dest="cutoff",action="store",type=float,default=0.0,help="Cut-off for clustering")
+parser.add_argument("-c","--cutoff",dest="cutoff",action="store",type=float,default=None,help="Cut-off for clustering")
 parser.add_argument("-b","--begin",dest="begin",action="store",type=int,default=0,help="First frame to read")
 parser.add_argument("-e","--end",dest="end",action="store",type=int,default=-1,help="Last frame to read")
 parser.add_argument("-s","--skip",dest="skip",action="store",type=int,default=1,help="number of frame to skip", metavar="INTEGER")
@@ -61,7 +61,8 @@ with open(options.out+'-phrases.dat', 'wb') as output:
 P.calc_dist()
 np.savez(options.out+"-distance.npz",P.D)
 
-perc = np.percentile(P.D,np.linspace(0,100,1002))
+p = np.linspace(0,100,1002)
+perc = np.percentile(P.D,p)
 
 if cutoff==None:
     n_val = 551
@@ -79,12 +80,15 @@ if cutoff==None:
     
     buf=20
     
-    
+    s1 = np.zeros(n_val)
+    s2 = np.zeros(n_val)
+    i1 = np.zeros(n_val)
+    i2 = np.zeros(n_val)
     for i in range(buf,n_val-buf):
-        slope1[i], intercept1, r_value1, p_value1, std_err1 = stats.linregress(c_val[buf/2:i],      v_val[buf/2:i]      )
-        slope2[i], intercept2, r_value2, p_value2, std_err2 = stats.linregress(c_val[i:n_val-buf/2],v_val[i:n_val-buf/2])   
+        s1[i], i1[i], r_value1, p_value1, std_err1 = stats.linregress(c_val[buf/2:i],      v_val[buf/2:i]      )
+        s2[i], i2[i], r_value2, p_value2, std_err2 = stats.linregress(c_val[i:n_val-buf/2],v_val[i:n_val-buf/2])   
     
-    elbow = np.max(slope1-slope2)
+    elbow = np.argmax(s1-s2)
     cutoff = c_val[elbow]
     plt.figure()
     plt.plot(c_val,v_val,'.')
@@ -92,17 +96,15 @@ if cutoff==None:
     plt.plot(c_val[elbow:n_val-buf],i2[elbow]+c_val[elbow:n_val-buf]*s2[elbow])
     plt.savefig('{0:s}-elbow-point.png'.format(options.out),fmt="png")
 
-
-cutoff_percentile = (perc[np.min(np.where(perc>cutoff))]+perc[np.max(np.where(perc<cutoff))]) * 50
-
 print("Using Cut-Off                 : {0:10.6f}".format(cutoff))
+cutoff_percentile = (p[np.min(np.where(perc>cutoff))]+p[np.max(np.where(perc<cutoff))]) / 2
 print("This value corresponds to the   {0:8.4f} percentile".format(cutoff_percentile))
 
 P.find_cluster(cutoff)
 P.cluster_phrases()
 P.life_time()
 
-perc=np.sum(P.p_cl>0,axis=0)/float(len(P.p_cl))
+perc=100.*np.sum(P.p_cl>0,axis=0)/float(len(P.p_cl))
 life_time=np.zeros(int(max(P.labels)+1))
 
 #print P.LT
@@ -110,9 +112,9 @@ with open(options.out+"-binding-site.dat","w") as f:
     for i in range(1,int(max(P.labels)+1)):
         life_time[i] = np.average(P.LT[i])*P.dt
         clusters=''
-        for e in P.clusters[i]:
-            clusters=clusters+' {0:3s}'.format(e)
-        f.write("{0:3d}|{1:4d} : ({2:s}) | perc: {3:6.4f} | life-time: {4:10.6f} ns\n".format(i,P.centroid[i],clusters,perc[i],life_time[i]/1000.0))
+        for e in P.clusters[i].astype(int):
+            clusters=clusters+' {0:3s}'.format(str(e))
+        f.write("{0:3d}|{1:4d} : ({2:s}) | perc: {3:6.4f} | life-time: {4:8.3f} ns\n".format(i,P.centroid[i],clusters,perc[i],life_time[i]/1000.0))
 
 
 quit()
