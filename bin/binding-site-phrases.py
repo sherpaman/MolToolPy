@@ -28,7 +28,7 @@ parser.add_argument("-s","--skip",dest="skip",action="store",type=int,default=1,
 #parser.add_argument("-p","--plot",dest="plot",action="store_true",default=False,help="toggle auto-saving matrix plot")
 parser.add_argument("-r","--receptor",dest="receptor",action="store",type=str,default="protein",help="Selection string for the Receptor")
 parser.add_argument("-l","--ligand",dest="ligand",action="store",type=str,default="not protein",help="Selection strin for the Ligand")
-parser.add_argument("-r","--res0",dest="res0",action="store",type=int,default=1,help="Add this to residue numbering of Protein")
+parser.add_argument("--res0",dest="res0",action="store",type=int,default=1,help="Add this to residue numbering of Protein")
 #
 options = parser.parse_args()
 
