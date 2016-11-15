@@ -8,12 +8,25 @@ def read_phrases(f_dat):
         out.phrases = L
     return out
 
-def _mj(a,c,t): 
+def _mj(a,c,t):
+    if len(a) == 0:
+        return 0
     list_j = [ float(len(set(a) & set(i))) /  float(len(set(a) | set(i))) for i in c ] # Jaccad Similarity
     if max(list_j) < t :
         return 0
     else:
         return np.argmax(list_j)
+
+def _percent_of_cluster(a,c,t): 
+    list_j = [ float(len(set(a) & set(i))) /  float(len(set(i))) for i in c ] 
+    if max(list_j) < t :
+        return 0
+    else:
+        return np.argmax(list_j)
+
+def _autocoor(data):
+    result = np.correlate(data, data, mode='full')
+    return result[result.size/2:]
 
 def _gromos(D,cutoff,min_sz):
     M=np.copy(D)
@@ -55,9 +68,20 @@ def _calc_lifetime(data):
         LT.append(loc_t)
     return LT
 
+def _calc_lifetime_per_ligand(data,n_cl):
+    n_fr , n_lig = data.shape
+    LT = [ [ ] for j in range(int(n_cl)+1) ]
+    for n in range(n_lig):
+        for c in range(int(n_cl)+1):
+            d0 = (data[:,n] == c).astype(int)
+            d = (np.concatenate([[0],d0,[0]])).astype(int)
+            up   = np.array([ i   for i in np.arange(1,n_fr+1) if (d[i] - d[i-1] ==  1) ])
+            down = np.array([ i   for i in np.arange(2,n_fr+2) if (d[i] - d[i-1] == -1) ])
+            LT[c].append(down-up)
+    return LT
 
 class phrases:
-    def __init__(self,universe=None,receptor=None,ligand=None,cutoff=None,min_len=None):
+    def __init__(self,universe=None,receptor=None,ligand=None,cutoff=None,min_len=2):
         self.universe = universe
         self.receptor = receptor
         self.ligand = ligand
@@ -78,6 +102,23 @@ class phrases:
                 p = list(np.unique(self.receptor.select_atoms("around %f global group grp" %(self.cutoff), grp=lr).resids).astype(int))
                 if len(p) > self.min_len:
                     phrase.append(p)
+            self.phrases.append(phrase)
+        print("Done!")
+
+    def find_phrases_per_ligand(self,b,e,skip):
+        self.phrases = []
+        print ("Start reading trajectory")
+        old_t=0.0
+        for fr in self.universe.trajectory[b:e:skip]:
+            self.dt = fr.time - old_t
+            old_t = fr.time
+            phrase=[]
+            for lr in self.ligand.residues:
+                p = list(np.unique(self.receptor.select_atoms("around %f global group grp" %(self.cutoff), grp=lr).resids).astype(int))
+                if len(p) > self.min_len:
+                    phrase.append(p)
+                else:
+                    phrase.append([])
             self.phrases.append(phrase)
         print("Done!")
 
@@ -117,6 +158,16 @@ class phrases:
                 self.p_cl[i,j] += 1
         
     def life_time(self):
-        self.LT=_calc_lifetime(self.p_cl)
+        self.LT=_calc_lifetime(self.p_cl,)
+    
+    def life_time_per_ligand(self):
+        self.phrases_cl = np.array(self.phrases_cl)
+        self.LT=_calc_lifetime_per_ligand(self.phrases_cl,max(self.labels))
+    
+    def autocorr_time_per_ligand(self):
+        return
+    
+    def autocorr_time_per_ligand(self):
+        return
 
     

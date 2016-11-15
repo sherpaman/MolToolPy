@@ -28,6 +28,7 @@ parser.add_argument("-s","--skip",dest="skip",action="store",type=int,default=1,
 #parser.add_argument("-p","--plot",dest="plot",action="store_true",default=False,help="toggle auto-saving matrix plot")
 parser.add_argument("-r","--receptor",dest="receptor",action="store",type=str,default="protein",help="Selection string for the Receptor")
 parser.add_argument("-l","--ligand",dest="ligand",action="store",type=str,default="not protein",help="Selection strin for the Ligand")
+parser.add_argument("-r","--res0",dest="res0",action="store",type=int,default=1,help="Add this to residue numbering of Protein")
 #
 options = parser.parse_args()
 
@@ -40,6 +41,7 @@ skip = options.skip
 cutoff = options.cutoff
 rec_str = options.receptor
 lig_str = options.ligand
+res0 = options.res0
 
 min_phrase_len = 3
 threshold = 0.25
@@ -52,7 +54,7 @@ ligand = u.select_atoms(lig_str)
 
 P = phrases.phrases(u,receptor,ligand,lig_dist_cutoff,min_phrase_len)
 
-P.find_phrases(b,e,skip)
+P.find_phrases_per_ligand(b,e,skip)
 
 
 with open(options.out+'-phrases.dat', 'wb') as output:
@@ -99,7 +101,7 @@ if cutoff==None:
 
 P.find_cluster(cutoff)
 P.cluster_phrases(threshold)
-P.life_time()
+P.life_time_per_ligand()
 
 perc_ex=100.*np.sum(P.p_cl>0,axis=0)/float(len(P.p_cl))
 life_time=np.zeros(int(max(P.labels)+1))
@@ -111,10 +113,10 @@ with open(options.out+"-binding-site.dat","w") as f:
     f.write("This value corresponds to the   {0:8.4f} percentile\n".format(cutoff_percentile))
     for i in range(1,int(max(P.labels)+1)):
         if len(P.LT[i]) > 0:
-            life_time[i] = np.average(P.LT[i])*P.dt
+            life_time[i] = np.average(np.concatenate(P.LT[i]))*P.dt
             clusters=''
             for e in P.clusters[i].astype(int):
-                clusters=clusters+' {0:3s}'.format(str(e+1))
+                clusters=clusters+' {0:3s}'.format(str(e+res0))
             f.write("{0:3d}|{1:4d} : ({2:60s}) | perc: {3:6.4f} | life-time: {4:8.3f} ns\n".format(i,P.centroid[i]+1,clusters,perc_ex[i],life_time[i]/1000.0))
 
 
