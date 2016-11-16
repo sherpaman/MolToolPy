@@ -25,7 +25,7 @@ parser.add_argument("-c","--cutoff",dest="cutoff",action="store",type=float,defa
 parser.add_argument("-b","--begin",dest="begin",action="store",type=int,default=0,help="First frame to read")
 parser.add_argument("-e","--end",dest="end",action="store",type=int,default=-1,help="Last frame to read")
 parser.add_argument("-s","--skip",dest="skip",action="store",type=int,default=1,help="number of frame to skip", metavar="INTEGER")
-#parser.add_argument("-p","--plot",dest="plot",action="store_true",default=False,help="toggle auto-saving matrix plot")
+parser.add_argument("-j","--jaccard",dest="jac",action="store",default=0.25,help="Jaccard Similarity Threshold")
 parser.add_argument("-r","--receptor",dest="receptor",action="store",type=str,default="protein",help="Selection string for the Receptor")
 parser.add_argument("-l","--ligand",dest="ligand",action="store",type=str,default="not protein",help="Selection strin for the Ligand")
 parser.add_argument("--res0",dest="res0",action="store",type=int,default=1,help="Add this to residue numbering of Protein")
@@ -33,15 +33,15 @@ parser.add_argument("--res0",dest="res0",action="store",type=int,default=1,help=
 options = parser.parse_args()
 
 
-top = options.top
-trj = options.traj
-b    = options.begin
-e    = options.end
-skip = options.skip
-cutoff = options.cutoff
+top     = options.top
+trj     = options.traj
+b       = options.begin
+e       = options.end
+skip    = options.skip
+cutoff  = options.cutoff
 rec_str = options.receptor
 lig_str = options.ligand
-res0 = options.res0
+res0    = options.res0
 
 min_phrase_len = 3
 threshold = 0.25
@@ -54,7 +54,7 @@ ligand = u.select_atoms(lig_str)
 
 P = phrases.phrases(u,receptor,ligand,lig_dist_cutoff,min_phrase_len)
 
-P.find_phrases_per_ligand(b,e,skip)
+P.find_phrases(b,e,skip)
 
 
 with open(options.out+'-phrases.dat', 'wb') as output:
@@ -101,23 +101,34 @@ if cutoff==None:
 
 P.find_cluster(cutoff)
 P.cluster_phrases(threshold)
-P.life_time_per_ligand()
+P.life_time()
+P.autocorr_time()
 
 perc_ex=100.*np.sum(P.p_cl>0,axis=0)/float(len(P.p_cl))
 life_time=np.zeros(int(max(P.labels)+1))
+for i in range(int(max(P.labels)+1)):
+    if len(P.LT[i]) > 0:
+        life_time[i] = np.average(np.concatenate(P.LT[i]))*P.dt
+at = np.sort(P.ac_t[:,:2])*P.dt
 
 #print P.LT
+with open(options.out+"-cluster-list.dat","w") as f:
+    for i in range(1,int(max(P.labels)+1)):
+        clusters=''
+        for e in P.clusters[i].astype(int):
+            clusters=clusters+' {0:s}'.format(str(e+res0))
+        f.write("{0:s}\n".format(clusters))
+
 with open(options.out+"-binding-site.dat","w") as f:
     f.write("Using Cut-Off                 : {0:10.6f}\n".format(cutoff))
     cutoff_percentile = (p[np.min(np.where(perc>cutoff))]+p[np.max(np.where(perc<cutoff))]) / 2
     f.write("This value corresponds to the   {0:8.4f} percentile\n".format(cutoff_percentile))
     for i in range(1,int(max(P.labels)+1)):
         if len(P.LT[i]) > 0:
-            life_time[i] = np.average(np.concatenate(P.LT[i]))*P.dt
             clusters=''
             for e in P.clusters[i].astype(int):
                 clusters=clusters+' {0:3s}'.format(str(e+res0))
-            f.write("{0:3d}|{1:4d} : ({2:60s}) | perc: {3:6.4f} | life-time: {4:8.3f} ns\n".format(i,P.centroid[i]+1,clusters,perc_ex[i],life_time[i]/1000.0))
+            f.write("{0:3d}| {1:4d} : ({2:80s}) | perc: {3:6.4f} | life-time: {4:8.3f} , {5:8.3f}, {6:8.3f} ns\n".format(i,P.centroid[i]+1,clusters,perc_ex[i],life_time[i]/1000.0,at[i,0],at[i,1]))
 
 
 quit()

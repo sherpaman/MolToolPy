@@ -1,10 +1,17 @@
 import numpy as np
+import scipy.optimize as opt
 import pickle
 
-def read_phrases(f_dat):
-    with open(f_dat) as f:
+def _exp2(x,l1,l2,a):
+ return a * np.exp(-l1*x) + (1-a) * np.exp(-l2*x)
+
+
+def read_phrases(f_dat,*args,**kwargs):
+    with open(f_dat,'rb') as f:
         L=pickle.load(f)
-        out = phrases()
+        out = phrases(min_len=kwargs.get('min_len',2))
+        if kwargs.has_key("dist"):
+            out.D = np.load(kwargs["dist"])['arr_0']
         out.phrases = L
     return out
 
@@ -24,7 +31,7 @@ def _percent_of_cluster(a,c,t):
     else:
         return np.argmax(list_j)
 
-def _autocoor(data):
+def _autocorr(data):
     result = np.correlate(data, data, mode='full')
     return result[result.size/2:]
 
@@ -80,6 +87,19 @@ def _calc_lifetime_per_ligand(data,n_cl):
             LT[c].append(down-up)
     return LT
 
+def _calc_lifetime_per_ligand_fast(data,n_cl):
+    n_fr , n_lig = data.shape
+    LT = [ [ ] for j in range(int(n_cl)+1) ]
+    for n in range(n_lig):
+        for c in range(int(n_cl)+1):
+            d0 = (data[:,n] == c).astype(int)
+            d = (np.concatenate([[0],d0,[0]])).astype(int)
+            jump = d[1:]-d[:-1]
+            up   = np.where(jump== 1)
+            down = np.where(jump==-1)
+            LT[c].append(down-up)
+    return LT
+
 class phrases:
     def __init__(self,universe=None,receptor=None,ligand=None,cutoff=None,min_len=2):
         self.universe = universe
@@ -90,7 +110,7 @@ class phrases:
         self.phrases = []
         self.D = None
 
-    def find_phrases(self,b,e,skip):
+    def find_phrases_old(self,b,e,skip):
         self.phrases = []
         print ("Start reading trajectory")
         old_t=0.0
@@ -105,7 +125,7 @@ class phrases:
             self.phrases.append(phrase)
         print("Done!")
 
-    def find_phrases_per_ligand(self,b,e,skip):
+    def find_phrases(self,b=0,e=-1,skip=1):
         self.phrases = []
         print ("Start reading trajectory")
         old_t=0.0
@@ -123,6 +143,8 @@ class phrases:
         print("Done!")
 
     def calc_dist(self):
+        if self.phrases == [] :
+            self.find_phrases()
         p_a = []
         self.nobs = 0
         for t in self.phrases:
@@ -143,6 +165,8 @@ class phrases:
         self.D = -np.log(C/self.nobs)
 
     def find_cluster(self,cutoff):
+        if type(self.D).__module__ != np.__name__:
+            self.calc_dist()
         e, c = _gromos(self.D,cutoff,self.min_len)
         self.centroid = c
         self.labels   = e
@@ -157,17 +181,29 @@ class phrases:
             for j in self.phrases_cl[i]:
                 self.p_cl[i,j] += 1
         
-    def life_time(self):
+    def life_time_old(self):
         self.LT=_calc_lifetime(self.p_cl,)
     
-    def life_time_per_ligand(self):
+    def life_time(self):
         self.phrases_cl = np.array(self.phrases_cl)
         self.LT=_calc_lifetime_per_ligand(self.phrases_cl,max(self.labels))
     
-    def autocorr_time_per_ligand(self):
+    def autocorr_time(self):
+        data = np.array(self.phrases_cl)
+        n_fr, n_lig = data.shape
+        n_cl = len(self.clusters)
+        self.ac = np.array([ [ _autocorr( (data[:,i]==j).astype(int) )  for i in range(n_lig) ] for j in range(n_cl) ])
+        ac_mean= np.mean(self.ac, axis = 1 )
+        self.ac_t = np.zeros((n_cl,3))
+        for i in range(n_cl):
+            if ac_mean[i,0] != 0:
+                ac_mean[i] = ac_mean[i] / ac_mean[i,0]
+                self.ac_t[i], o = opt.curve_fit(_exp2,np.arange(n_fr),ac_mean[i],p0=(0.1,0.9,0.9),bounds=( [0.,0.,0.],[np.inf, np.inf,1.0] ) )
+                self.ac_t[i,0] = 1. / self.ac_t[i,0]
+                self.ac_t[i,1] = 1. / self.ac_t[i,1]
         return
     
-    def autocorr_time_per_ligand(self):
+    def autocorr_time_old(self):
         return
 
     
