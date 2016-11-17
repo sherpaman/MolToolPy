@@ -1,6 +1,7 @@
 import numpy as np
 import scipy.optimize as opt
 import pickle
+import itertools
 
 def _exp2(x,l1,l2,a):
  return a * np.exp(-l1*x) + (1-a) * np.exp(-l2*x)
@@ -15,15 +16,52 @@ def read_phrases(f_dat,*args,**kwargs):
         out.phrases = L
     return out
 
+def _jaccard(a,b):
+    return float(len(set(a) & set(b))) /  float(len(set(a) | set(b)))
+
 def _mj(a,c,t):
     if len(a) == 0:
         return 0
-    list_j = [ float(len(set(a) & set(i))) /  float(len(set(a) | set(i))) for i in c ] # Jaccad Similarity
+    list_j = [ _jaccard(a,i) for i in c ] # Jaccad Similarity
+    if max(list_j) < t :
+        return 0
+    else:
+        return np.argmax(list_j)
+        
+def _similarity(a,c,t):
+    if len(a) == 0:
+        return 0
+    list_s = [ float(len(set(a) & set(i))) / len(i) for i in c ] 
+    if max(list_s) < t :
+        return 0
+    else:
+        return np.argmax(list_s)
+
+def _mj_subset(a,c,t):
+    if len(a) == 0:
+        return 0
+    list_j = [ _j_subset(a,i) for i in c ] # Jaccad Similarity
     if max(list_j) < t :
         return 0
     else:
         return np.argmax(list_j)
 
+def _j_subset(a,c):
+    if len(a) == 0:
+        return 0
+    if len(a) <= len(c):
+        min_list = a
+        min_len = len(a)
+        max_list = c
+        max_len = len(c)
+    elif len(a) > len(c):
+        min_list = c
+        min_len = len(c)
+        max_list = a
+        max_len = len(a)
+    list_j = [ _jaccard(i,min_list) for i in itertools.combinations(max_list,min_len) ]
+    return np.max(list_j)
+        
 def _percent_of_cluster(a,c,t): 
     list_j = [ float(len(set(a) & set(i))) /  float(len(set(i))) for i in c ] 
     if max(list_j) < t :
@@ -180,7 +218,16 @@ class phrases:
         for i in range(n_fr):
             for j in self.phrases_cl[i]:
                 self.p_cl[i,j] += 1
-        
+    
+    def cluster_phrases_new(self,threshold=0.25):
+        self.phrases_cl = [ [ _similarity(p,self.clusters,threshold) for p in t ] for t in self.phrases]
+        n_fr = len(self.phrases_cl)
+        n_cl = int(max(self.labels))
+        self.p_cl = np.zeros((n_fr,n_cl+1))
+        for i in range(n_fr):
+            for j in self.phrases_cl[i]:
+                self.p_cl[i,j] += 1
+    
     def life_time_old(self):
         self.LT=_calc_lifetime(self.p_cl,)
     
@@ -205,5 +252,3 @@ class phrases:
     
     def autocorr_time_old(self):
         return
-
-    
