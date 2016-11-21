@@ -28,6 +28,7 @@ parser.add_argument("-s","--skip",dest="skip",action="store",type=int,default=1,
 parser.add_argument("-j","--jaccard",dest="jac",action="store",default=0.25,help="Jaccard Similarity Threshold")
 parser.add_argument("-r","--receptor",dest="receptor",action="store",type=str,default="protein",help="Selection string for the Receptor")
 parser.add_argument("-l","--ligand",dest="ligand",action="store",type=str,default="not protein",help="Selection strin for the Ligand")
+parser.add_argument("--lig_dist",dest="lig_dist",action="store",type=float,default=7.0,help="Ligand-Receptor Distance Cut-Off")
 parser.add_argument("--res0",dest="res0",action="store",type=int,default=1,help="Add this to residue numbering of Protein")
 #
 options = parser.parse_args()
@@ -42,10 +43,10 @@ cutoff  = options.cutoff
 rec_str = options.receptor
 lig_str = options.ligand
 res0    = options.res0
+threshold = options.jac
+lig_dist_cutoff = options.lig_dist
 
 min_phrase_len = 3
-threshold = 0.25
-lig_dist_cutoff = 6.0
 
 u = MD.Universe(top,trj)
 
@@ -128,7 +129,7 @@ with open(options.out+"-binding-site.dat","w") as f:
             clusters=''
             for e in P.clusters[i].astype(int):
                 clusters=clusters+' {0:3s}'.format(str(e+res0))
-            f.write("{0:3d}| {1:4d} : ({2:80s}) | perc: {3:6.4f} | life-time: {4:8.3f} , {5:8.3f}, {6:8.3f} ns\n".format(i,P.centroid[i]+1,clusters,perc_ex[i],life_time[i]/1000.0,at[i,0],at[i,1]))
+            f.write("{0:3d}| {1:4d} : ({2:80s}) | perc: {3:6.4f} | life-time: {4:8.3f} , {5:8.3f}, {6:8.3f} ns\n".format(i,P.centroid[i]+1,clusters,perc_ex[i],life_time[i]/1000.,at[i,0]/1000.,at[i,1]/1000.))
 
 
 quit()

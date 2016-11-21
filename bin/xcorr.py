@@ -35,11 +35,12 @@ for i in np.arange(n_res):
         c[i,j] = np.trace(D[3*i:3*(i+1),3*j:3*(j+1)]) / (v[i]*v[j])
         c[j,i] = c[i,j]
 
-np.save(options.out,c)
-np.savetxt(options.out+'.txt',c)
+np.savez(options.out,c)
+#np.savetxt(options.out+'.txt',c)
 
 plt.matshow(c,cmap=plt.get_cmap('coolwarm'))
 plt.colorbar()
-plt.show()
+plt.savefig(options.out+".svg",fmt='svg')
+#plt.show()
 
 quit()

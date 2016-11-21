@@ -190,7 +190,6 @@ class phrases:
                 self.nobs = self.nobs + 1 
                 for a in f:
                     p_a.append(a)
-        
         C = np.ones((max(p_a),max(p_a)))
         for t in self.phrases:
             for f in t:
@@ -199,7 +198,6 @@ class phrases:
                     for j in range(i+1,len(f)):
                         C[f[i]-1,f[j]-1] += 1
                         C[f[j]-1,f[i]-1] += 1
-        
         self.D = -np.log(C/self.nobs)
 
     def find_cluster(self,cutoff):

@@ -84,7 +84,7 @@ if options.out != None:
                 clusters=''
                 for e in P.clusters[i].astype(int):
                     clusters=clusters+' {0:3s}'.format(str(e+options.res0))
-                f.write("{0:3d}| ({1:80s}) | perc: {2:6.4f} | life-time: {3:8.3f} , {4:8.3f}, {5:8.3f} ns\n".format(i,clusters,perc_ex[i],life_time[i]/1000.0,at[i,0],at[i,1]))
+                f.write("{0:3d}| ({1:80s}) | perc: {2:6.4f} | life-time: {3:8.3f} , {4:8.3f}, {5:8.3f} frames\n".format(i,clusters,perc_ex[i],life_time[i]/1000.0,at[i,0],at[i,1]))
 else:
     if options.cutoff != None:
         print("Using Cut-Off                 : {0:10.6f}".format(cutoff))
@@ -95,7 +95,7 @@ else:
             clusters=''
             for e in P.clusters[i].astype(int):
                 clusters=clusters+' {0:3s}'.format(str(e+options.res0))
-            print("{0:3d}| ({1:80s}) | perc: {2:6.4f} | life-time: {3:8.3f} , {4:8.3f}, {5:8.3f} ns\n".format(i,clusters,perc_ex[i],life_time[i]/1000.0,at[i,0],at[i,1]))
+            print("{0:3d}| ({1:80s}) | perc: {2:6.4f} | life-time: {3:8.3f} , {4:8.3f}, {5:8.3f} frames\n".format(i,clusters,perc_ex[i],life_time[i],at[i,0],at[i,1]))
 
 
 quit()
