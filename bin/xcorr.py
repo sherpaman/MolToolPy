@@ -38,7 +38,7 @@ for i in np.arange(n_res):
 np.savez(options.out,c)
 #np.savetxt(options.out+'.txt',c)
 
-plt.matshow(c,cmap=plt.get_cmap('coolwarm'))
+plt.matshow(c,cmap=plt.get_cmap('coolwarm'),vmin=-1.,vmax=+1)
 plt.colorbar()
 plt.savefig(options.out+".svg",fmt='svg')
 #plt.show()
