@@ -63,8 +63,8 @@ else:
     P.labels, P.clusters = read_cluster_file(options.clusters, options.res0,n_res)
 
 P.cluster_phrases(options.threshold)
-P.life_time_per_ligand()
-P.autocorr_time_per_ligand()
+P.life_time()
+P.autocorr_time()
 
 perc_ex=100.*np.sum(P.p_cl>0,axis=0)/float(len(P.p_cl))
 life_time=np.zeros(int(max(P.labels)+1))
