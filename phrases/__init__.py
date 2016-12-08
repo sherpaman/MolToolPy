@@ -97,7 +97,7 @@ def _gromos(D,cutoff,min_sz):
     return elem,cent
 
     
-def _calc_lifetime(data):
+def _calc_lifetime_old(data):
     n_fr , n_cl = data.shape
     LT = []
     for n in np.arange(n_cl):
@@ -113,7 +113,10 @@ def _calc_lifetime(data):
         LT.append(loc_t)
     return LT
 
-def _calc_lifetime_per_ligand(data,n_cl):
+def _calc_lifetime(data,n_cl):
+    # 
+    # This version assumes that you have one entry per ligand
+    #
     n_fr , n_lig = data.shape
     LT = [ [ ] for j in range(int(n_cl)+1) ]
     for n in range(n_lig):
@@ -158,7 +161,7 @@ class phrases:
             phrase=[]
             for lr in self.ligand.residues:
                 p = list(np.unique(self.receptor.select_atoms("around %f global group grp" %(self.cutoff), grp=lr).resids).astype(int))
-                if len(p) > self.min_len:
+                if len(p) >= self.min_len:
                     phrase.append(p)
             self.phrases.append(phrase)
         print("Done!")
@@ -171,9 +174,12 @@ class phrases:
             self.dt = fr.time - old_t
             old_t = fr.time
             phrase=[]
+            # Could be used List comprehension:
+            # p = [ list(np.unique(receptor.select_atoms("around %f global group grp" %(self.cutoff), grp=lr)) if len(list(np.unique(receptor.select_atoms("around %f global group grp" %(self.cutoff), grp=lr))) > self.min_len else [] for lr in self.ligand.residues ]
+            #
             for lr in self.ligand.residues:
                 p = list(np.unique(self.receptor.select_atoms("around %f global group grp" %(self.cutoff), grp=lr).resids).astype(int))
-                if len(p) > self.min_len:
+                if len(p) >= self.min_len:
                     phrase.append(p)
                 else:
                     phrase.append([])
@@ -208,8 +214,8 @@ class phrases:
         self.labels   = e
         self.clusters = [ np.where(e==i)[0] for i in range(int(max(e)+1)) ]
 
-    def cluster_phrases(self,threshold=0.25):
-        self.phrases_cl = [ [ _mj(p,self.clusters,threshold) for p in t ] for t in self.phrases]
+    def cluster_phrases(self,thresh=0.2):
+        self.phrases_cl = [ [ _mj(p,self.clusters,thresh) for p in t ] for t in self.phrases]
         n_fr = len(self.phrases_cl)
         n_cl = int(max(self.labels))
         self.p_cl = np.zeros((n_fr,n_cl+1))
@@ -217,8 +223,8 @@ class phrases:
             for j in self.phrases_cl[i]:
                 self.p_cl[i,j] += 1
     
-    def cluster_phrases_new(self,threshold=0.25):
-        self.phrases_cl = [ [ _similarity(p,self.clusters,threshold) for p in t ] for t in self.phrases]
+    def cluster_phrases_new(self,thresh=0.2):
+        self.phrases_cl = [ [ _similarity(p,self.clusters,thresh) for p in t ] for t in self.phrases]
         n_fr = len(self.phrases_cl)
         n_cl = int(max(self.labels))
         self.p_cl = np.zeros((n_fr,n_cl+1))
@@ -227,11 +233,11 @@ class phrases:
                 self.p_cl[i,j] += 1
     
     def life_time_old(self):
-        self.LT=_calc_lifetime(self.p_cl,)
+        self.LT=_calc_lifetime_old(self.p_cl,)
     
     def life_time(self):
         self.phrases_cl = np.array(self.phrases_cl)
-        self.LT=_calc_lifetime_per_ligand(self.phrases_cl,max(self.labels))
+        self.LT=_calc_lifetime(self.phrases_cl,max(self.labels))
     
     def autocorr_time(self):
         data = np.array(self.phrases_cl)

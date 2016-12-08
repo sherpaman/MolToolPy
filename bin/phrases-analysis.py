@@ -27,6 +27,7 @@ clustering.add_argument("-l","--clusters",dest="clusters",action="store",type=st
 parser.add_argument("-t","--threshold",dest="threshold",action="store",type=float,required=False,default=0.25,help="Threshold for Similarity")
 #parser.add_argument("-m","--method",dest="method",choices=['jaccard'],default='jaccard',help="Similarity Method")
 parser.add_argument("--res0",dest="res0",action="store",type=int,default=1,help="Add this to residue numbering of Protein")
+parser.add_argument("--dt",dest="dt",action="store",type=float,default=1.0,help="Time Step of the saved Phrases")
 
 
 #
@@ -51,6 +52,7 @@ else:
     P = phrases.read_phrases(options.phrases,min_len=3)
     P.calc_dist()
 
+P.dt = options.dt
 p = np.linspace(0,100,1002)
 perc = np.percentile(P.D,p)
 

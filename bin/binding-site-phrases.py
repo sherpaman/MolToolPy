@@ -101,7 +101,7 @@ if cutoff==None:
 
 
 P.find_cluster(cutoff)
-P.cluster_phrases(threshold)
+P.cluster_phrases(thresh=threshold)
 P.life_time()
 P.autocorr_time()
 

@@ -37,10 +37,16 @@ for i in np.arange(n_res):
 
 np.savez(options.out,c)
 #np.savetxt(options.out+'.txt',c)
-
+ix = np.triu_indices(len(c),1)
+p = np.linspace(0,100,1002)
+perc = np.percentile(c[ix],p)
+SIGN = (c > p[981]).astype(int) - (c < p[21]).astype(int)
 plt.matshow(c,cmap=plt.get_cmap('coolwarm'),vmin=-1.,vmax=+1)
 plt.colorbar()
 plt.savefig(options.out+".svg",fmt='svg')
+plt.matshow(SIGN,cmap=plt.get_cmap('coolwarm'))
+plt.title("Significance regions")
+plt.savefig(options.out+".significance.svg",fmt='svg')
 #plt.show()
 
 quit()

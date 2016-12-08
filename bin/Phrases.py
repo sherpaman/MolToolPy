@@ -9,7 +9,7 @@ from math import *
 import MDAnalysis as MD
 from argparse import ArgumentParser
 parser = ArgumentParser( description = 'Find Binding Sites in Receptor+Ligand MD simulation')
-subparsers = parser.add_subparsers(help='sub-command help')
+subparsers = parser.add_subparsers(help='sub-command help',dest='prog')
 #
 # TRAJ-READ PROGRAM SUB-PARSER
 parser_read = subparsers.add_parser('read-traj',description="read a trajectory, find and cluster binding phrases, basic statistics")
@@ -35,7 +35,7 @@ parser_read.add_argument("-l","--ligand",dest="ligand",action="store",type=str,d
 parser_read.add_argument("--res0",dest="res0",action="store",type=int,default=1,help="Add this to residue numbering of Protein")
 #
 # ANALYSIS PROGRAM SUB-PARSER
-parser_anal = subparsers.add_parser('read-traj',description="read a list of phrases previously generated (possibly a distance matrix between phrases sub-elements), and perform clustering, filtering and basic statistics")
+parser_anal = subparsers.add_parser('anal-phrases',description="read a list of phrases previously generated (possibly a distance matrix between phrases sub-elements), and perform clustering, filtering and basic statistics")
 #
 # INPUT FILES
 #
@@ -52,6 +52,7 @@ clustering = parser_anal.add_mutually_exclusive_group()
 clustering.add_argument("-c","--cutoff",dest="cutoff",action="store",type=float,default=None,help="Cut-off for clustering",metavar="FLOAT")
 clustering.add_argument("-l","--clusters",dest="clusters",action="store",type=str,default=None,help="Text file containing the clusters",metavar="CLUST FILE")
 parser_anal.add_argument("-t","--threshold",dest="threshold",action="store",type=float,required=False,default=0.25,help="Threshold for Similarity")
+parser_anal.add_argument("--dt",dest="dt",action="store",type=float,required=True,default=1.0,help="Time-step of the analyzed trajectory")
 #parser.add_argument("-m","--method",dest="method",choices=['jaccard'],default='jaccard',help="Similarity Method")
 parser_anal.add_argument("--res0",dest="res0",action="store",type=int,default=1,help="Add this to residue numbering of Protein")
 # 
@@ -71,7 +72,7 @@ def read_cluster_file(file_in,r0,nr):
             clusters.append(loc_cluster)
     return labels, clusters
 
-if options.subparser_name='read-traj':
+if options.prog=='read-traj':
     top             = options.top
     trj             = options.traj
     b               = options.begin
@@ -134,13 +135,15 @@ if options.subparser_name='read-traj':
         plt.plot(c_val[elbow:n_val-buf],i2[elbow]+c_val[elbow:n_val-buf]*s2[elbow])
         plt.savefig('{0:s}-elbow-point.png'.format(options.out),fmt="png")
 
-elif options.subparser_name="anal":
+elif options.prog=="anal-phrases":
+    threshold = options.threshold
     if options.dist != None:
         P = phrases.read_phrases(options.phrases,min_len=3,dist=options.dist)
     else:
         P = phrases.read_phrases(options.phrases,min_len=3)
         P.calc_dist()
     
+    P.dt = options.dt
     p = np.linspace(0,100,1002)
     perc = np.percentile(P.D,p)
     n_res=len(P.D)
@@ -184,7 +187,7 @@ elif options.subparser_name="anal":
 
 
 P.find_cluster(cutoff)
-P.cluster_phrases(threshold)
+P.cluster_phrases(thresh=threshold)
 P.life_time()
 P.autocorr_time()
 
@@ -200,7 +203,7 @@ with open(options.out+"-cluster-list.dat","w") as f:
     for i in range(1,int(max(P.labels)+1)):
         clusters=''
         for e in P.clusters[i].astype(int):
-            clusters=clusters+' {0:s}'.format(str(e+res0))
+            clusters=clusters+' {0:s}'.format(str(e+options.res0))
         f.write("{0:s}\n".format(clusters))
 
 with open(options.out+"-binding-site.dat","w") as f:
@@ -211,7 +214,7 @@ with open(options.out+"-binding-site.dat","w") as f:
         if len(P.LT[i]) > 0:
             clusters=''
             for e in P.clusters[i].astype(int):
-                clusters=clusters+' {0:3s}'.format(str(e+res0))
+                clusters=clusters+' {0:3s}'.format(str(e+options.res0))
             f.write("{0:3d}| {1:4d} : ({2:80s}) | perc: {3:6.4f} | life-time: {4:8.3f} , {5:8.3f}, {6:8.3f} ns\n".format(i,P.centroid[i]+1,clusters,perc_ex[i],life_time[i]/1000.,at[i,0]/1000.,at[i,1]/1000.))
 
 quit()
