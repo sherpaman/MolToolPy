@@ -43,7 +43,7 @@ def read_cluster_file(file_in,r0,nr):
                 resnum = int(e)-int(r0)
                 loc_cluster.append(int(e)-r0)
                 labels[resnum] = i
-            clusters.append(loc_cluster)
+            clusters.append(np.array(loc_cluster))
     return labels, clusters
 
 if options.dist != None:
@@ -63,7 +63,6 @@ if options.cutoff != None:
     P.find_cluster(options.cutoff)
 else:
     P.labels, P.clusters = read_cluster_file(options.clusters, options.res0,n_res)
-
 P.cluster_phrases(options.threshold)
 P.life_time()
 P.autocorr_time()
