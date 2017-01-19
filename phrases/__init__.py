@@ -1,5 +1,6 @@
 import numpy as np
 import scipy.optimize as opt
+import scipy.cluster.hierarchy as sch
 import pickle
 import itertools
 
@@ -196,14 +197,14 @@ class phrases:
                 self.nobs = self.nobs + 1 
                 for a in f:
                     p_a.append(a)
-        C = np.ones((max(p_a),max(p_a)))
+        C = np.ones((max(p_a)+1,max(p_a)+1))
         for t in self.phrases:
             for f in t:
                 for i in range(len(f)):
-                    C[f[i]-1,f[i]-1] += 1
+                    C[f[i],f[i]] += 1
                     for j in range(i+1,len(f)):
-                        C[f[i]-1,f[j]-1] += 1
-                        C[f[j]-1,f[i]-1] += 1
+                        C[f[i],f[j]] += 1
+                        C[f[j],f[i]] += 1
         self.D = -np.log(C/self.nobs)
 
     def find_cluster(self,cutoff):
@@ -213,6 +214,11 @@ class phrases:
         self.centroid = c
         self.labels   = e
         self.clusters = [ np.where(e==i)[0] for i in range(int(max(e)+1)) ]
+    
+    def complete_linkage(self):
+        idx = np.triu_indices(self.D.shape[0],1)
+        L = sch.linkage(self.D[idx],method='complete')
+        
 
     def cluster_phrases(self,thresh=0.2):
         self.phrases_cl = [ [ _mj(p,self.clusters,thresh) for p in t ] for t in self.phrases]

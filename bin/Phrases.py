@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
 import matplotlib.pyplot as plt
 import numpy as np
 import pickle
@@ -25,11 +26,12 @@ parser_read.add_argument("-o","--out",dest="out",action="store",type=str,default
 #
 # VAR ARGUMENTS
 #
+parser_read.add_argument("-d","--dist",dest="dist_cutoff",action="store",type=float,default=7.0,help="Distance Cut-off for binding definition")
 parser_read.add_argument("-c","--cutoff",dest="cutoff",action="store",type=float,default=None,help="Cut-off for clustering")
 parser_read.add_argument("-b","--begin",dest="begin",action="store",type=int,default=0,help="First frame to read")
 parser_read.add_argument("-e","--end",dest="end",action="store",type=int,default=-1,help="Last frame to read")
 parser_read.add_argument("-s","--skip",dest="skip",action="store",type=int,default=1,help="number of frame to skip", metavar="INTEGER")
-parser_read.add_argument("-j","--jaccard",dest="jac",action="store",default=0.25,help="Jaccard Similarity Threshold")
+parser_read.add_argument("-j","--jaccard",dest="jac",action="store",type=float,default=0.25,help="Jaccard Similarity Threshold")
 parser_read.add_argument("-r","--receptor",dest="receptor",action="store",type=str,default="protein",help="Selection string for the Receptor")
 parser_read.add_argument("-l","--ligand",dest="ligand",action="store",type=str,default="not protein",help="Selection strin for the Ligand")
 parser_read.add_argument("--res0",dest="res0",action="store",type=int,default=1,help="Add this to residue numbering of Protein")
@@ -51,7 +53,7 @@ parser_anal.add_argument("-o","--out",dest="out",action="store",type=str,default
 clustering = parser_anal.add_mutually_exclusive_group()
 clustering.add_argument("-c","--cutoff",dest="cutoff",action="store",type=float,default=None,help="Cut-off for clustering",metavar="FLOAT")
 clustering.add_argument("-l","--clusters",dest="clusters",action="store",type=str,default=None,help="Text file containing the clusters",metavar="CLUST FILE")
-parser_anal.add_argument("-t","--threshold",dest="threshold",action="store",type=float,required=False,default=0.25,help="Threshold for Similarity")
+parser_anal.add_argument("-j","--jaccard",dest="jac",action="store",type=float,required=False,default=0.25,help="Threshold for Similarity")
 parser_anal.add_argument("--dt",dest="dt",action="store",type=float,required=True,default=1.0,help="Time-step of the analyzed trajectory")
 #parser.add_argument("-m","--method",dest="method",choices=['jaccard'],default='jaccard',help="Similarity Method")
 parser_anal.add_argument("--res0",dest="res0",action="store",type=int,default=1,help="Add this to residue numbering of Protein")
@@ -61,15 +63,16 @@ options = parser.parse_args()
 # LOCAL FUNCTION DEFINITION
 def read_cluster_file(file_in,r0,nr):
     with open(file_in) as f:
-        clusters = []
-        labels = np.arange(nr)
+        clusters = [[]]
+        labels = np.zeros(nr)
         for i,r in enumerate(f.readlines()):
             loc_cluster = []
             for e in r.split():
                 resnum = int(e)-int(r0)
                 loc_cluster.append(int(e)-r0)
-                labels[resnum] = i
-            clusters.append(loc_cluster)
+                labels[resnum] = i+1
+            clusters.append(np.array(loc_cluster))
+            clusters[0] = [ n for n,i in enumerate(labels) if i == 0 ]
     return labels, clusters
 
 if options.prog=='read-traj':
@@ -103,7 +106,9 @@ if options.prog=='read-traj':
     p = np.linspace(0,100,1002)
     perc = np.percentile(P.D,p)
 
-    if cutoff==None:
+    if cutoff != None:
+        P.find_cluster(options.cutoff)
+    else:
         n_val = 551
         c_val = np.linspace(perc[5],perc[60],n_val)
         v_val = np.zeros(n_val)
@@ -136,7 +141,8 @@ if options.prog=='read-traj':
         plt.savefig('{0:s}-elbow-point.png'.format(options.out),fmt="png")
 
 elif options.prog=="anal-phrases":
-    threshold = options.threshold
+    res0            = options.res0
+    threshold       = options.jac
     if options.dist != None:
         P = phrases.read_phrases(options.phrases,min_len=3,dist=options.dist)
     else:
@@ -152,7 +158,13 @@ elif options.prog=="anal-phrases":
         cutoff = options.cutoff
         P.find_cluster(options.cutoff)
     elif options.clusters != None:
-        P.labels, P.clusters = read_cluster_file(options.clusters, options.res0,n_res)
+        P.labels, P.clusters = read_cluster_file(options.clusters,options.res0,n_res)
+        P.centroid = [ i[0] for i in P.clusters ]
+        print("Will measure Clusters :")
+        for i in P.clusters:
+            print(i)
+        print(" Label:" )
+        print(P.labels)
     else:
         n_val = 551
         c_val = np.linspace(perc[5],perc[60],n_val)
@@ -185,8 +197,6 @@ elif options.prog=="anal-phrases":
         plt.plot(c_val[elbow:n_val-buf],i2[elbow]+c_val[elbow:n_val-buf]*s2[elbow])
         plt.savefig('{0:s}-elbow-point.png'.format(options.out),fmt="png")
 
-
-P.find_cluster(cutoff)
 P.cluster_phrases(thresh=threshold)
 P.life_time()
 P.autocorr_time()
@@ -198,23 +208,47 @@ for i in range(int(max(P.labels)+1)):
         life_time[i] = np.average(np.concatenate(P.LT[i]))*P.dt
 at = np.sort(P.ac_t[:,:2])*P.dt
 
-#print P.LT
-with open(options.out+"-cluster-list.dat","w") as f:
-    for i in range(1,int(max(P.labels)+1)):
-        clusters=''
-        for e in P.clusters[i].astype(int):
-            clusters=clusters+' {0:s}'.format(str(e+options.res0))
-        f.write("{0:s}\n".format(clusters))
+do_write_clusters=False
+if options.prog=="read-traj" :
+    do_write_clusters=True
+if options.prog == "anal-phrases": 
+    if options.clusters != None :
+        do_write_clusters=True
+        
+if do_write_clusters:
+    with open(options.out+"-cluster-list.dat","w") as f:
+        for i in range(1,int(max(P.labels))+1):
+            clusters=''
+            for e in P.clusters[i].astype(int):
+                clusters=clusters+' {0:s}'.format(str(e+options.res0))
+            f.write("{0:s}\n".format(clusters))
 
+        
+#print P.LT
 with open(options.out+"-binding-site.dat","w") as f:
-    f.write("Using Cut-Off                 : {0:10.6f}\n".format(cutoff))
-    cutoff_percentile = (p[np.min(np.where(perc>cutoff))]+p[np.max(np.where(perc<cutoff))]) / 2
-    f.write("This value corresponds to the   {0:8.4f} percentile\n".format(cutoff_percentile))
+    if options.prog=="read-traj":
+        f.write("Using Cut-Off                 : {0:10.6f}\n".format(cutoff))
+        try:
+            cutoff_percentile = (p[np.min(np.where(perc>cutoff))]+p[np.max(np.where(perc<cutoff))]) / 2
+            f.write("This value corresponds to the   {0:8.4f} percentile\n".format(cutoff_percentile))
+        except:
+            f.write("This value corresponds to the    0.00 percentile\n")
+    else:
+        if options.cutoff != None:
+            f.write("Using Cut-Off                 : {0:10.6f}\n".format(cutoff))
+            try:
+                cutoff_percentile = (p[np.min(np.where(perc>cutoff))]+p[np.max(np.where(perc<cutoff))]) / 2
+                f.write("This value corresponds to the   {0:8.4f} percentile\n".format(cutoff_percentile))
+            except:
+                f.write("This value corresponds to the    0.00 percentile\n".format(cutoff_percentile))
+        else:
+            f.write("Using Manually defined Clusters\n")
+    f.write("Using Jaccard Similarity Threshold : {0:10.6f}\n".format(threshold))
     for i in range(1,int(max(P.labels)+1)):
         if len(P.LT[i]) > 0:
             clusters=''
             for e in P.clusters[i].astype(int):
                 clusters=clusters+' {0:3s}'.format(str(e+options.res0))
-            f.write("{0:3d}| {1:4d} : ({2:80s}) | perc: {3:6.4f} | life-time: {4:8.3f} , {5:8.3f}, {6:8.3f} ns\n".format(i,P.centroid[i]+1,clusters,perc_ex[i],life_time[i]/1000.,at[i,0]/1000.,at[i,1]/1000.))
+            f.write("{0:3d}| {1:4d} : ({2:80s}) | perc: {3:6.4f} | life-time: {4:8.3f} , {5:8.3f}, {6:8.3f} ns\n".format(i,P.centroid[i]+options.res0,clusters,perc_ex[i],life_time[i]/1000.,at[i,0]/1000.,at[i,1]/1000.))
 
 quit()
