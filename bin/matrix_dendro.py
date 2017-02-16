@@ -108,6 +108,7 @@ if options.threshold != None:
     # Reordered Large Distance Matrix
     axmatrix = fig.add_axes([0.09,0.1,0.6,0.6])
     im = axmatrix.matshow(d_s[idx1][:,idx2], aspect='auto', origin='lower', cmap=plt.get_cmap('coolwarm'))
+    im.set_clim(np.min(d),np.max(d))
     axmatrix.set_xticks([])
     axmatrix.set_yticks([])
     

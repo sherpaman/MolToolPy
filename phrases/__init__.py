@@ -71,8 +71,11 @@ def _percent_of_cluster(a,c,t):
         return np.argmax(list_j)
 
 def _autocorr(data):
-    result = np.correlate(data, data, mode='full')
-    return result[result.size/2:]
+    mu = np.average(data)
+    sigma = np.var(data)
+    result = np.correlate(data-mu, data-mu, mode='full')/(sigma**2)
+    norm = np.arange(result.size/2+1,0,-1)
+    return result[result.size/2:]/norm
 
 def _gromos(D,cutoff,min_sz):
     M=np.copy(D)
@@ -215,10 +218,14 @@ class phrases:
         self.labels   = e
         self.clusters = [ np.where(e==i)[0] for i in range(int(max(e)+1)) ]
     
-    def complete_linkage(self):
+    def complete_linkage(self,cutoff):
         idx = np.triu_indices(self.D.shape[0],1)
-        L = sch.linkage(self.D[idx],method='complete')
-        
+        Z = sch.linkage(self.D[idx],method='complete')
+        L = sch.fcluster(Z,t=cutoff,criterion='distance')
+        #
+        self.clusters = [ np.where(L1 == i )[0] for i in np.arange(max(L))+1 if len(np.where(L==i)) >= self.min_len ]
+        self.labels   = L
+
 
     def cluster_phrases(self,thresh=0.2):
         self.phrases_cl = [ [ _mj(p,self.clusters,thresh) for p in t ] for t in self.phrases]

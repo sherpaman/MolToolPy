@@ -5,6 +5,7 @@ import xpm
 import copy
 import numpy
 import scipy.stats
+import scipy.optimize
 
 #REGULAR EXPRESSION DEFINITIONS
 re_nucleotide=re.compile('D[ATCG][0-9]+')
@@ -14,6 +15,16 @@ re_N=re.compile("(D[ACTG])([1-9]{1}[0-9]*)([HNOP][A-Z,0-9]*)") # MATCHES NUCLEOT
 re_P=re.compile("([ACGHILMNPSTV][A-Z]{2})([1-9]{1}[0-9]*)([HNOP][A-Z,0-9]*)") # MATCHES PROTEIN RESIDUES
 re_R=re.compile("(D[ACTG]|[ACGHILMNPSTV][A-Z]{2})([1-9]{1}[0-9]*)([HNOP][A-Z,0-9]*)") # MATCHES BOTH
 re_R_sim=re.compile("(D[ACTG]|[ACGHILMNPSTV][A-Z]{2})([1-9]{1}[0-9]*)")
+
+def _autocorr(data):
+    mu     = numpy.average(data)
+    sigma  = numpy.var(data)
+    result = numpy.correlate(data-mu, data-mu, mode='full')/(sigma**2)
+    norm   = numpy.arange(result.size/2+1,0,-1)
+    return result[result.size/2:]/norm
+
+def _exp2(x,l1,l2,a):
+    return a * numpy.exp(-l1*x) + (1-a) * numpy.exp(-l2*x)
 
 def uniq_ref(l):
     """
@@ -95,6 +106,7 @@ class HBond:
         n2=int(other.perc*other.nfr/100.0)
         odds, pvalue = scipy.stats.fisher_exact([ [ n1 , perc*self.nfr - n1 ],[ n2 , perc*other.nfr - n2 ] ])
         return pvalue
+    
 
 class HBonds: 
     def __init__(self,name='New List',mol=None,red=False,log=None,xpm=None,perc=None,conf=None):
@@ -326,7 +338,29 @@ class HBonds:
             for n,i in enumerate(self.hblist):
                 self.hblist[n].perc  = 100.0 * self.xpm.array[n,:].sum() / self.nfr
                 self.hblist[n].nfr = self.nfr
-        
+    
+    def autocorr_time(self,b=0,e=-1):
+        self.ac_t = numpy.zeros([self.nbonds,3])
+        if b != 0:
+            if b >= len(self.hblist):
+                print("b (%d) should be lower than %d" %(b, len(self.hblist)))
+                raise ValueError
+        if e > 0:
+            if e < b:
+                print("e (%d) should be higher than b (%d)" %(e, b))
+                raise ValueError
+            if e >= len(self.hblist):
+                 print("e (%d) should be lower than %d" %(e, len(self.hblist)))
+                 raise ValueError
+        if e < 0:
+            e = len(self.hblist) + e
+        for n in numpy.arange(b,e,dtype=int):
+            d0   = self.xpm.array[self.ref_hb[n][0],:]
+            for r in range(1,len(self.ref_hb[n])):
+                d1 = self.xpm.array[self.ref_hb[n][r],:]
+                d0 = numpy.logical_or(d0,d1)
+            self.ac_t[n], o = scipy.optimize.curve_fit(_exp2,numpy.arange(self.nfr),_autocorr(d0),p0=(1.0,1000.0,0.9),bounds=( [0.,0.,0.],[numpy.inf, numpy.inf,1.0] ) )
+    
     def calc_lifetime(self,b=0,e=-1):
         LT = []
         if b != 0:
