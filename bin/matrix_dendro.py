@@ -19,7 +19,7 @@ parser.add_argument("-o","--out",dest="out",action="store",type=str,default=None
 #
 # OTHER OPTIONS
 #
-parser.add_argument("-r","--rec",dest="rec",action="store",type=str,default=None,help="Receptor String Selection",required=True,metavar="FILENAME")
+parser.add_argument("-r","--rec",dest="rec",action="store",type=str,default=None,help="Receptor String Selection",required=True,metavar="RECEPTOR")
 parser.add_argument("-t","--threshold",dest="threshold",action="store",type=float,default=None,help="Distance Threshold",required=False,metavar="CUTOFF")
 parser.add_argument("--res0",dest="res0",action="store",type=int,default=1,help="Add this to residue numbering of Protein")
 options = parser.parse_args()
