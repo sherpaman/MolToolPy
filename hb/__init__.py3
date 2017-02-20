@@ -359,7 +359,7 @@ class HBonds:
             for r in range(1,len(self.ref_hb[n])):
                 d1 = self.xpm.array[self.ref_hb[n][r],:]
                 d0 = numpy.logical_or(d0,d1)
-            self.ac_t[n], o = scipy.optimize.curve_fit(_exp2,numpy.arange(self.nfr),_autocorr(d0),p0=(1.0,1000.0,0.9),bounds=( [0.,0.,0.],[numpy.inf, numpy.inf,1.0] ) )
+            self.ac_t[n], o = scipy.optimize.curve_fit(_exp2,numpy.arange(self.nfr),_autocorr(d0),p0=(0.01,1.0,0.9),bounds=( [0.,0.,0.],[numpy.inf, numpy.inf,1.0] ) )
     
     def calc_lifetime(self,b=0,e=-1):
         LT = []
