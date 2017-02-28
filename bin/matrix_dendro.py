@@ -23,7 +23,7 @@ parser.add_argument("-o","--out",dest="out",action="store",type=str,default=None
 # OTHER OPTIONS
 #
 parser.add_argument("-r","--rec",dest="rec",action="store",type=str,default=None,help="Receptor String Selection",required=True,metavar="RECEPTOR")
-parser.add_argument("-l","--list",dest="list_out",action="store_true",default=False,help="Print List of Residues in Clusters",metavar="RECEPTOR")
+parser.add_argument("-l","--list",dest="list_out",action="store_true",default=False,help="Print List of Residues in Clusters")
 parser.add_argument("-t","--threshold",dest="threshold",action="store",type=float,default=None,help="Minimum Probability Threshold",required=False,metavar="CUTOFF")
 parser.add_argument("-c","--clust_min_size",dest="cl_min_sz",action="store",type=int,default=3,help="Minimum size of threshold",required=False,metavar="CUTOFF")
 parser.add_argument("--res0",dest="res0",action="store",type=int,default=1,help="Add this to residue numbering of Protein")
