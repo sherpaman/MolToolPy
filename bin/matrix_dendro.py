@@ -2,6 +2,9 @@
 
 import numpy as np
 import scipy.cluster.hierarchy as sch
+import scipy.optimize as opt
+from scipy.interpolate import interp1d as interp
+from sklearn import metrics
 import MDAnalysis as MD
 import matplotlib.pyplot as plt
 from argparse import ArgumentParser
@@ -20,7 +23,9 @@ parser.add_argument("-o","--out",dest="out",action="store",type=str,default=None
 # OTHER OPTIONS
 #
 parser.add_argument("-r","--rec",dest="rec",action="store",type=str,default=None,help="Receptor String Selection",required=True,metavar="RECEPTOR")
-parser.add_argument("-t","--threshold",dest="threshold",action="store",type=float,default=None,help="Distance Threshold",required=False,metavar="CUTOFF")
+parser.add_argument("-l","--list",dest="list_out",action="store",type=str,default=None,help="Print List of Residues in Clusters",required=True,metavar="RECEPTOR")
+parser.add_argument("-t","--threshold",dest="threshold",action="store",type=float,default=None,help="Minimum Probability Threshold",required=False,metavar="CUTOFF")
+parser.add_argument("-c","--clust_min_size",dest="cl_min_sz",action="store",type=int,default=3,help="Minimum size of threshold",required=False,metavar="CUTOFF")
 parser.add_argument("--res0",dest="res0",action="store",type=int,default=1,help="Add this to residue numbering of Protein")
 options = parser.parse_args()
 
@@ -44,16 +49,16 @@ fig = plt.figure(figsize=(10,10))
 
 # Right side Dedrogram
 ax1 = fig.add_axes([0.74,0.1,0.2,0.6])
-Y1 = sch.linkage(d[idx], method='complete')
-Y2 = sch.linkage(d[idx], method='complete')
-Z1 = sch.dendrogram(Y1, orientation='right')
-idx1 = Z1['leaves']
+Y01 = sch.linkage(d[idx], method='complete')
+Y02 = sch.linkage(d[idx], method='complete')
+Z01 = sch.dendrogram(Y01, orientation='right')
+idx1 = Z01['leaves']
 ax1.set_xticks([])
 ax1.set_yticklabels(res[idx1],size=4)
 
 # Top side Dendrogram
 ax2 = fig.add_axes([0.09,0.75,0.6,0.2])
-Z2 = sch.dendrogram(Y2)
+Z02 = sch.dendrogram(Y02)
 idx2 = Z2['leaves']
 #ax2.set_xticks([])
 ax2.set_xticklabels(res[idx2],size=4)
@@ -123,5 +128,28 @@ if options.threshold != None:
     plt.colorbar(im, cax=cbaxes)
     #plt.show()
     plt.savefig('{0:s}_{1:s}_subset.pdf'.format(base_name,str(options.threshold)),fmt='pdf')
+
+if options.list_out!=None:
+    labels = np.array([sch.fcluster(Y01,c,criterion='distance') for c in Y01[:,2]])
+    score = np.array([metrics.silhouette_score(d,l) for l in labels[:-2]])
+    c = Y01[:-2,2]
+    f = interp(c,-score,kind='linear')
+    opt_c = opt.fmin(f,x0=c[options.cl_min_cl-1])
+    lab_opt = sch.fcluster(Y01,t=opt_c,criterion='distance') 
+    C = [ np.where(lab_opt==i)[0] for i in range(1,max(lab_opt)+1) if len(np.where(lab_opt==i)[0])>=options.cl_min_sz ]
+    fo=open(options.out+".resname.dat",'w+')
+    for n,i in enumerate(C1):
+        fo.write("{:30s} {:2d}".format(options.dist,n+1))
+        for j in i:
+            fo.write(" {:6s}".format(res[j]))
+        fo.write("\n")
+    fo.close()
+    fo=open(options.out+".resnum.dat",'w+')
+    for n,i in enumerate(C):
+        fo.write("{:30s} {:2d}".format(options.dist,n+1))
+        for j in i:
+            fo.write(" {:3d}".format(j))
+        fo.write("\n")
+    fo.close()
 
 quit()

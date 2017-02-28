@@ -36,8 +36,8 @@ parser_read.add_argument("-r","--receptor",dest="receptor",action="store",type=s
 parser_read.add_argument("-l","--ligand",dest="ligand",action="store",type=str,default="not protein",help="Selection strin for the Ligand")
 parser_read.add_argument("--res0",dest="res0",action="store",type=int,default=1,help="Add this to residue numbering of Protein")
 #
-# ANALYSIS PROGRAM SUB-PARSER
-parser_anal = subparsers.add_parser('anal-phrases',description="read a list of phrases previously generated (possibly a distance matrix between phrases sub-elements), and perform clustering, filtering and basic statistics")
+# JACCARD ANALYSIS PROGRAM SUB-PARSER
+parser_anal = subparsers.add_parser('Jaccard',description="read a list of phrases previously generated (possibly a distance matrix between phrases sub-elements), and perform clustering, filtering and basic statistics")
 #
 # INPUT FILES
 #
@@ -55,9 +55,34 @@ clustering.add_argument("-c","--cutoff",dest="cutoff",action="store",type=float,
 clustering.add_argument("-l","--clusters",dest="clusters",action="store",type=str,default=None,help="Text file containing the clusters",metavar="CLUST FILE")
 parser_anal.add_argument("-j","--jaccard",dest="jac",action="store",type=float,required=False,default=0.25,help="Threshold for Similarity")
 parser_anal.add_argument("--dt",dest="dt",action="store",type=float,required=True,default=1.0,help="Time-step of the analyzed trajectory")
-#parser.add_argument("-m","--method",dest="method",choices=['jaccard'],default='jaccard',help="Similarity Method")
 parser_anal.add_argument("--res0",dest="res0",action="store",type=int,default=1,help="Add this to residue numbering of Protein")
 # 
+#
+# LINKAGE ANALYSIS PROGRAM SUB-PARSER
+parser_linkage = subparsers.add_parser('Linkage',description="Performe Hierarchical Clustering of Residues based on Phrases Analysis and/or filter the Phrases based on clustering")
+#
+# INPUT FILES
+#
+parser_linkage.add_argument("-p","--phrases",dest="phrases",action="store",type=str,default=None,help="Input Phrases list",required=True,metavar="PICKLE FILE")
+parser_linkage.add_argument("-d","--dist",dest="dist",action="store",type=str,default=None,help="Input Phrases Distance Matrix",required=False,metavar="NPY FILE")
+parser_linkage.add_argument("-s","--topol",dest="top",action="store",type=str,default=None,help="Topology File",required=True,metavar="TOPOL")
+parser_linkage.add_argument("-f","--ref",dest="trj",action="store",type=str,default=None,help="Structure File",required=True,metavar="STRUCT")
+#
+# OUTPUT FILES
+#
+parser_linkage.add_argument("-o","--out",dest="out",action="store",type=str,default=None,required=True,help="Output File Name",metavar="DAT FILE")
+#
+# VAR ARGUMENTS
+#
+parser_linkage.add_argument("-r","--receptor",dest="receptor",action="store",type=str,default=None,help="Selection string for the Receptor",required=True,metavar="STRING")
+parser_linkage.add_argument("-t","--threshold",dest="threshold",action="store",type=float,default=None,help="Minimum Probability Threshold for Clustering",required=False,metavar="PROBABILITY")
+parser_linkage.add_argument(     "--do_filter",dest="do_filter",action="store_true",default=False,help="Toggle the Cluster Based Filtering of the original Phrases",required=False,metavar="FLOAT")
+#
+clustering2 = parser_linkage.add_mutually_exclusive_group()
+clustering2.add_argument("-e","--do_elbow",dest="do_elbow",action="store_true",default=False,help="Toggle The Elbow Criterion for Cluster Definition")
+clustering2.add_argument("-l","--clusters",dest="clusters",action="store",type=str,default=None,help="Text file containing the clusters",metavar="CLUST FILE")
+#
+#
 options = parser.parse_args()
 
 # LOCAL FUNCTION DEFINITION
@@ -197,6 +222,117 @@ elif options.prog=="anal-phrases":
         plt.plot(c_val[elbow:n_val-buf],i2[elbow]+c_val[elbow:n_val-buf]*s2[elbow])
         plt.savefig('{0:s}-elbow-point.png'.format(options.out),fmt="png")
 
+elif options.program == "Linkage":
+    top      = options.top
+    trj      = options.trj
+    rec_str  = options.receptor
+    base_name = options.out
+    
+    u = MD.Universe(top,trj)
+    receptor = u.select_atoms(rec_str)
+    P = phrases.read_phrases(options.phrases,min_len=3)
+    if options.dist == None:
+        P.calc_dist()
+        D = P.D
+    else:
+        D = np.load(dist)['arr_0']
+    
+    r0 = receptor.residues[0].resid
+    res=np.array([ l.resname+str(l.resid+options.res0) for l in receptor.residues])
+    res_idx=np.array([ l.resid for l in receptor.residues])
+    d = D[res_idx][:,res_idx]
+    idx = np.triu_indices(d.shape[0],1)
+    
+    #Create The First Figure
+    fig = plt.figure(figsize=(10,10))
+    
+    # Right side Dedrogram
+    ax1 = fig.add_axes([0.74,0.1,0.2,0.6])
+    Y1 = sch.linkage(d[idx], method='complete')
+    Y2 = sch.linkage(d[idx], method='complete')
+    Z1 = sch.dendrogram(Y1, orientation='right')
+    idx1 = Z1['leaves']
+    ax1.set_xticks([])
+    ax1.set_yticklabels(res[idx1],size=4)
+    
+    # Top side Dendrogram
+    ax2 = fig.add_axes([0.09,0.75,0.6,0.2])
+    Z2 = sch.dendrogram(Y2)
+    idx2 = Z2['leaves']
+    #ax2.set_xticks([])
+    ax2.set_xticklabels(res[idx2],size=4)
+    
+    # Reordered Large Distance Matrix
+    axmatrix = fig.add_axes([0.09,0.1,0.6,0.6])
+    im = axmatrix.matshow(d[idx1][:,idx2], aspect='auto', origin='lower', cmap=plt.get_cmap('coolwarm'))
+    axmatrix.set_xticks([])
+    axmatrix.set_yticks([])
+    
+    # Original Distance Matrix (Small)
+    axmatrix2 = fig.add_axes([0.74,0.74,0.18,0.18])
+    im = axmatrix2.matshow(d, aspect='auto', origin='lower', cmap=plt.get_cmap('coolwarm'))
+    #axmatrix.set_xticks([])
+    #axmatrix.set_yticks([])
+    
+    # Colorbar
+    cbaxes = fig.add_axes([0.95,0.1, 0.01, 0.6])
+    plt.colorbar(im, cax=cbaxes)
+    plt.savefig('{0:s}_complete.pdf'.format(base_name),fmt='pdf')
+    
+    if options.threshold != None:
+        if (options.threshold <= 0.0) | (options.threshold >= 1.0):
+            print("Threshold ({0:8.3f}) must be a float number between 0.0 and 1.0 (extreemes exluded)".format(options.threshold))
+            raise ValueError
+        subs=np.where(np.diag(d)< -np.log(options.threshold))[0]
+        if len(subs) < 1:
+            print("Threshold ({0:8.3f}) Corresponds to 0 residues".format(options.threshold))
+            quit()
+        d_s=d[subs][:,subs]
+        res_s=res[subs]
+        idx = np.triu_indices(d_s.shape[0],1)
+        #Create The Second Figure
+        fig = plt.figure(figsize=(10,10))
+        
+        # Right side Dendrogram
+        ax1 = fig.add_axes([0.74,0.1,0.2,0.6])
+        Y1 = sch.linkage(d_s[idx], method='complete')
+        Y2 = sch.linkage(d_s[idx], method='complete')
+        Z1 = sch.dendrogram(Y1, orientation='right')
+        idx1 = Z1['leaves']
+        ax1.set_xticks([])
+        ax1.set_yticklabels(res_s[idx1],size=7)
+        
+        # Top side Dendrogram
+        ax2 = fig.add_axes([0.09,0.75,0.6,0.2])
+        Z2 = sch.dendrogram(Y2)
+        idx2 = Z2['leaves']
+        #ax2.set_xticks([])
+        ax2.set_xticklabels(res_s[idx2],size=7)
+        
+        # Reordered Large Distance Matrix
+        axmatrix = fig.add_axes([0.09,0.1,0.6,0.6])
+        im = axmatrix.matshow(d_s[idx1][:,idx2], aspect='auto', origin='lower', cmap=plt.get_cmap('coolwarm'))
+        im.set_clim(np.min(d),np.max(d))
+        axmatrix.set_xticks([])
+        axmatrix.set_yticks([])
+        
+        # Original Distance Matrix (Small)
+        axmatrix2 = fig.add_axes([0.74,0.74,0.18,0.18])
+        im = axmatrix2.matshow(d, aspect='auto', origin='lower', cmap=plt.get_cmap('coolwarm'))
+        #axmatrix.set_xticks([])
+        #axmatrix.set_yticks([])
+        
+        # Colorbar
+        cbaxes = fig.add_axes([0.95,0.1, 0.01, 0.6])
+        plt.colorbar(im, cax=cbaxes)
+        #plt.show()
+        plt.savefig('{0:s}_{1:s}_subset.pdf'.format(base_name,str(options.threshold)),fmt='pdf')
+        
+        
+        
+        exit()
+
+# CALCULATE LIFE TIME OF CLUSTERS
 P.cluster_phrases(thresh=threshold)
 P.life_time()
 P.autocorr_time()

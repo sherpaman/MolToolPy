@@ -236,15 +236,13 @@ class phrases:
             for j in self.phrases_cl[i]:
                 self.p_cl[i,j] += 1
     
-    def cluster_phrases_new(self,thresh=0.2):
-        self.phrases_cl = [ [ _similarity(p,self.clusters,thresh) for p in t ] for t in self.phrases]
-        n_fr = len(self.phrases_cl)
-        n_cl = int(max(self.labels))
-        self.p_cl = np.zeros((n_fr,n_cl+1))
-        for i in range(n_fr):
-            for j in self.phrases_cl[i]:
-                self.p_cl[i,j] += 1
-    
+    def filter_phrases(self):
+        frames_list = [ [] ]
+        for n,c in enumerate(self.clusters):
+            if n > 0:
+                frames_list.append( np.where([ np.any(np.array([ set(c) == set(c) & set(i) for i in j])) for j in P.phrases ])[0] )
+        return frames_list
+        
     def life_time_old(self):
         self.LT=_calc_lifetime_old(self.p_cl,)
     
