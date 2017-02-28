@@ -22,10 +22,10 @@ parser.add_argument("-o","--out",dest="out",action="store",type=str,default=None
 #
 # OTHER OPTIONS
 #
-parser.add_argument("-r","--rec",dest="rec",action="store",type=str,default=None,help="Receptor String Selection",required=True,metavar="RECEPTOR")
-parser.add_argument("-l","--list",dest="list_out",action="store_true",default=False,help="Print List of Residues in Clusters")
-parser.add_argument("-t","--threshold",dest="threshold",action="store",type=float,default=None,help="Minimum Probability Threshold",required=False,metavar="CUTOFF")
-parser.add_argument("-c","--clust_min_size",dest="cl_min_sz",action="store",type=int,default=3,help="Minimum size of threshold",required=False,metavar="CUTOFF")
+parser.add_argument("-r","--rec",dest="rec",action="store",type=str,default=None,help="Receptor String Selection",required=True,metavar="STRING")
+parser.add_argument("--list_out",dest="list_out",action="store_true",help="Print List of Residues in Clusters")
+parser.add_argument("-t","--threshold",dest="threshold",action="store",type=float,default=None,help="Minimum Probability Threshold",required=False,metavar="PROBABILITY [0.0-1.0]")
+parser.add_argument("-c","--clust_min_size",dest="cl_min_sz",action="store",type=int,default=3,help="Minimum size of Cluster to write in the output",required=False,metavar="INTERGER")
 parser.add_argument("--res0",dest="res0",action="store",type=int,default=1,help="Add this to residue numbering of Protein")
 options = parser.parse_args()
 
@@ -129,16 +129,17 @@ if options.threshold != None:
     #plt.show()
     plt.savefig('{0:s}_{1:s}_subset.pdf'.format(base_name,str(options.threshold)),fmt='pdf')
 
-if options.list_out == True:
+if options.list_out:
     labels = np.array([sch.fcluster(Y01,c,criterion='distance') for c in Y01[:,2]])
     score = np.array([metrics.silhouette_score(d,l) for l in labels[:-2]])
     c = Y01[:-2,2]
     f = interp(c,-score,kind='linear')
-    opt_c = opt.fmin(f,x0=c[options.cl_min_cl-1])
+    opt_c = opt.fmin(f,x0=c[options.cl_min_sz-1])
     lab_opt = sch.fcluster(Y01,t=opt_c,criterion='distance') 
     C = [ np.where(lab_opt==i)[0] for i in range(1,max(lab_opt)+1) if len(np.where(lab_opt==i)[0])>=options.cl_min_sz ]
+    print("Writing  Residue List")
     fo=open(options.out+".resname.dat",'w+')
-    for n,i in enumerate(C1):
+    for n,i in enumerate(C):
         fo.write("{:30s} {:2d}".format(options.dist,n+1))
         for j in i:
             fo.write(" {:6s}".format(res[j]))
