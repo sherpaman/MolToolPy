@@ -59,7 +59,7 @@ ax1.set_yticklabels(res[idx1],size=4)
 # Top side Dendrogram
 ax2 = fig.add_axes([0.09,0.75,0.6,0.2])
 Z02 = sch.dendrogram(Y02)
-idx2 = Z2['leaves']
+idx2 = Z02['leaves']
 #ax2.set_xticks([])
 ax2.set_xticklabels(res[idx2],size=4)
 
