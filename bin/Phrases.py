@@ -27,14 +27,11 @@ parser_read.add_argument("-o","--out",dest="out",action="store",type=str,default
 # VAR ARGUMENTS
 #
 parser_read.add_argument("-d","--dist",dest="dist_cutoff",action="store",type=float,default=7.0,help="Distance Cut-off for binding definition")
-parser_read.add_argument("-c","--cutoff",dest="cutoff",action="store",type=float,default=None,help="Cut-off for clustering")
 parser_read.add_argument("-b","--begin",dest="begin",action="store",type=int,default=0,help="First frame to read")
 parser_read.add_argument("-e","--end",dest="end",action="store",type=int,default=-1,help="Last frame to read")
 parser_read.add_argument("-s","--skip",dest="skip",action="store",type=int,default=1,help="number of frame to skip", metavar="INTEGER")
-parser_read.add_argument("-j","--jaccard",dest="jac",action="store",type=float,default=0.25,help="Jaccard Similarity Threshold")
 parser_read.add_argument("-r","--receptor",dest="receptor",action="store",type=str,default="protein",help="Selection string for the Receptor")
-parser_read.add_argument("-l","--ligand",dest="ligand",action="store",type=str,default="not protein",help="Selection strin for the Ligand")
-parser_read.add_argument("--res0",dest="res0",action="store",type=int,default=1,help="Add this to residue numbering of Protein")
+parser_read.add_argument("-l","--ligand",dest="ligand",action="store",type=str,default="not protein",help="Selection string for the Ligand")
 #
 # JACCARD ANALYSIS PROGRAM SUB-PARSER
 parser_anal = subparsers.add_parser('Jaccard',description="read a list of phrases previously generated (possibly a distance matrix between phrases sub-elements), and perform clustering, filtering and basic statistics")
@@ -76,7 +73,7 @@ parser_linkage.add_argument("-o","--out",dest="out",action="store",type=str,defa
 #
 parser_linkage.add_argument("-r","--receptor",dest="receptor",action="store",type=str,default=None,help="Selection string for the Receptor",required=True,metavar="STRING")
 parser_linkage.add_argument("-t","--threshold",dest="threshold",action="store",type=float,default=None,help="Minimum Probability Threshold for Clustering",required=False,metavar="PROBABILITY")
-parser_linkage.add_argument(     "--do_filter",dest="do_filter",action="store_true",default=False,help="Toggle the Cluster Based Filtering of the original Phrases",required=False,metavar="FLOAT")
+parser_linkage.add_argument(     "--do_filter",dest="do_filter",action="store_true",help="Toggle the Cluster Based Filtering of the original Phrases",required=False)
 #
 clustering2 = parser_linkage.add_mutually_exclusive_group()
 clustering2.add_argument("-e","--do_elbow",dest="do_elbow",action="store_true",default=False,help="Toggle The Elbow Criterion for Cluster Definition")
@@ -106,11 +103,8 @@ if options.prog=='read-traj':
     b               = options.begin
     e               = options.end
     skip            = options.skip
-    cutoff          = options.cutoff
     rec_str         = options.receptor
     lig_str         = options.ligand
-    res0            = options.res0
-    threshold       = options.jac
     lig_dist_cutoff = options.dist_cutoff
     min_phrase_len  = 3
     
@@ -128,42 +122,7 @@ if options.prog=='read-traj':
     
     P.calc_dist()
     np.savez(options.out+"-distance.npz",P.D)
-    p = np.linspace(0,100,1002)
-    perc = np.percentile(P.D,p)
-
-    if cutoff != None:
-        P.find_cluster(options.cutoff)
-    else:
-        n_val = 551
-        c_val = np.linspace(perc[5],perc[60],n_val)
-        v_val = np.zeros(n_val)
-        
-        avg_dist = np.average(P.D)
-        
-        for i in range(n_val):
-            cutoff = c_val[i]
-            P.find_cluster(cutoff)
-            n_cl = int( np.max(P.labels) + 1 )
-            sub_D = P.D[P.centroid[1:]][:,P.centroid[1:]]
-            v_val[i] = np.average(sub_D)/avg_dist
-        
-        buf=20
-        
-        s1 = np.zeros(n_val)
-        s2 = np.zeros(n_val)
-        i1 = np.zeros(n_val)
-        i2 = np.zeros(n_val)
-        for i in range(buf,n_val-buf):
-            s1[i], i1[i], r_value1, p_value1, std_err1 = stats.linregress(c_val[buf/2:i],      v_val[buf/2:i]      )
-            s2[i], i2[i], r_value2, p_value2, std_err2 = stats.linregress(c_val[i:n_val-buf/2],v_val[i:n_val-buf/2])   
-        
-        elbow = np.argmax(s1-s2)
-        cutoff = c_val[elbow]
-        plt.figure()
-        plt.plot(c_val,v_val,'.')
-        plt.plot(c_val[buf:elbow],i1[elbow]+c_val[buf:elbow]*s1[elbow])
-        plt.plot(c_val[elbow:n_val-buf],i2[elbow]+c_val[elbow:n_val-buf]*s2[elbow])
-        plt.savefig('{0:s}-elbow-point.png'.format(options.out),fmt="png")
+    exit()
 
 elif options.prog=="anal-phrases":
     res0            = options.res0
@@ -327,8 +286,6 @@ elif options.program == "Linkage":
         plt.colorbar(im, cax=cbaxes)
         #plt.show()
         plt.savefig('{0:s}_{1:s}_subset.pdf'.format(base_name,str(options.threshold)),fmt='pdf')
-        
-        
         
         exit()
 
