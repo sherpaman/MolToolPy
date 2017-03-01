@@ -23,17 +23,25 @@ parser.add_argument("-o","--out",dest="out",action="store",type=str,default=None
 # OTHER OPTIONS
 #
 parser.add_argument("-r","--rec",dest="rec",action="store",type=str,default=None,help="Receptor String Selection",required=True,metavar="STRING")
-parser.add_argument("--list_out",dest="list_out",action="store_true",help="Print List of Residues in Clusters")
+parser.add_argument(     "--list_out",dest="list_out",action="store_true",help="Print List of Residues in Clusters")
 parser.add_argument("-t","--threshold",dest="threshold",action="store",type=float,default=None,help="Minimum Probability Threshold",required=False,metavar="PROBABILITY [0.0-1.0]")
-parser.add_argument("-c","--clust_min_size",dest="cl_min_sz",action="store",type=int,default=3,help="Minimum size of Cluster to write in the output",required=False,metavar="INTERGER")
-parser.add_argument("--res0",dest="res0",action="store",type=int,default=1,help="Add this to residue numbering of Protein")
+parser.add_argument("-c","--clust_cutoff",dest="cluster_cutoff",action="store",type=float,default=None,help="Cutoff for Clustering",required=False,metavar="FLOAT")
+parser.add_argument("-m","--clust_min_size",dest="cl_min_sz",action="store",type=int,default=3,help="Minimum size of Cluster to write in the output",required=False,metavar="INTERGER")
+parser.add_argument(     "--res0",dest="res0",action="store",type=int,default=1,help="Add this to residue numbering of Protein")
 options = parser.parse_args()
+
+def optimal_cutoff(Y,dist_mat,min_size):
+    labels = np.array([sch.fcluster(Y,c,criterion='distance') for c in Y[:,2]])
+    score = np.array([metrics.silhouette_score(dist_mat,l) for l in labels[:-2]])
+    c = Y[:-2,2]
+    f = interp(c,-score,kind='linear')
+    opt_c = opt.fmin(f,x0=c[min_size-1])
+    return opt_c
 
 dist = options.dist
 top  = options.top
 trj  = options.trj
 base_name = options.out
-
 
 D = np.load(dist)['arr_0']
 u = MD.Universe(top,trj)
@@ -44,8 +52,11 @@ res_idx=np.array([ l.resid for l in receptor.residues])
 d = D[res_idx][:,res_idx]
 idx = np.triu_indices(d.shape[0],1)
 
+fig_size = 20
+font_size = 20 * 0.51 * 72 / (2 * len(res))
+
 #Create The First Figure
-fig = plt.figure(figsize=(10,10))
+fig = plt.figure(figsize=(fig_size,fig_size))
 
 # Right side Dedrogram
 ax1 = fig.add_axes([0.74,0.1,0.2,0.6])
@@ -54,14 +65,14 @@ Y02 = sch.linkage(d[idx], method='complete')
 Z01 = sch.dendrogram(Y01, orientation='right')
 idx1 = Z01['leaves']
 ax1.set_xticks([])
-ax1.set_yticklabels(res[idx1],size=4)
+ax1.set_yticklabels(res[idx1],size=font_size)
 
 # Top side Dendrogram
 ax2 = fig.add_axes([0.09,0.75,0.6,0.2])
 Z02 = sch.dendrogram(Y02)
 idx2 = Z02['leaves']
 #ax2.set_xticks([])
-ax2.set_xticklabels(res[idx2],size=4)
+ax2.set_xticklabels(res[idx2],size=font_size)
 
 # Reordered Large Distance Matrix
 axmatrix = fig.add_axes([0.09,0.1,0.6,0.6])
@@ -90,9 +101,10 @@ if options.threshold != None:
         quit()
     d_s=d[subs][:,subs]
     res_s=res[subs]
+    font_size_s = 20 * 0.51 * 72 / (2 * len(res_s))
     idx = np.triu_indices(d_s.shape[0],1)
     #Create The Second Figure
-    fig = plt.figure(figsize=(10,10))
+    fig = plt.figure(figsize=(fig_size,fig_size))
     
     # Right side Dendrogram
     ax1 = fig.add_axes([0.74,0.1,0.2,0.6])
@@ -101,14 +113,14 @@ if options.threshold != None:
     Z1 = sch.dendrogram(Y1, orientation='right')
     idx1 = Z1['leaves']
     ax1.set_xticks([])
-    ax1.set_yticklabels(res_s[idx1],size=7)
+    ax1.set_yticklabels(res_s[idx1],size=font_size_s)
     
     # Top side Dendrogram
     ax2 = fig.add_axes([0.09,0.75,0.6,0.2])
     Z2 = sch.dendrogram(Y2)
     idx2 = Z2['leaves']
     #ax2.set_xticks([])
-    ax2.set_xticklabels(res_s[idx2],size=7)
+    ax2.set_xticklabels(res_s[idx2],size=font_size_s)
     
     # Reordered Large Distance Matrix
     axmatrix = fig.add_axes([0.09,0.1,0.6,0.6])
@@ -130,12 +142,11 @@ if options.threshold != None:
     plt.savefig('{0:s}_{1:s}_subset.pdf'.format(base_name,str(options.threshold)),fmt='pdf')
 
 if options.list_out:
-    labels = np.array([sch.fcluster(Y01,c,criterion='distance') for c in Y01[:,2]])
-    score = np.array([metrics.silhouette_score(d,l) for l in labels[:-2]])
-    c = Y01[:-2,2]
-    f = interp(c,-score,kind='linear')
-    opt_c = opt.fmin(f,x0=c[options.cl_min_sz-1])
-    lab_opt = sch.fcluster(Y01,t=opt_c,criterion='distance') 
+    if options.cluster_cutoff == None:
+        clust_c = optimal_cutoff(Y01,d,options.cl_min_sz)
+    else:
+        clust_c = options.cluster_cutoff
+    lab_opt = sch.fcluster(Y01,t=clust_c,criterion='distance') # CLUSTERING USING OPTIMIZED OR CHOOSEN CUTOFF
     C = [ np.where(lab_opt==i)[0] for i in range(1,max(lab_opt)+1) if len(np.where(lab_opt==i)[0])>=options.cl_min_sz ]
     print("Writing  Residue List")
     fo=open(options.out+".resname.dat",'w+')
