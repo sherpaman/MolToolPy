@@ -32,10 +32,10 @@ options = parser.parse_args()
 
 def optimal_cutoff(Y,dist_mat,min_size):
     labels = np.array([sch.fcluster(Y,c,criterion='distance') for c in Y[:,2]])
-    score = np.array([metrics.silhouette_score(dist_mat,l) for l in labels[:-2]])
-    c = Y[:-2,2]
+    score = np.array([metrics.silhouette_score(dist_mat,l) for l in labels[:-min_size]])
+    c = Y[:-min_size,2]
     f = interp(c,-score,kind='linear')
-    opt_c = opt.fmin(f,x0=c[min_size-1])
+    opt_c = opt.fmin(f,x0=c[2*min_size])
     return opt_c
 
 dist = options.dist
@@ -97,11 +97,11 @@ if options.threshold != None:
         raise ValueError
     subs=np.where(np.diag(d)< -np.log(options.threshold))[0]
     if len(subs) < 1:
-        print("Threshold ({0:8.3f}) Corresponds to 0 residues".format(options.threshold))
+        print("WARNING: Threshold ({0:8.3f}) Corresponds to 0 residues".format(options.threshold))
         quit()
     d_s=d[subs][:,subs]
     res_s=res[subs]
-    font_size_s = 20 * 0.51 * 72 / (2 * len(res_s))
+    font_size_s = 20 * 0.51 * 54 / (2 * len(res_s))
     idx = np.triu_indices(d_s.shape[0],1)
     #Create The Second Figure
     fig = plt.figure(figsize=(fig_size,fig_size))
@@ -143,13 +143,21 @@ if options.threshold != None:
 
 if options.list_out:
     if options.cluster_cutoff == None:
-        clust_c = optimal_cutoff(Y01,d,options.cl_min_sz)
+        if options.threshold != None:
+            clust_c = optimal_cutoff(Y1,d_s,options.cl_min_sz)
+        else:
+            clust_c = optimal_cutoff(Y01,d,options.cl_min_sz)
     else:
         clust_c = options.cluster_cutoff
-    lab_opt = sch.fcluster(Y01,t=clust_c,criterion='distance') # CLUSTERING USING OPTIMIZED OR CHOOSEN CUTOFF
-    C = [ np.where(lab_opt==i)[0] for i in range(1,max(lab_opt)+1) if len(np.where(lab_opt==i)[0])>=options.cl_min_sz ]
+    if options.threshold != None:
+        lab_opt = sch.fcluster(Y1,t=clust_c,criterion='distance') # CLUSTERING USING OPTIMIZED OR CHOOSEN CUTOFF
+        C = [ subs[np.where(lab_opt==i)[0]] for i in range(1,max(lab_opt)+1) if len(np.where(lab_opt==i)[0])>=options.cl_min_sz ]
+    else:
+        lab_opt = sch.fcluster(Y01,t=clust_c,criterion='distance') # CLUSTERING USING OPTIMIZED OR CHOOSEN CUTOFF
+        C = [ np.where(lab_opt==i)[0] for i in range(1,max(lab_opt)+1) if len(np.where(lab_opt==i)[0])>=options.cl_min_sz ]
     print("Writing  Residue List")
     fo=open(options.out+".resname.dat",'w+')
+    fo.write("# CLUSTERING WITH CUTOFF : {0:.3f}\n".format(clust_c))
     for n,i in enumerate(C):
         fo.write("{:30s} {:2d}".format(options.dist,n+1))
         for j in i:
@@ -157,6 +165,7 @@ if options.list_out:
         fo.write("\n")
     fo.close()
     fo=open(options.out+".resnum.dat",'w+')
+    fo.write("# CLUSTERING WITH CUTOFF : {0:.3f}\n".format(clust_c))
     for n,i in enumerate(C):
         fo.write("{:30s} {:2d}".format(options.dist,n+1))
         for j in i:
