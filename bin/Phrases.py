@@ -186,6 +186,7 @@ elif options.program == "Linkage":
     trj      = options.trj
     rec_str  = options.receptor
     base_name = options.out
+    dist      = options.dist
     
     u = MD.Universe(top,trj)
     receptor = u.select_atoms(rec_str)
