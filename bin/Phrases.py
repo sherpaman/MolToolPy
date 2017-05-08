@@ -78,6 +78,7 @@ parser_linkage.add_argument(     "--do_filter",dest="do_filter",action="store_tr
 clustering2 = parser_linkage.add_mutually_exclusive_group()
 clustering2.add_argument("-e","--do_elbow",dest="do_elbow",action="store_true",default=False,help="Toggle The Elbow Criterion for Cluster Definition")
 clustering2.add_argument("-l","--clusters",dest="clusters",action="store",type=str,default=None,help="Text file containing the clusters",metavar="CLUST FILE")
+clustering2.add_argument("--res0",dest="res0",action="store",type=int,default=1,help="Add this to residue numbering of Protein")
 #
 #
 options = parser.parse_args()
@@ -187,6 +188,7 @@ elif options.program == "Linkage":
     rec_str  = options.receptor
     base_name = options.out
     dist      = options.dist
+    res0      = options.res0
     
     u = MD.Universe(top,trj)
     receptor = u.select_atoms(rec_str)
