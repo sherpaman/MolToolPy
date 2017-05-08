@@ -10,7 +10,7 @@ from math import *
 import MDAnalysis as MD
 from argparse import ArgumentParser
 parser = ArgumentParser( description = 'Find Binding Sites in Receptor+Ligand MD simulation')
-subparsers = parser.add_subparsers(help='sub-command help',dest='prog')
+subparsers = parser.add_subparsers(help='sub-command help',dest='program')
 #
 # TRAJ-READ PROGRAM SUB-PARSER
 parser_read = subparsers.add_parser('read-traj',description="read a trajectory, find and cluster binding phrases, basic statistics")
