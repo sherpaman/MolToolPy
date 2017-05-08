@@ -97,7 +97,7 @@ def read_cluster_file(file_in,r0,nr):
             clusters[0] = [ n for n,i in enumerate(labels) if i == 0 ]
     return labels, clusters
 
-if options.prog=='read-traj':
+if options.program=='read-traj':
     top             = options.top
     trj             = options.traj
     b               = options.begin
@@ -124,7 +124,7 @@ if options.prog=='read-traj':
     np.savez(options.out+"-distance.npz",P.D)
     exit()
 
-elif options.prog=="anal-phrases":
+elif options.program=="anal-phrases":
     res0            = options.res0
     threshold       = options.jac
     if options.dist != None:
@@ -302,9 +302,9 @@ for i in range(int(max(P.labels)+1)):
 at = np.sort(P.ac_t[:,:2])*P.dt
 
 do_write_clusters=False
-if options.prog=="read-traj" :
+if options.program=="read-traj" :
     do_write_clusters=True
-if options.prog == "anal-phrases": 
+if options.program == "anal-phrases": 
     if options.clusters != None :
         do_write_clusters=True
         
@@ -319,7 +319,7 @@ if do_write_clusters:
         
 #print P.LT
 with open(options.out+"-binding-site.dat","w") as f:
-    if options.prog=="read-traj":
+    if options.program=="read-traj":
         f.write("Using Cut-Off                 : {0:10.6f}\n".format(cutoff))
         try:
             cutoff_percentile = (p[np.min(np.where(perc>cutoff))]+p[np.max(np.where(perc<cutoff))]) / 2
