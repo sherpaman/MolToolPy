@@ -183,6 +183,7 @@ elif options.program=="anal-phrases":
         plt.savefig('{0:s}-elbow-point.png'.format(options.out),fmt="png")
 
 elif options.program == "Linkage":
+    import scipy.cluster.hierarchy as sch
     top      = options.top
     trj      = options.trj
     rec_str  = options.receptor
