@@ -15,6 +15,8 @@ re_N=re.compile("(D[ACTG])([1-9]{1}[0-9]*)([HNOP][A-Z,0-9]*)") # MATCHES NUCLEOT
 re_P=re.compile("([ACGHILMNPSTV][A-Z]{2})([1-9]{1}[0-9]*)([HNOP][A-Z,0-9]*)") # MATCHES PROTEIN RESIDUES
 re_R=re.compile("(D[ACTG]|[ACGHILMNPSTV][A-Z]{2})([1-9]{1}[0-9]*)([HNOP][A-Z,0-9]*)") # MATCHES BOTH
 re_R_sim=re.compile("(D[ACTG]|[ACGHILMNPSTV][A-Z]{2})([1-9]{1}[0-9]*)")
+re_G=re.compile("([0-6]GB|ROH)([1-9]{1}[0-9]*)([HNOP][A-Z,0-9]*)")
+re_R=re.compile("(D[ACTG]|[ACGHILMNPSTV][A-Z]{2}|[0-6]GB|ROH)([1-9]{1}[0-9]*)([HNOP][A-Z,0-9]*)") # MATCHES PROTEIN NUCLEOTIDE AND GLYCAM
 
 def _autocorr(data):
     mu     = numpy.average(data)

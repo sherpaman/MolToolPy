@@ -25,6 +25,7 @@ parser.add_argument("-o","--out",dest="out",action="store",type=str,default=None
 parser.add_argument("-b","--begin",dest="begin",action="store",type=int,default=0,help="First frame to read")
 parser.add_argument("-e","--end",dest="end",action="store",type=int,default=-1,help="Last frame to read")
 parser.add_argument("-s","--skip",dest="skip",action="store",type=int,default=1,help="number of frame to skip", metavar="INTEGER")
+parser.add_argument("-c","--dist_cutoff",dest="cutoff",action="store",type=float,default=7.0,help="Distance Cutoff")
 
 options = parser.parse_args()
 
@@ -36,8 +37,8 @@ e         = options.end
 skip      = options.skip
 l_sites   = options.list_sites
 npz       = options.npz
+dist_cutoff = options.cutoff # Distance Cutoff in Aangstrom
 
-dist_cutoff = 8.0 # Distance Cutoff in Aangstrom
 smooth = 2
 conv = np.ones(smooth)
 

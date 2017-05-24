@@ -260,7 +260,8 @@ class phrases:
             # Could be used List comprehension:
             # p = [ list(np.unique(receptor.select_atoms("around %f global group grp" %(self.cutoff), grp=lr)) if len(list(np.unique(receptor.select_atoms("around %f global group grp" %(self.cutoff), grp=lr))) > self.min_len else [] for lr in self.ligand.residues ]
             #
-            for lr in self.ligand.residues:
+            l_by_res = [ self.ligand.atoms[np.where(self.ligand.resids == r)[0]] for r in np.unique(self.ligand.resids) ] # create a list of AtomGroups divided by Ligand residues 
+            for lr in l_by_res:
                 p = list(np.unique(self.receptor.select_atoms("around %f global group grp" %(self.cutoff), grp=lr).resids).astype(int))
                 if len(p) >= self.min_len:
                     phrase.append(p)

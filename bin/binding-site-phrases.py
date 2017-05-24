@@ -26,7 +26,7 @@ parser.add_argument("-b","--begin",dest="begin",action="store",type=int,default=
 parser.add_argument("-e","--end",dest="end",action="store",type=int,default=-1,help="Last frame to read")
 parser.add_argument("-s","--skip",dest="skip",action="store",type=int,default=1,help="number of frame to skip", metavar="INTEGER")
 parser.add_argument("-j","--jaccard",dest="jac",action="store",default=0.25,help="Jaccard Similarity Threshold")
-parser.add_argument("-r","--receptor",dest="receptor",action="store",type=str,default="protein",help="Selection string for the Receptor")
+parser.add_argument("-r","--receptor",dest="receptor",action="store",type=str,defasplult="protein",help="Selection string for the Receptor")
 parser.add_argument("-l","--ligand",dest="ligand",action="store",type=str,default="not protein",help="Selection strin for the Ligand")
 parser.add_argument("--lig_dist",dest="lig_dist",action="store",type=float,default=7.0,help="Ligand-Receptor Distance Cut-Off")
 parser.add_argument("--res0",dest="res0",action="store",type=int,default=1,help="Add this to residue numbering of Protein")
