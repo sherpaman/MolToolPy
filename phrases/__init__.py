@@ -102,13 +102,14 @@ def _autocorr2(data, trim_val=1):
         out[:n_r] = result
         return out
 
-def acfs(occupancies):
-    acfs = np.empty(len(occupancies))
+def _acfs(occupancies):
+    # Code from Arnarez.
+    acfs = np.zeros(len(occupancies))
     convolve_array = np.ones(2, dtype = np.int32)
     # compute the ACFs for the chunk of binding sites passed in argument
     
     # extract the data for this site and this lipid to avoid dimensionality nightmares
-    reduced_occupancies = occupancies
+    reduced_occupancies = np.copy(occupancies)
     # first value is the sum of all single-frame occupancy
     acfs[0] = float(np.sum(reduced_occupancies))
     # if the ACF reached 0 already, no need to compute the rest
@@ -311,13 +312,14 @@ class phrases:
         if threshold < np.inf:
             self.clusters = [ t_idx[np.where(L == i )[0]] for i in np.arange(max(L))+1 if len(np.where(L==i)[0]) >= self.min_len ]
             self.labels = np.zeros(self.D.shape[0],dtype=int)
+            self.linkage = Z
             for n,i in enumerate(t_idx):
                 self.labels[i] = L[n]
         else:
             self.clusters = [ np.where(L == i )[0] for i in np.arange(max(L))+1 if len(np.where(L==i)[0]) >= self.min_len ]
             self.labels   = L
+            self.linkage  = Z
         return
-
 
     def cluster_phrases(self,thresh=0.2):
         self.phrases_cl = [ [ _mj(p,self.clusters,thresh) for p in t ] for t in self.phrases]
