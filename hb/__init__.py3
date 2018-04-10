@@ -14,9 +14,11 @@ re_protein=re.compile('[A-Z]{3}[0-9]+')
 re_N=re.compile("(D[ACTG])([1-9]{1}[0-9]*)([HNOP][A-Z,0-9]*)") # MATCHES NUCLEOTIDES
 re_P=re.compile("([ACGHILMNPSTV][A-Z]{2})([1-9]{1}[0-9]*)([HNOP][A-Z,0-9]*)") # MATCHES PROTEIN RESIDUES
 re_R=re.compile("(D[ACTG]|[ACGHILMNPSTV][A-Z]{2})([1-9]{1}[0-9]*)([HNOP][A-Z,0-9]*)") # MATCHES BOTH
+
 re_R_sim=re.compile("(D[ACTG]|[ACGHILMNPSTV][A-Z]{2})([1-9]{1}[0-9]*)")
 re_G=re.compile("([0-6]GB|ROH)([1-9]{1}[0-9]*)([HNOP][A-Z,0-9]*)")
 re_R=re.compile("(D[ACTG]|[ACGHILMNPSTV][A-Z]{2}|[0-6]GB|ROH)([1-9]{1}[0-9]*)([HNOP][A-Z,0-9]*)") # MATCHES PROTEIN NUCLEOTIDE AND GLYCAM
+re_R=re.compile("(D[ACTG]|[ACGHILMNPSTV][A-Z]{2}|WAT)([1-9]{1}[0-9]*)([HNOP][A-Z,0-9]*)") # MATCHES BOTH
 
 def _autocorr(data):
     mu     = numpy.average(data)
@@ -242,7 +244,12 @@ class HBonds:
             for l in raw[1:]:
                 l_sim.append([ list(i)[0]+list(i)[1] for n,i in enumerate(re_R.findall(l)) if (n != 1) ])
                 hblist.append([ list(i) for i in re_R.findall(l)])
-                d_r , a_r = l_sim[-1][0] , l_sim[-1][1]
+                try:
+                    d_r , a_r = l_sim[-1][0] , l_sim[-1][1]
+                except:
+                    print l
+                    print re_R.findall(l)
+                    raise
                 d_a , a_a = hblist[-1][0][2], hblist[-1][2][2]
                 self.red_hb.append(HBond(don=d_r, don_atom=d_a, acc=a_r, acc_atom=a_a, perc=0.0, mediated=0.0, both=0.0, nfr=self.nfr))
             l_hb,l_hb_id,l_ref = uniq_ref(l_sim)
