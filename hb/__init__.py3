@@ -15,10 +15,10 @@ re_N=re.compile("(D[ACTG])([1-9]{1}[0-9]*)([HNOP][A-Z,0-9]*)") # MATCHES NUCLEOT
 re_P=re.compile("([ACGHILMNPSTV][A-Z]{2})([1-9]{1}[0-9]*)([HNOP][A-Z,0-9]*)") # MATCHES PROTEIN RESIDUES
 re_R=re.compile("(D[ACTG]|[ACGHILMNPSTV][A-Z]{2})([1-9]{1}[0-9]*)([HNOP][A-Z,0-9]*)") # MATCHES BOTH
 
-re_R_sim=re.compile("(D[ACTG]|[ACGHILMNPSTV][A-Z]{2})([1-9]{1}[0-9]*)")
+re_R_sim=re.compile("(D[ACTG]|[ACGHILMNPSTV][A-Z]{2}|[0-6]GB|ROH|P23)([1-9]{1}[0-9]*)")
 re_G=re.compile("([0-6]GB|ROH)([1-9]{1}[0-9]*)([HNOP][A-Z,0-9]*)")
-re_R=re.compile("(D[ACTG]|[ACGHILMNPSTV][A-Z]{2}|[0-6]GB|ROH)([1-9]{1}[0-9]*)([HNOP][A-Z,0-9]*)") # MATCHES PROTEIN NUCLEOTIDE AND GLYCAM
-re_R=re.compile("(D[ACTG]|[ACGHILMNPSTV][A-Z]{2}|WAT|P23)([1-9]{1}[0-9]*)([HNOP][A-Z,0-9]*)") # MATCHES BOTH
+re_R=re.compile("(D[ACTG]|[ACGHILMNPSTV][A-Z]{2}|[0-6]GB|ROH|P23)([1-9]{1}[0-9]*)([HNOP][A-Z,0-9]*)") # MATCHES PROTEIN NUCLEOTIDE AND GLYCAM
+#re_R=re.compile("(D[ACTG]|[ACGHILMNPSTV][A-Z]{2}|WAT|P23)([1-9]{1}[0-9]*)([HNOP][A-Z,0-9]*)") # MATCHES BOTH
 
 def _autocorr(data):
     mu     = numpy.average(data)
@@ -72,12 +72,20 @@ def fscore(p1,p2,t1,t2):
     #print "F-SCORE [ [ %d , %d ], [ %d, %d] ] = %f" %(n1 , (t1 - n1)+1 ,  n2 , (t2 - n2)+1, pvalue )
     return pvalue
 
-def bootstrap(data, num_samples, statistic, alpha):
-    n       = len(data)
-    idx     = numpy.random.randint(0, n, (num_samples, n))
+def _bootstrap(data, fun, num_samples=100, conf=0.95):
+    n      = len(data)
+    if n/num_samples < 100:
+        raise("You should use num_samples < {0}".format(n/100))
+    idx     = numpy.random.randint(0, n, (num_samples, n/num_samples))
     samples = data[idx]
-    stat    = numpy.sort(statistic(samples, 1))
-    return numpy.array([stat[int((alpha/2.0)*num_samples)], stat[int((1-alpha/2.0)*num_samples)]])
+    try:
+        stat    = numpy.sort(fun(samples))
+    except:
+        print samples
+        print fun(samples)
+        raise
+    alpha = 1.0 - conf
+    return numpy.array([stat[int((alpha/2.0)*num_samples)], stat[int((1.-alpha/2.0)*num_samples)]])
 
 class HBond:
     def __init__(self,don='res1',don_atom='',acc='res2',acc_atom='',h='',perc=0.0,perc_ci=numpy.zeros(2),perc_c=0.0,mediated=0.0,both=0.0,nfr=0):
@@ -93,7 +101,7 @@ class HBond:
         self.nfr      = nfr
     
     def __str__(self):
-        return "%11s %11s %6.2f %6.2f %6.2f %d" %(self.don+self.don_atom,self.acc+self.acc_atom,self.perc,0.0,0.0,self.nfr)
+        return "%11s %11s %6.2f %6.2f %6.2f %d" %(self.don+self.don_atom,self.acc+self.acc_atom,self.perc,self.perc_ci[0],self.perc_ci[1],self.nfr)
     
     def __repr__(self):
         return str(self)+"\n"
@@ -136,7 +144,7 @@ class HBonds:
                 print("FOUND %4d     REDUNDANT HB" % self.nrhb)
                 if self.red == False :
                     print("      %4d NON-REDUNDAT HB" % self.nbonds)
-                    self.nr_xpm = self.merge_xpm()
+                    self.merge_xpm()
                 if self.conf != None:
                     self.perc_bootstrap(conf=self.conf)
                 else:
@@ -192,16 +200,14 @@ class HBonds:
         return str(self)
     
     def merge_xpm(self):
-        nr_xpm       = copy.deepcopy(self.xpm)
-        nr_xpm.rows  = self.nbonds
-        nr_xpm.cols  = self.nfr
-        nr_xpm.yaxis = numpy.arange(nr_xpm.rows)
-        nr_xpm.ylabel= 'Non-Redundant Hydrogen Bond Index'
-        nr_xpm.title = 'Non-Redundant Hydrogen Bond Existence Map'
-        nr_xpm.array = numpy.zeros((nr_xpm.rows,nr_xpm.cols)) # COLS AND ROWS IN XPM HAVE DIFFERENT MEANING THAN IN THE ACTUAL ARRAY!!!
+        self.nr_xpm       = xpm.Xpm(title="NON REDUNDANT",rows=self.nbonds,cols=self.nfr,cop=self.xpm.cop,colors=self.xpm.colors,scal=self.xpm.scal)
+        self.nr_xpm.yaxis = numpy.arange(self.nr_xpm.rows)
+        self.nr_xpm.xaxis = self.xpm.xaxis
+        self.nr_xpm.ylabel= 'Non-Redundant Hydrogen Bond Index'
+        self.nr_xpm.title = 'Non-Redundant Hydrogen Bond Existence Map'
+        self.nr_xpm.array = numpy.zeros((self.nr_xpm.rows,self.nr_xpm.cols)) # COLS AND ROWS IN XPM HAVE DIFFERENT MEANING THAN IN THE ACTUAL ARRAY!!!
         for i in numpy.arange(self.nbonds):
-            nr_xpm.array[i,:] = numpy.max(self.xpm.array[self.ref_hb[i],:],axis=0)
-        return nr_xpm
+            self.nr_xpm.array[i,:] = numpy.max(self.xpm.array[self.ref_hb[i],:],axis=0)
     
     def renum(self,func):
         for hb in self.hblist:
@@ -213,11 +219,54 @@ class HBonds:
         
     def write_file(self,filename):
         out=open(filename,'w')
-        out.write(self.name+'\n')
+        out.write("#%10s %11s %6s %6s %6s %s\n" %("DONOR","ACCEPTOR","EXIST","V2","V3","NFRAMES"))
         for i in self.hblist:
             out.write(str(i)+'\n')
         out.close()
     
+    def as_dataframe(self,rep=0):
+        import pandas
+        frame={ k:[ h.__dict__[k] for h in self.hblist ] for k in ['acc','don','perc'] }
+        frame['rep']        = [                           int(rep) for h in self.hblist ]
+        frame['low_conf']   = [                       h.perc_ci[0] for h in self.hblist ]
+        frame['high_conf']  = [                       h.perc_ci[1] for h in self.hblist ] 
+        frame['don_resnum'] = [ int(re_R_sim.findall(h.don)[0][1]) for h in self.hblist ]
+        frame['acc_resnum'] = [ int(re_R_sim.findall(h.acc)[0][1]) for h in self.hblist ]
+        return pandas.DataFrame(frame)
+    
+    def res_map(self):
+        acc_list =  [ h.acc for h in self.hblist ]
+        don_list =  [ h.don for h in self.hblist ]
+        res_list = list(set(acc_list+don_list))
+        res_map  = { r:int(re_R_sim.findall(r)[0][1]) for r in res_list }
+        id_map = [ None for i in range(0,max(res_map.values())+1)  ]
+        for k in res_map.keys():
+            id_map[res_map[k]]=k
+        return res_map, id_map
+    
+    def as_array(self,residue_map=False):
+        if self.red == True:
+            print "Not Available per Redundant"
+            return
+        if residue_map:
+            acc_ids = [ int(re_R_sim.findall(h.acc)[0][1]) for h in self.hblist ]
+            don_ids = [ int(re_R_sim.findall(h.don)[0][1]) for h in self.hblist ]
+            res_map = numpy.unique(acc_ids+don_ids)
+            M = numpy.zeros((len(res_map),len(res_map)))
+            for n,h in enmerate(self.hblist):
+                i = res_map.index(acc_ids[n])
+                j = res_map.index(don_ids[n])
+                M[i,j] = h.perc
+            return res_map, M
+        else:
+            acc_ids = [ int(re_R_sim.findall(h.acc)[0][1]) for h in self.hblist ]
+            don_ids = [ int(re_R_sim.findall(h.don)[0][1]) for h in self.hblist ]
+            max_res = numpy.max(acc_ids+don_ids)
+            M = numpy.zeros((max_res+1,max_res+1))
+            for n,h in enumerate(self.hblist):
+                M[acc_ids[n],don_ids[n]] = h.perc
+            return M
+
     def read_log(self,file_in,red=False):
         """
         Populate the HBonds object with the HBond found in a
@@ -406,42 +455,50 @@ class HBonds:
             self.hblist[n].perc = 100.0 * ref.sum() /len(ref0)
             self.hblist[n].nfr = self.nfr
 
-    def perc_bootstrap(self,conf=0.95,nsample=1000):
+    def func_bootstrap(self,fun,conf=0.95,nsample=1000,hb_ids=None):
         import time
         import sys
         print("Starting Bootstrap")
         t0 = time.time()
+        if numpy.all(hb_ids == None):
+            hb_ids=numpy.arange(len(self.hblist))
         if not self.red:
-            for n,i in enumerate(self.hblist):
+            for i,n  in enumerate(hb_ids):
                 ref0 = self.xpm.array[self.ref_hb[n][0],:]
-                self.red_hb[self.ref_hb[n][0]].perc_ci = bootstrap(ref0,nsample,numpy.sum,1.0-conf) * 100.0 / len(ref0)
+                self.red_hb[self.ref_hb[n][0]].perc_ci = _bootstrap(ref0, fun, num_samples=nsample, conf=conf) 
                 self.red_hb[self.ref_hb[n][0]].perc_c  = conf
-                self.red_hb[self.ref_hb[n][0]].perc    = numpy.mean(self.red_hb[self.ref_hb[n][0]].perc_ci)
+                #self.red_hb[self.ref_hb[n][0]].perc    = numpy.mean(self.red_hb[self.ref_hb[n][0]].perc_ci)
                 for r in range(1,len(self.ref_hb[n])):
                     ref1 = self.xpm.array[self.ref_hb[n][r],:]
-                    self.red_hb[self.ref_hb[n][r]].perc_ci = bootstrap(ref1,nsample,numpy.sum,1.0-conf) * 100.0 / len(ref1)
+                    self.red_hb[self.ref_hb[n][r]].perc_ci = _bootstrap(ref1, fun, num_samples=nsample, conf=conf) 
                     self.red_hb[self.ref_hb[n][r]].perc_c  = conf
-                    self.red_hb[self.ref_hb[n][r]].perc    = numpy.mean(self.red_hb[self.ref_hb[n][r]].perc_ci)
+                    #self.red_hb[self.ref_hb[n][r]].perc    = numpy.mean(self.red_hb[self.ref_hb[n][r]].perc_ci)
                     ref0 = numpy.logical_or(ref0,ref1)
-                self.hblist[n].perc_ci = bootstrap(ref0,nsample,numpy.sum,1.0-conf) * 100.0 / len(ref0)
+                self.hblist[n].perc_ci = _bootstrap(ref0, fun, num_samples=nsample, conf=conf)
                 self.hblist[n].perc_c  = conf
-                self.hblist[n].perc = numpy.mean(self.hblist[n].perc_ci)
+                #self.hblist[n].perc = numpy.mean(self.hblist[n].perc_ci)
                 self.hblist[n].nfr = self.nfr
                 t = time.time()
-                ETA =  ( t - t0 ) * ( float(self.nbonds) / ( n +1 ) - 1. )
-                sys.stdout.write(" %4d/%4d calculations ETA: %6.1f sec.\r" %(n,self.nbonds,ETA)) 
+                ETA =  ( t - t0 ) * ( float(len(hb_ids)) / ( i + 1 ) - 1. )
+                sys.stdout.write(" %4d/%4d calculations ETA: %6.1f sec.\r" %(i,len(hb_ids),ETA)) 
         else:
-            for n,i in enumerate(self.hblist):
+            for i,n  in enumerate(hb_ids):
                 ref0 = self.xpm.array[n,:]
-                self.hblist[n].perc_ci = bootstrap(ref0,nsample,numpy.sum,1.0-conf) * 100.0 / len(ref0)
+                self.hblist[n].perc_ci = _bootstrap(ref0, fun, num_samples=nsample, conf=conf) 
                 self.hblist[n].perc_c  = conf
-                self.hblist[n].perc = numpy.mean(self.hblist[n].perc_ci)
+                #self.hblist[n].perc = numpy.mean(self.hblist[n].perc_ci)
                 self.hblist[n].nfr = self.nfr
                 t = time.time()
-                ETA =  ( t - t0 ) * ( float(self.nbonds) / ( n +1 ) - 1. )
-                sys.stdout.write(" %4d/%4d calculations ETA: %6.1f sec.\r" %(n,self.nbonds,ETA))  
+                ETA =  ( t - t0 ) * ( float(len(hb_ids)) / ( i + 1 ) - 1. )
+                sys.stdout.write(" %4d/%4d calculations ETA: %6.1f sec.\r" %(i,len(hb_ids),ETA))  
         sys.stdout.write (" Completed in %6.1f sec.                \n" %(t-t0))
-
+    
+    def perc_bootstrap(self,conf=0.95,nsample=1000,hb_ids=None):
+        def perc(data):
+            s,n = data.shape
+            return numpy.sum(data,axis=1) * 100. / n
+        self.func_bootstrap(perc,conf=conf,nsample=nsample,hb_ids=hb_ids)
+        
     def read_perc(self,filein,red=False):
         fi          = open(filein,'r')
         raw         = fi.readlines()
@@ -726,8 +783,8 @@ class HBondsCompare:
                 test_conf_second += 1
         
         if (test_conf_first+test_conf_second) != 0 :
-            self.first.perc_bootstrap(confidence)
-            self.second.perc_bootstrap(confidence)
+            self.first.perc_bootstrap(conf=confidence,nsample=1000)
+            self.second.perc_bootstrap(conf=confidence,nsample=1000)
                     
         for i in range(self.first.nbonds):
             self.M1[self.don_n.index(self.first.hblist[i].don[1]),self.acc_n.index(self.first.hblist[i].acc[1]),0]  = self.first.hblist[i].perc_ci[0]

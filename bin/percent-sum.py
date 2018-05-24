@@ -23,11 +23,14 @@ if out_dir=="":
     out_dir="."
 
 if options.red:
-	print("Calculating Percentage of REDUNDANT HB")
-	united_hbonds = HBonds(log=options.log,xpm=options.xpm,red=True)
+    print("Calculating Percentage of REDUNDANT HB")
+    united_hbonds = HBonds(log=options.log,xpm=options.xpm,red=True)
+    #united_hbonds.perc_bootstrap(nsample=50)
 else:
-	print("Calculating Percentage of NON-REDUNDANT HB")
-	united_hbonds = HBonds(log=options.log,xpm=options.xpm,red=False)
+    print("Calculating Percentage of NON-REDUNDANT HB")
+    united_hbonds = HBonds(log=options.log,xpm=options.xpm,red=False)
+    ids = numpy.where([ h.perc > 75 for h in united_hbonds ])[0]
+    united_hbonds.perc_bootstrap(nsample=100,hb_ids=ids)
 
 united_hbonds.write_file(out_dir+'/'+out_base+'.dat')
 

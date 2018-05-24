@@ -4,14 +4,15 @@ list_x = $(patsubst %.c, %.x, $(list_c) )
 list_so = _pyxpm.so
 CC=gcc
 
-CC_OPT=-std=gnu99 -O3
+CC_OPT=-std=gnu99 -O3 -fPIC -g
 DEPS=
-LDIR=/usr/X11R6/lib64/
-LIBS=-lXpm -lX11
-CFLAGS=-I$(IDIR) -L$(LDIR)
+LDIR=/usr/lib/x86_64-linux-gnu
+IDIR=/usr/include
+LIBS=-L$(LDIR) -lXpm -lX11
+CFLAGS=-I$(IDIR)
 
 PY_CC_OPT=-O3 -fPIC -g
-NUMPY=/home/coletta/pkg/lib64/python2.7/site-packages/numpy-1.11.0-py2.7-linux-x86_64.egg/numpy/core/include
+NUMPY=/mnt/software/lib/python2.7/site-packages/numpy/core/include
 PY=/usr/include/python2.7
 PY_CFLAGS=-I$(NUMPY) -I$(PY)
 PY_LIBS=-L$(LDIR) -lXpm -lX11
@@ -24,7 +25,7 @@ clean:
 	rm $(list_so) $(list_x)
 
 %.x : %.c
-	$(CC) $(CC_OPT) -o $@ $(CFLAGS) $(LIBS) $*.c $(DEPS)
+	$(CC) $(CC_OPT) $(CFLAGS) $(LIBS) $*.c -o $@ $(DEPS)
 
 %.o : %.c
 	$(CC) $(PY_CC_OPT) $(PY_CFLAGS) -c $*.c -o $@

@@ -27,7 +27,8 @@ static PyObject *pyxpm_read(PyObject *self, PyObject *args){
     
     XpmReadFileToXpmImage(fn, &XPM, &XPM_info);
     
-    //printf("Done!\n");
+    printf("Done!\n");
+    printf("%d x %d \n",XPM.height,XPM.width);
     
     // Create a Python List to return back
     
@@ -41,8 +42,10 @@ static PyObject *pyxpm_read(PyObject *self, PyObject *args){
     PyList_SetItem(ret, (Py_ssize_t) 3, PyInt_FromLong(XPM.ncolors));
     
     dims[0] = XPM.height;
-    dims[1] = XPM.width;
+    dims[1] = XPM.width; 
     
+    //printf(dims[0],dims[1]);
+
     /* 
      * List that will contain the Color Table of XPM:
      *  LIST = [ [ string0, color0] ,[string1, color1] ... [stringN, colorN] ]
